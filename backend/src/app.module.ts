@@ -35,7 +35,7 @@ import { AdminModule } from './modules/admin/admin.module';
         database: config.get('DB_NAME'),
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
         migrations: [__dirname + '/database/migrations/*{.ts,.js}'],
-        synchronize: config.get('NODE_ENV') === 'development', // disable in production
+        synchronize: false, // schema managed manually via database/schema.sql
         logging: config.get('NODE_ENV') === 'development',
       }),
       inject: [ConfigService],
