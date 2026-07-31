@@ -1,0 +1,43 @@
+# ─── Secrets ───────────────────────────────────────────────────────────────────
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+service-account*.json
+google-services.json
+GoogleService-Info.plist
+
+# ─── OS ────────────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ─── IDE ───────────────────────────────────────────────────────────────────────
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# ─── Node (backend) ────────────────────────────────────────────────────────────
+node_modules/
+dist/
+*.log
+npm-debug.log*
+
+# ─── Flutter (all apps) ────────────────────────────────────────────────────────
+**/build/
+**/.dart_tool/
+**/.flutter-plugins
+**/.flutter-plugins-dependencies
+**/.packages
+**/.pub-cache/
+**/.pub/
+**/pubspec.lock
+
+# ─── Misc ──────────────────────────────────────────────────────────────────────
+coverage/
+*.tgz
+
+# ─── Project temp scripts ──────────────────────────────────────────────────────
+create_mobile_dirs.ps1
