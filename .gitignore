@@ -41,3 +41,7 @@ coverage/
 
 # ─── Project temp scripts ──────────────────────────────────────────────────────
 create_mobile_dirs.ps1
+apply_schema.ps1
+run_schema.bat
+push.bat
+setup.bat
