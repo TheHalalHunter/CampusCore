@@ -130,7 +130,6 @@ class HomeScreen extends ConsumerWidget {
                   const _SectionHeader(title: 'Quick Actions'),
                   const SizedBox(height: 12),
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       _QuickAction(
                         icon: Icons.auto_awesome,
@@ -138,18 +137,21 @@ class HomeScreen extends ConsumerWidget {
                         color: AppColors.accent,
                         onTap: () => context.push(AppRoutes.aiAssistant),
                       ),
+                      const SizedBox(width: 16),
                       _QuickAction(
                         icon: Icons.calculate,
                         label: 'GPA Calc',
                         color: AppColors.info,
                         onTap: () => context.push(AppRoutes.gpaCalculator),
                       ),
+                      const SizedBox(width: 16),
                       _QuickAction(
                         icon: Icons.trending_up,
                         label: 'Progress',
                         color: AppColors.success,
                         onTap: () => context.push(AppRoutes.progress),
                       ),
+                      const SizedBox(width: 16),
                       _QuickAction(
                         icon: Icons.upload_file,
                         label: 'Upload',
@@ -383,20 +385,20 @@ class _QuickAction extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: 60,
-            height: 60,
+            width: 52,
+            height: 52,
             decoration: BoxDecoration(
               color: color.withOpacity(0.12),
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(14),
               border: Border.all(color: color.withOpacity(0.2)),
             ),
-            child: Icon(icon, color: color, size: 28),
+            child: Icon(icon, color: color, size: 24),
           ),
           const SizedBox(height: 6),
           Text(
             label,
             style: const TextStyle(
-              fontSize: 12,
+              fontSize: 11,
               fontWeight: FontWeight.w600,
               color: AppColors.textPrimary,
             ),
