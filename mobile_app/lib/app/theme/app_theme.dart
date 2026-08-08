@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 /// CampusCore brand colors and typography
-class AppColors {
+abstract final class AppColors {
   // Primary — deep teal (academic, trustworthy)
   static const Color primary = Color(0xFF006B5E);
   static const Color primaryLight = Color(0xFF4CAF93);
@@ -18,7 +18,7 @@ class AppColors {
   static const Color info = Color(0xFF3B82F6);
 
   // Neutrals
-  static const Color grey50 = Color(0xFFF9FAFB);
+  static const Color grey50  = Color(0xFFF9FAFB);
   static const Color grey100 = Color(0xFFF3F4F6);
   static const Color grey200 = Color(0xFFE5E7EB);
   static const Color grey600 = Color(0xFF4B5563);
@@ -68,7 +68,7 @@ class AppTheme {
         ),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       ),
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         elevation: 0,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         color: Colors.white,

@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../app/theme/app_theme.dart';
-import '../../app/router/app_router.dart';
-import '../../../presentation/providers/auth_provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../../../app/theme/app_theme.dart';
+import '../../../app/router/app_router.dart';
+import '../../providers/auth_provider.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -35,10 +36,22 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         _passwordCtrl.text,
       );
       if (mounted) context.go(AppRoutes.home);
+    } on FirebaseAuthException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(_friendlyError(e.code)),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString()), backgroundColor: AppColors.error),
+          SnackBar(
+            content: Text(e.toString().replaceAll('Exception: ', '')),
+            backgroundColor: AppColors.error,
+          ),
         );
       }
     } finally {
@@ -54,11 +67,26 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString()), backgroundColor: AppColors.error),
+          SnackBar(
+            content: Text(e.toString().replaceAll('Exception: ', '')),
+            backgroundColor: AppColors.error,
+          ),
         );
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  String _friendlyError(String code) {
+    switch (code) {
+      case 'user-not-found': return 'No account found with this email.';
+      case 'wrong-password': return 'Incorrect password. Please try again.';
+      case 'invalid-credential': return 'Invalid email or password.';
+      case 'user-disabled': return 'This account has been disabled.';
+      case 'too-many-requests': return 'Too many attempts. Try again later.';
+      case 'network-request-failed': return 'Network error. Check your connection.';
+      default: return 'Sign in failed. Please try again.';
     }
   }
 

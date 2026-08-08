@@ -27,11 +27,12 @@ class DefaultFirebaseOptions {
   );
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyC51CCYfdcw62gxb42CFr9AGraEWaljmUM',
-    appId: '1:730507191669:android:d613c55e3b00417f679f3c',
+    apiKey: 'AIzaSyDCse7FB79lRhQFH7EOxlaY9P3UWBN_gdo',
+    appId: '1:730507191669:web:3c46732f3a8a7008679f3c',
     messagingSenderId: '730507191669',
     projectId: 'campuscore-5658f',
     storageBucket: 'campuscore-5658f.firebasestorage.app',
     authDomain: 'campuscore-5658f.firebaseapp.com',
+    measurementId: 'G-YL0C7J16FW',
   );
 }

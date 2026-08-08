@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../app/theme/app_theme.dart';
 import '../../../app/router/app_router.dart';
-
 class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
 

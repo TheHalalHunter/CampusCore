@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base href="$FLUTTER_BASE_HREF">
+  <meta charset="UTF-8">
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta name="description" content="CampusCore — Learn. Connect. Achieve.">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="CampusCore">
+  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+  <link rel="icon" type="image/png" href="favicon.png"/>
+  <title>CampusCore</title>
+  <link rel="manifest" href="manifest.json">
+</head>
+<body>
+  <!-- Firebase SDKs for web -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+
+  <script>
+    // Initialize Firebase for web auth
+    const firebaseConfig = {
+      apiKey: "AIzaSyDCse7FB79lRhQFH7EOxlaY9P3UWBN_gdo",
+      authDomain: "campuscore-5658f.firebaseapp.com",
+      projectId: "campuscore-5658f",
+      storageBucket: "campuscore-5658f.firebasestorage.app",
+      messagingSenderId: "730507191669",
+      appId: "1:730507191669:web:3c46732f3a8a7008679f3c",
+      measurementId: "G-YL0C7J16FW"
+    };
+    firebase.initializeApp(firebaseConfig);
+  </script>
+
+  <script src="flutter_bootstrap.js" async></script>
+</body>
+</html>
