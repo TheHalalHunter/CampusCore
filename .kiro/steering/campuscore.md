@@ -115,7 +115,13 @@ admin      → full platform control
 
 ---
 
-## Nigerian Grading Scale (5-point)
+## Academic Structure
+
+- **Programme duration:** 5 years (100L to 500L)
+- **Academic levels:** 100L, 200L, 300L, 400L, 500L
+- **Semesters per level:** 2 (First and Second)
+- **GPA scale:** 5-point Nigerian university system
+- **Resource access:** Open to ALL students in the department — a 500L student can access 100L notes and past questions. Resources are attached to courses, not cohorts.
 
 | Grade | Points |
 |-------|--------|

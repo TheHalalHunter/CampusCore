@@ -10,12 +10,20 @@ export class CoursesService {
     private readonly repo: Repository<Course>,
   ) {}
 
+  /** All active courses for a department — accessible to every student regardless of level */
   findByDepartment(departmentId: string): Promise<Course[]> {
-    return this.repo.find({ where: { departmentId, isActive: true } });
+    return this.repo.find({
+      where: { departmentId, isActive: true },
+      order: { academicLevel: 'ASC', semester: 'ASC' },
+    });
   }
 
+  /** Filter by level — e.g. a 500L student browsing 200L courses to download past questions */
   findByLevel(departmentId: string, level: string): Promise<Course[]> {
-    return this.repo.find({ where: { departmentId, academicLevel: level, isActive: true } });
+    return this.repo.find({
+      where: { departmentId, academicLevel: level, isActive: true },
+      order: { semester: 'ASC' },
+    });
   }
 
   async findOne(id: string): Promise<Course> {

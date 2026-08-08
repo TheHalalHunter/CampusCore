@@ -8,7 +8,7 @@ export class Course {
   @Column()
   title: string;
 
-  @Column({ name: 'course_code', unique: false })
+  @Column({ name: 'course_code' })
   courseCode: string; // e.g. AQU 201
 
   @Column({ nullable: true })

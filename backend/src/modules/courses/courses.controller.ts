@@ -15,10 +15,13 @@ export class CoursesController {
 
   @Public()
   @Get()
-  @ApiOperation({ summary: 'List courses by department (and optionally by level)' })
+  @ApiOperation({ summary: 'List all courses for a department. Any student can browse all levels.' })
   @ApiQuery({ name: 'departmentId', required: true })
-  @ApiQuery({ name: 'level', required: false })
-  findAll(@Query('departmentId') departmentId: string, @Query('level') level?: string) {
+  @ApiQuery({ name: 'level', required: false, description: 'Filter by level e.g. 200L' })
+  findAll(
+    @Query('departmentId') departmentId: string,
+    @Query('level') level?: string,
+  ) {
     if (level) return this.service.findByLevel(departmentId, level);
     return this.service.findByDepartment(departmentId);
   }
