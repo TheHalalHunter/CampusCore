@@ -19,12 +19,12 @@ class ResourceViewerScreen extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.picture_as_pdf, size: 72, color: AppColors.grey600),
+            Icon(Icons.picture_as_pdf, size: 72, color: AppColors.textSecondary),
             SizedBox(height: 16),
-            Text('PDF Viewer', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+            Text('PDF Viewer', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
             SizedBox(height: 8),
             Text('PDF will render here once resource URL is loaded.',
-                style: TextStyle(color: AppColors.grey600), textAlign: TextAlign.center),
+                style: TextStyle(color: AppColors.textSecondary), textAlign: TextAlign.center),
           ],
         ),
       ),

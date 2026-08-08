@@ -4,12 +4,15 @@ import 'package:go_router/go_router.dart';
 import '../../../app/theme/app_theme.dart';
 import '../../../app/router/app_router.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/user_provider.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final userAsync = ref.watch(currentUserProvider);
+
     return Scaffold(
       appBar: AppBar(title: const Text('Profile'), actions: [
         IconButton(icon: const Icon(Icons.settings_outlined), onPressed: () {}),
@@ -18,28 +21,68 @@ class ProfileScreen extends ConsumerWidget {
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
-            // Avatar + name
-            const CircleAvatar(
-              radius: 48,
-              backgroundColor: AppColors.primary,
-              child: Icon(Icons.person, size: 48, color: Colors.white),
-            ),
-            const SizedBox(height: 12),
-            const Text('Student Name',
-                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 20)),
-            const SizedBox(height: 4),
-            Text('Fisheries & Aquaculture • 200L',
-                style: TextStyle(color: AppColors.grey600)),
-            const SizedBox(height: 8),
-            // Reputation
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.star, color: AppColors.accent, size: 18),
-                const SizedBox(width: 4),
-                const Text('42 reputation points',
-                    style: TextStyle(fontWeight: FontWeight.w600)),
-              ],
+            // Avatar + name from real data
+            userAsync.when(
+              data: (user) => Column(
+                children: [
+                  CircleAvatar(
+                    radius: 48,
+                    backgroundColor: AppColors.primary,
+                    backgroundImage: user?.avatar != null
+                        ? NetworkImage(user!.avatar!)
+                        : null,
+                    child: user?.avatar == null
+                        ? Text(
+                            user?.firstName.substring(0, 1).toUpperCase() ?? 'S',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 36,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          )
+                        : null,
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    user?.fullName ?? 'Student',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 20,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '${user?.displayLevel ?? ''} • Fisheries & Aquaculture',
+                    style: const TextStyle(color: AppColors.textSecondary, fontSize: 14),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.star, color: AppColors.accent, size: 18),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${user?.reputationPoints ?? 0} reputation points',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              loading: () => Column(children: [
+                const CircleAvatar(radius: 48, backgroundColor: AppColors.grey200),
+                const SizedBox(height: 12),
+                Container(width: 120, height: 20, color: AppColors.grey200),
+              ]),
+              error: (_, __) => const CircleAvatar(
+                radius: 48,
+                backgroundColor: AppColors.primary,
+                child: Icon(Icons.person, size: 48, color: Colors.white),
+              ),
             ),
             const SizedBox(height: 24),
             // Badges row

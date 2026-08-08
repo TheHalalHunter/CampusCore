@@ -71,11 +71,11 @@ class ProgressScreen extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(course['title'] as String,
-                            style: const TextStyle(fontWeight: FontWeight.w600)),
+                            style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
                         const SizedBox(height: 4),
                         Text(
                           '${course['completed']}/${course['total']} topics completed',
-                          style: const TextStyle(color: AppColors.grey600, fontSize: 12),
+                          style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
                         ),
                         const SizedBox(height: 10),
                         LinearProgressIndicator(

@@ -36,7 +36,7 @@ class QuestionDetailScreen extends ConsumerWidget {
                           children: [
                             const Icon(Icons.thumb_up_outlined, size: 16, color: AppColors.grey600),
                             const SizedBox(width: 4),
-                            Text('5 upvotes', style: TextStyle(color: AppColors.grey600, fontSize: 12)),
+                Text('5 upvotes', style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
                           ],
                         ),
                       ],

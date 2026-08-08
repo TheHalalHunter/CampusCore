@@ -41,7 +41,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               Text('Join CampusCore',
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700)),
               const SizedBox(height: 8),
-              Text('Create your free student account', style: TextStyle(color: AppColors.grey600)),
+              const Text('Create your free student account', style: TextStyle(color: AppColors.textSecondary)),
               const SizedBox(height: 32),
               TextFormField(
                 controller: _nameCtrl,

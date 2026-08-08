@@ -84,7 +84,7 @@ class _CourseOverview extends StatelessWidget {
               style: TextStyle(fontWeight: FontWeight.w700, fontSize: 18)),
           const SizedBox(height: 8),
           Text('200 Level • Semester 1 • 2 Credit Units',
-              style: TextStyle(color: AppColors.grey600)),
+              style: const TextStyle(color: AppColors.textSecondary)),
           const SizedBox(height: 16),
           const Text(
             'This course covers the nutritional requirements of fish, feed formulation, and feeding strategies in aquaculture systems.',
