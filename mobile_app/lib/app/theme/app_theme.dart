@@ -53,6 +53,7 @@ class AppTheme {
       ),
       fontFamily: 'Nunito',
       scaffoldBackgroundColor: AppColors.background,
+      brightness: Brightness.light,
 
       // Text theme — all text dark enough to read
       textTheme: const TextTheme(

@@ -6,6 +6,7 @@ import '../../../app/router/app_router.dart';
 import '../../providers/user_provider.dart';
 import '../../providers/courses_provider.dart';
 import '../../providers/notifications_provider.dart';
+import '../../providers/department_provider.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
