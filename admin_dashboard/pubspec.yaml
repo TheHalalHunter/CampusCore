@@ -28,9 +28,9 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
-  fonts:
-    - family: Nunito
-      fonts:
-        - asset: assets/fonts/Nunito-Regular.ttf
-        - asset: assets/fonts/Nunito-Bold.ttf
-          weight: 700
+  # fonts:   # Uncomment after adding Nunito font files to assets/fonts/
+  #   - family: Nunito
+  #     fonts:
+  #       - asset: assets/fonts/Nunito-Regular.ttf
+  #       - asset: assets/fonts/Nunito-Bold.ttf
+  #         weight: 700

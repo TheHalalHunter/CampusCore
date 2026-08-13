@@ -13,6 +13,8 @@ class CampusCoreAdminApp extends ConsumerWidget {
       title: 'CampusCore Admin',
       debugShowCheckedModeBanner: false,
       theme: AdminTheme.light(),
+      darkTheme: AdminTheme.light(),
+      themeMode: ThemeMode.light,
       routerConfig: router,
     );
   }
