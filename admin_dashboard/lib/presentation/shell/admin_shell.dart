@@ -28,7 +28,7 @@ class _AdminShellState extends State<AdminShell> {
           elevation: 0,
           centerTitle: false,
         ),
-        body: child,
+        body: widget.child,
         drawer: _AdminSidebar(isMobile: true),
       );
     }
@@ -45,7 +45,7 @@ class _AdminShellState extends State<AdminShell> {
               onToggle: () => setState(() => _sidebarExpanded = !_sidebarExpanded),
             ),
           ),
-          Expanded(child: child),
+          Expanded(child: widget.child),
         ],
       ),
     );
