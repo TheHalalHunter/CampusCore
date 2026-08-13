@@ -7,6 +7,7 @@ import '../../../app/router/app_router.dart';
 import '../../../data/models/resource_model.dart';
 import '../../providers/courses_provider.dart';
 import '../../providers/resources_provider.dart';
+import '../../providers/library_provider.dart';
 
 class CourseDetailScreen extends ConsumerStatefulWidget {
   final String courseId;
@@ -366,12 +367,16 @@ class _ResourcesTab extends ConsumerWidget {
   }
 }
 
-class _ResourceCard extends StatelessWidget {
+class _ResourceCard extends ConsumerWidget {
   final ResourceModel resource;
   const _ResourceCard({required this.resource});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isBookmarked = ref.watch(
+      bookmarkProvider.select((s) => s.contains(resource.id)),
+    );
+
     return Card(
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -394,23 +399,17 @@ class _ResourceCard extends StatelessWidget {
         ),
         subtitle: Row(
           children: [
-            Text(
-              resource.typeLabel,
-              style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
-            ),
+            Text(resource.typeLabel,
+                style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
             if (resource.academicYear != null) ...[
-              const Text(' • ', style: TextStyle(color: AppColors.textHint)),
-              Text(
-                resource.academicYear!,
-                style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
-              ),
+              const Text(' • ', style: TextStyle(color: AppColors.textHint, fontSize: 12)),
+              Text(resource.academicYear!,
+                  style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
             ],
             if (resource.fileSizeLabel.isNotEmpty) ...[
-              const Text(' • ', style: TextStyle(color: AppColors.textHint)),
-              Text(
-                resource.fileSizeLabel,
-                style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
-              ),
+              const Text(' • ', style: TextStyle(color: AppColors.textHint, fontSize: 12)),
+              Text(resource.fileSizeLabel,
+                  style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
             ],
           ],
         ),
@@ -418,13 +417,17 @@ class _ResourceCard extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             if (resource.isOfficial)
-              const Tooltip(
-                message: 'Official resource',
-                child: Icon(Icons.verified, color: AppColors.success, size: 18),
-              ),
-            const SizedBox(width: 4),
+              const Icon(Icons.verified, color: AppColors.success, size: 18),
             IconButton(
-              icon: const Icon(Icons.download_outlined, color: AppColors.primary),
+              icon: Icon(
+                isBookmarked ? Icons.bookmark : Icons.bookmark_outline,
+                color: isBookmarked ? AppColors.primary : AppColors.textSecondary,
+                size: 20,
+              ),
+              onPressed: () => ref.read(bookmarkProvider.notifier).toggle(resource.id),
+            ),
+            IconButton(
+              icon: const Icon(Icons.download_outlined, color: AppColors.primary, size: 20),
               onPressed: () => _download(context, resource),
               tooltip: 'Download',
             ),

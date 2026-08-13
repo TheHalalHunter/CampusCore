@@ -156,7 +156,7 @@ class HomeScreen extends ConsumerWidget {
                         icon: Icons.upload_file,
                         label: 'Upload',
                         color: AppColors.primaryLight,
-                        onTap: () {},
+                        onTap: () => context.push(AppRoutes.uploadResource),
                       ),
                     ],
                   ),
