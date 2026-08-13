@@ -1,47 +1,58 @@
 import 'package:flutter/material.dart';
 import '../../../app/theme/app_theme.dart';
+import '../../../core/utils/responsive.dart';
 
 class CommunityScreen extends StatelessWidget {
   const CommunityScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final isMobile = Responsive.isMobile(context);
+    final padding = Responsive.getPadding(context);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Community'),
         elevation: 0,
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
+        padding: padding,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               'Q&A Forum',
-              style: Theme.of(context).textTheme.headlineMedium,
+              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                fontSize: isMobile ? 24 : 32,
+              ),
             ),
             const SizedBox(height: 24),
             Card(
               child: ListView.separated(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-                itemCount: 8,
-                separatorBuilder: (_, __) => const Divider(),
+                itemCount: isMobile ? 4 : 8,
+                separatorBuilder: (_, __) => const Divider(height: 1),
                 itemBuilder: (context, index) => Padding(
-                  padding: const EdgeInsets.all(16),
+                  padding: EdgeInsets.all(isMobile ? 12 : 16),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
                         children: [
                           CircleAvatar(
+                            radius: isMobile ? 16 : 20,
                             backgroundColor: AppColors.primary.withOpacity(0.1),
                             child: Text(
                               'S${index + 1}',
-                              style: const TextStyle(color: AppColors.primary),
+                              style: TextStyle(
+                                color: AppColors.primary,
+                                fontSize: isMobile ? 12 : 14,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                           ),
-                          const SizedBox(width: 12),
+                          SizedBox(width: isMobile ? 8 : 12),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -50,12 +61,15 @@ class CommunityScreen extends StatelessWidget {
                                   'Student ${index + 1}',
                                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                                     fontWeight: FontWeight.w600,
+                                    fontSize: isMobile ? 12 : 14,
                                   ),
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                                 Text(
                                   '${index + 1} hours ago',
                                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                     color: AppColors.grey500,
+                                    fontSize: isMobile ? 10 : 12,
                                   ),
                                 ),
                               ],
@@ -63,50 +77,28 @@ class CommunityScreen extends StatelessWidget {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 12),
+                      SizedBox(height: isMobile ? 8 : 12),
                       Text(
                         'How do I approach problem ${index + 1}?',
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           fontWeight: FontWeight.w600,
+                          fontSize: isMobile ? 12 : 14,
                         ),
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 2,
                       ),
-                      const SizedBox(height: 8),
-                      Row(
+                      SizedBox(height: isMobile ? 6 : 8),
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 4,
                         children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: AppColors.primary.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Text(
-                              '${index + 2} answers',
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: AppColors.primary,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
+                          _BadgeChip(
+                            label: '${index + 2} answers',
+                            color: AppColors.primary,
                           ),
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: AppColors.success.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Text(
-                              '${index * 3 + 5} views',
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: AppColors.success,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
+                          _BadgeChip(
+                            label: '${index * 3 + 5} views',
+                            color: AppColors.success,
                           ),
                         ],
                       ),
@@ -116,6 +108,40 @@ class CommunityScreen extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _BadgeChip extends StatelessWidget {
+  final String label;
+  final Color color;
+
+  const _BadgeChip({
+    required this.label,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isMobile = Responsive.isMobile(context);
+
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: isMobile ? 6 : 8,
+        vertical: isMobile ? 2 : 4,
+      ),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Text(
+        label,
+        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+          color: color,
+          fontWeight: FontWeight.w600,
+          fontSize: isMobile ? 10 : 12,
         ),
       ),
     );
