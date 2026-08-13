@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:data_table_2/data_table_2.dart';
 import '../../../app/theme/admin_theme.dart';
 
 class UsersScreen extends StatefulWidget {
@@ -75,45 +74,47 @@ class _UsersScreenState extends State<UsersScreen> {
           const SizedBox(height: 16),
           Expanded(
             child: Card(
-              child: DataTable2(
-                headingRowColor: WidgetStateProperty.all(const Color(0xFFF9FAFB)),
-                columnSpacing: 12,
-                columns: const [
-                  DataColumn2(label: Text('Name'), size: ColumnSize.L),
-                  DataColumn2(label: Text('Email'), size: ColumnSize.L),
-                  DataColumn2(label: Text('Role'), size: ColumnSize.S),
-                  DataColumn2(label: Text('Level'), size: ColumnSize.S),
-                  DataColumn2(label: Text('Status'), size: ColumnSize.S),
-                  DataColumn2(label: Text('Actions'), size: ColumnSize.S),
-                ],
-                rows: filtered.map((u) {
-                  final isSuspended = u['status'] == 'Suspended';
-                  return DataRow2(cells: [
-                    DataCell(Text(u['name']!, style: const TextStyle(fontWeight: FontWeight.w600))),
-                    DataCell(Text(u['email']!)),
-                    DataCell(_RoleChip(role: u['role']!)),
-                    DataCell(Text(u['level']!)),
-                    DataCell(_StatusChip(status: u['status']!)),
-                    DataCell(Row(
-                      children: [
-                        IconButton(
-                          icon: Icon(
-                            isSuspended ? Icons.check_circle_outline : Icons.block,
-                            size: 18,
-                            color: isSuspended ? AdminColors.success : AdminColors.warning,
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: DataTable(
+                  headingRowColor: WidgetStateProperty.all(const Color(0xFFF9FAFB)),
+                  columns: const [
+                    DataColumn(label: Text('Name')),
+                    DataColumn(label: Text('Email')),
+                    DataColumn(label: Text('Role')),
+                    DataColumn(label: Text('Level')),
+                    DataColumn(label: Text('Status')),
+                    DataColumn(label: Text('Actions')),
+                  ],
+                  rows: filtered.map((u) {
+                    final isSuspended = u['status'] == 'Suspended';
+                    return DataRow(cells: [
+                      DataCell(Text(u['name']!, style: const TextStyle(fontWeight: FontWeight.w600))),
+                      DataCell(Text(u['email']!)),
+                      DataCell(_RoleChip(role: u['role']!)),
+                      DataCell(Text(u['level']!)),
+                      DataCell(_StatusChip(status: u['status']!)),
+                      DataCell(Row(
+                        children: [
+                          IconButton(
+                            icon: Icon(
+                              isSuspended ? Icons.check_circle_outline : Icons.block,
+                              size: 18,
+                              color: isSuspended ? AdminColors.success : AdminColors.warning,
+                            ),
+                            tooltip: isSuspended ? 'Activate' : 'Suspend',
+                            onPressed: () {},
                           ),
-                          tooltip: isSuspended ? 'Activate' : 'Suspend',
-                          onPressed: () {},
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.manage_accounts_outlined, size: 18),
-                          tooltip: 'Change role',
-                          onPressed: () => _showChangeRoleDialog(context, u['name']!),
-                        ),
-                      ],
-                    )),
-                  ]);
-                }).toList(),
+                          IconButton(
+                            icon: const Icon(Icons.manage_accounts_outlined, size: 18),
+                            tooltip: 'Change role',
+                            onPressed: () => _showChangeRoleDialog(context, u['name']!),
+                          ),
+                        ],
+                      )),
+                    ]);
+                  }).toList(),
+                ),
               ),
             ),
           ),

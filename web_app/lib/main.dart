@@ -12,5 +12,5 @@ void main() async {
     print('Firebase initialization error: $e');
     // Continue without Firebase for development
   }
-  runApp(const ProviderScope(child: CampusCoreAdminApp()));
+  runApp(const ProviderScope(child: CampusCoreWebApp()));
 }
