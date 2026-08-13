@@ -12,6 +12,7 @@ class AdminColors {
   static const Color background = Color(0xFFF3F4F6);
   static const Color surface = Colors.white;
   static const Color grey600 = Color(0xFF4B5563);
+  static const Color grey800 = Color(0xFF1F2937);
   static const Color grey900 = Color(0xFF111827);
 }
 

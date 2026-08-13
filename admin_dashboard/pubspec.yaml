@@ -1,11 +1,11 @@
 name: campuscore_admin
 description: CampusCore Admin Dashboard - Flutter Web
 version: 1.0.0+1
-publish_to: 'none'
+publish_to: "none"
 
 environment:
-  sdk: '>=3.2.0 <4.0.0'
-  flutter: '>=3.16.0'
+  sdk: ">=3.2.0 <4.0.0"
+  flutter: ">=3.16.0"
 
 dependencies:
   flutter:
@@ -17,7 +17,6 @@ dependencies:
   firebase_auth: ^4.17.9
   shared_preferences: ^2.2.3
   fl_chart: ^0.67.0
-  data_table_2: ^2.5.12
   intl: ^0.19.0
   cached_network_image: ^3.3.1
 
@@ -28,7 +27,7 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
-  # fonts:   # Uncomment after adding Nunito font files to assets/fonts/
+  # fonts:
   #   - family: Nunito
   #     fonts:
   #       - asset: assets/fonts/Nunito-Regular.ttf
