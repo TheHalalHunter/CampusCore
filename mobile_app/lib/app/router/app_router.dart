@@ -9,6 +9,7 @@ import '../../presentation/screens/home/home_screen.dart';
 import '../../presentation/screens/courses/courses_screen.dart';
 import '../../presentation/screens/courses/course_detail_screen.dart';
 import '../../presentation/screens/resources/resources_screen.dart';
+import '../../presentation/screens/resources/resource_viewer_screen.dart';
 import '../../presentation/screens/resources/upload_resource_screen.dart';
 import '../../presentation/screens/community/community_screen.dart';
 import '../../presentation/screens/community/question_detail_screen.dart';
@@ -84,6 +85,7 @@ class AppRoutes {
   static const String profile = '/profile';
   static const String notifications  = '/notifications';
   static const String uploadResource = '/upload-resource';
+}
 
 /// Bottom navigation shell
 class MainShell extends StatelessWidget {
