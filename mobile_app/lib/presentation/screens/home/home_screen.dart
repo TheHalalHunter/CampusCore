@@ -403,6 +403,8 @@ class _QuickAction extends StatelessWidget {
               color: AppColors.textPrimary,
             ),
             textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.visible,
           ),
         ],
       ),
