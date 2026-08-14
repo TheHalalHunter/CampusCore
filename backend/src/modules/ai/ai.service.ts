@@ -17,12 +17,25 @@ export class AiService {
   private model: string;
 
   constructor(private readonly config: ConfigService) {
-    this.openai = new OpenAI({ apiKey: config.get('OPENAI_API_KEY') });
-    this.model = config.get('OPENAI_MODEL', 'gpt-4o-mini');
+    this.openai = new OpenAI({
+      apiKey: config.get('OPENAI_API_KEY'),
+      baseURL: config.get('OPENAI_BASE_URL') || 'https://api.openai.com/v1',
+    });
+    this.model = config.get('OPENAI_MODEL', 'claude-haiku-4-5-20251001');
   }
 
   private detectExamCheat(prompt: string): boolean {
     return EXAM_CHEAT_PATTERNS.some((pattern) => pattern.test(prompt));
+  }
+
+  /** Extract JSON from a response that may contain markdown code fences */
+  private extractJson(content: string): any {
+    // Strip markdown code fences if present
+    const stripped = content
+      .replace(/```json\s*/gi, '')
+      .replace(/```\s*/gi, '')
+      .trim();
+    return JSON.parse(stripped);
   }
 
   async explain(concept: string, courseContext?: string): Promise<string> {
@@ -31,9 +44,10 @@ export class AiService {
         'This request appears to be related to an active exam. CampusCore AI is here to help you learn, not to assist during exams.',
       );
     }
+
     const systemPrompt = courseContext
-      ? `You are an academic tutor helping a Nigerian university student in ${courseContext}. Explain concepts clearly using simple English. Be concise and educational.`
-      : `You are an academic tutor helping a Nigerian university student. Explain concepts clearly.`;
+      ? `You are an academic tutor helping a Nigerian university student studying ${courseContext}. Explain concepts clearly in simple English. Be educational and concise.`
+      : `You are an academic tutor helping a Nigerian university student. Explain concepts clearly in simple English.`;
 
     const response = await this.openai.chat.completions.create({
       model: this.model,
@@ -41,8 +55,9 @@ export class AiService {
         { role: 'system', content: systemPrompt },
         { role: 'user', content: `Please explain: ${concept}` },
       ],
-      max_tokens: 800,
+      max_tokens: 1000,
     });
+
     return response.choices[0]?.message?.content || 'Unable to generate explanation.';
   }
 
@@ -52,18 +67,29 @@ export class AiService {
       messages: [
         {
           role: 'system',
-          content: `You are an academic quiz generator. Always respond with a valid JSON array of ${count} multiple-choice questions. Each object must have: question (string), options (array of 4 strings), correctAnswer (0-indexed number), explanation (string).`,
+          content: `You are an academic quiz generator for Nigerian university students. 
+Respond ONLY with a valid JSON object (no markdown, no explanation) in this exact format:
+{
+  "questions": [
+    {
+      "question": "string",
+      "options": ["string", "string", "string", "string"],
+      "correctAnswer": 0,
+      "explanation": "string"
+    }
+  ]
+}
+Generate exactly ${count} questions. correctAnswer is the 0-indexed position of the correct option.`,
         },
         { role: 'user', content: `Generate ${count} MCQ questions about: ${topic}` },
       ],
-      max_tokens: 1500,
-      response_format: { type: 'json_object' },
+      max_tokens: 2000,
     });
 
     try {
       const content = response.choices[0]?.message?.content || '{"questions":[]}';
-      const parsed = JSON.parse(content);
-      return parsed.questions || parsed;
+      const parsed = this.extractJson(content);
+      return parsed.questions || [];
     } catch {
       return [];
     }
@@ -75,12 +101,13 @@ export class AiService {
       messages: [
         {
           role: 'system',
-          content: 'You are a study assistant. Summarize the following academic content concisely, highlighting key points.',
+          content: 'You are a study assistant for Nigerian university students. Summarize the provided academic content concisely. Highlight key points using bullet points where appropriate.',
         },
-        { role: 'user', content: text },
+        { role: 'user', content: `Summarize this:\n\n${text}` },
       ],
-      max_tokens: 500,
+      max_tokens: 600,
     });
+
     return response.choices[0]?.message?.content || 'Unable to summarize.';
   }
 
@@ -90,15 +117,23 @@ export class AiService {
       messages: [
         {
           role: 'system',
-          content: `Generate ${count} study flashcards as a JSON object with a "flashcards" array. Each card has: "front" (question/term) and "back" (answer/definition).`,
+          content: `You are a study assistant. 
+Respond ONLY with a valid JSON object (no markdown, no explanation) in this exact format:
+{
+  "flashcards": [
+    { "front": "term or question", "back": "definition or answer" }
+  ]
+}
+Generate exactly ${count} flashcards.`,
         },
-        { role: 'user', content: `Topic: ${topic}` },
+        { role: 'user', content: `Create ${count} flashcards for the topic: ${topic}` },
       ],
-      max_tokens: 1000,
-      response_format: { type: 'json_object' },
+      max_tokens: 1500,
     });
+
     try {
-      const parsed = JSON.parse(response.choices[0]?.message?.content || '{}');
+      const content = response.choices[0]?.message?.content || '{"flashcards":[]}';
+      const parsed = this.extractJson(content);
       return parsed.flashcards || [];
     } catch {
       return [];
@@ -111,18 +146,21 @@ export class AiService {
       messages: [
         {
           role: 'system',
-          content: 'You are an academic advisor. Based on the course and recent topics, predict the most likely exam topics. Return a JSON object with a "topics" array of strings.',
+          content: `You are an academic advisor for Nigerian university students.
+Respond ONLY with a valid JSON object (no markdown) in this format:
+{ "topics": ["topic1", "topic2", "topic3"] }`,
         },
         {
           role: 'user',
-          content: `Course: ${courseTitle}\nRecent topics covered: ${recentTopics.join(', ')}`,
+          content: `Course: ${courseTitle}\nRecent topics covered: ${recentTopics.join(', ')}\n\nWhat are the most likely exam topics?`,
         },
       ],
       max_tokens: 400,
-      response_format: { type: 'json_object' },
     });
+
     try {
-      const parsed = JSON.parse(response.choices[0]?.message?.content || '{}');
+      const content = response.choices[0]?.message?.content || '{"topics":[]}';
+      const parsed = this.extractJson(content);
       return parsed.topics || [];
     } catch {
       return [];
