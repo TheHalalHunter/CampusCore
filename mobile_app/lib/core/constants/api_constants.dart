@@ -21,7 +21,6 @@ class ApiConstants {
 
   // Community
   static const String questions = '/community/questions';
-
   // AI
   static const String aiExplain = '/ai/explain';
   static const String aiQuiz = '/ai/quiz';
