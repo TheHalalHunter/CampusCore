@@ -8,10 +8,9 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isMobile = Responsive.isMobile(context);
-    final isTablet = Responsive.isTablet(context);
-    final padding = Responsive.getPadding(context);
     final gridColumns = Responsive.getGridColumns(context).toInt();
     final spacing = Responsive.getSpacing(context);
+    final padding = Responsive.getPaddingEdgeInsets(context);
 
     return Scaffold(
       appBar: AppBar(
@@ -27,15 +26,15 @@ class HomeScreen extends StatelessWidget {
             Text(
               'Welcome back!',
               style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                fontSize: isMobile ? 24 : 32,
-              ),
+                    fontSize: isMobile ? 24 : 32,
+                  ),
             ),
             const SizedBox(height: 8),
             Text(
               'Here\'s your learning progress at a glance.',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: AppColors.grey500,
-              ),
+                    color: AppColors.grey500,
+                  ),
             ),
             SizedBox(height: spacing + 16),
 
@@ -79,8 +78,8 @@ class HomeScreen extends StatelessWidget {
             Text(
               'Recent Activity',
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontSize: isMobile ? 16 : 18,
-              ),
+                    fontSize: isMobile ? 16 : 18,
+                  ),
             ),
             const SizedBox(height: 12),
             Card(
@@ -109,18 +108,24 @@ class HomeScreen extends StatelessWidget {
                           children: [
                             Text(
                               'Downloaded lecture notes',
-                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                fontWeight: FontWeight.w600,
-                                fontSize: isMobile ? 12 : 14,
-                              ),
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: isMobile ? 12 : 14,
+                                  ),
                               overflow: TextOverflow.ellipsis,
                             ),
                             Text(
                               'Fisheries & Aquaculture • ${index + 1} days ago',
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: AppColors.grey500,
-                                fontSize: isMobile ? 11 : 12,
-                              ),
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodySmall
+                                  ?.copyWith(
+                                    color: AppColors.grey500,
+                                    fontSize: isMobile ? 11 : 12,
+                                  ),
                               overflow: TextOverflow.ellipsis,
                             ),
                           ],
@@ -169,17 +174,17 @@ class _StatCard extends StatelessWidget {
                 Text(
                   value,
                   style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    color: color,
-                    fontSize: isMobile ? 20 : 28,
-                  ),
+                        color: color,
+                        fontSize: isMobile ? 20 : 28,
+                      ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   title,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColors.grey500,
-                    fontSize: isMobile ? 11 : 12,
-                  ),
+                        color: AppColors.grey500,
+                        fontSize: isMobile ? 11 : 12,
+                      ),
                   overflow: TextOverflow.ellipsis,
                 ),
               ],

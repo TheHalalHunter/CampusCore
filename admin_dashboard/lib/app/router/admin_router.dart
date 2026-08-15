@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -22,12 +21,23 @@ final adminRouterProvider = Provider<GoRouter>((ref) {
       ShellRoute(
         builder: (context, state, child) => AdminShell(child: child),
         routes: [
-          GoRoute(path: AdminRoutes.dashboard,  builder: (_, __) => const DashboardScreen()),
-          GoRoute(path: AdminRoutes.users,       builder: (_, __) => const UsersScreen()),
-          GoRoute(path: AdminRoutes.moderation,  builder: (_, __) => const ModerationScreen()),
-          GoRoute(path: AdminRoutes.departments, builder: (_, __) => const DepartmentsScreen()),
-          GoRoute(path: AdminRoutes.reports,     builder: (_, __) => const ReportsScreen()),
-          GoRoute(path: AdminRoutes.settings,    builder: (_, __) => const SettingsScreen()),
+          GoRoute(
+              path: AdminRoutes.dashboard,
+              builder: (_, __) => const DashboardScreen()),
+          GoRoute(
+              path: AdminRoutes.users, builder: (_, __) => const UsersScreen()),
+          GoRoute(
+              path: AdminRoutes.moderation,
+              builder: (_, __) => const ModerationScreen()),
+          GoRoute(
+              path: AdminRoutes.departments,
+              builder: (_, __) => const DepartmentsScreen()),
+          GoRoute(
+              path: AdminRoutes.reports,
+              builder: (_, __) => const ReportsScreen()),
+          GoRoute(
+              path: AdminRoutes.settings,
+              builder: (_, __) => const SettingsScreen()),
         ],
       ),
     ],
@@ -35,11 +45,11 @@ final adminRouterProvider = Provider<GoRouter>((ref) {
 });
 
 class AdminRoutes {
-  static const String login       = '/';
-  static const String dashboard   = '/dashboard';
-  static const String users       = '/users';
-  static const String moderation  = '/moderation';
+  static const String login = '/';
+  static const String dashboard = '/dashboard';
+  static const String users = '/users';
+  static const String moderation = '/moderation';
   static const String departments = '/departments';
-  static const String reports     = '/reports';
-  static const String settings    = '/settings';
+  static const String reports = '/reports';
+  static const String settings = '/settings';
 }

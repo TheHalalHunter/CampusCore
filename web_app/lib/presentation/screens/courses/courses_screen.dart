@@ -8,7 +8,7 @@ class CoursesScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isMobile = Responsive.isMobile(context);
-    final padding = Responsive.getPadding(context);
+    final padding = Responsive.getPaddingEdgeInsets(context);
     final gridColumns = Responsive.getGridColumns(context).toInt();
     final spacing = Responsive.getSpacing(context);
 
@@ -25,8 +25,8 @@ class CoursesScreen extends StatelessWidget {
             Text(
               'Enrolled Courses',
               style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                fontSize: isMobile ? 24 : 32,
-              ),
+                    fontSize: isMobile ? 24 : 32,
+                  ),
             ),
             const SizedBox(height: 24),
             GridView.count(
@@ -89,18 +89,18 @@ class _CourseCard extends StatelessWidget {
             Text(
               title,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-                fontSize: isMobile ? 12 : 14,
-              ),
+                    fontWeight: FontWeight.w600,
+                    fontSize: isMobile ? 12 : 14,
+                  ),
               overflow: TextOverflow.ellipsis,
             ),
             SizedBox(height: isMobile ? 2 : 4),
             Text(
               code,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: AppColors.grey500,
-                fontSize: isMobile ? 11 : 12,
-              ),
+                    color: AppColors.grey500,
+                    fontSize: isMobile ? 11 : 12,
+                  ),
             ),
             SizedBox(height: isMobile ? 8 : 12),
             Column(
@@ -112,17 +112,17 @@ class _CourseCard extends StatelessWidget {
                     Text(
                       'Progress',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.grey600,
-                        fontSize: isMobile ? 10 : 12,
-                      ),
+                            color: AppColors.grey600,
+                            fontSize: isMobile ? 10 : 12,
+                          ),
                     ),
                     Text(
                       '$progress%',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.primary,
-                        fontSize: isMobile ? 10 : 12,
-                      ),
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.primary,
+                            fontSize: isMobile ? 10 : 12,
+                          ),
                     ),
                   ],
                 ),
@@ -133,7 +133,8 @@ class _CourseCard extends StatelessWidget {
                     value: progress / 100,
                     minHeight: isMobile ? 3 : 4,
                     backgroundColor: AppColors.grey200,
-                    valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                    valueColor:
+                        AlwaysStoppedAnimation<Color>(AppColors.primary),
                   ),
                 ),
               ],

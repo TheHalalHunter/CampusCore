@@ -8,7 +8,7 @@ class ProgressScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isMobile = Responsive.isMobile(context);
-    final padding = Responsive.getPadding(context);
+    final padding = Responsive.getPaddingEdgeInsets(context);
 
     return Scaffold(
       appBar: AppBar(
@@ -23,8 +23,8 @@ class ProgressScreen extends StatelessWidget {
             Text(
               'Your Academic Progress',
               style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                fontSize: isMobile ? 24 : 32,
-              ),
+                    fontSize: isMobile ? 24 : 32,
+                  ),
             ),
             const SizedBox(height: 24),
             // GPA Card
@@ -37,9 +37,9 @@ class ProgressScreen extends StatelessWidget {
                     Text(
                       'Current GPA',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: AppColors.grey600,
-                        fontSize: isMobile ? 12 : 14,
-                      ),
+                            color: AppColors.grey600,
+                            fontSize: isMobile ? 12 : 14,
+                          ),
                     ),
                     const SizedBox(height: 8),
                     Row(
@@ -48,19 +48,23 @@ class ProgressScreen extends StatelessWidget {
                       children: [
                         Text(
                           '3.8',
-                          style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                            color: AppColors.success,
-                            fontSize: isMobile ? 32 : 48,
-                          ),
+                          style: Theme.of(context)
+                              .textTheme
+                              .headlineLarge
+                              ?.copyWith(
+                                color: AppColors.success,
+                                fontSize: isMobile ? 32 : 48,
+                              ),
                         ),
                         SizedBox(width: isMobile ? 8 : 12),
                         Text(
                           'First Class',
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: AppColors.success,
-                            fontWeight: FontWeight.w600,
-                            fontSize: isMobile ? 12 : 14,
-                          ),
+                          style:
+                              Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    color: AppColors.success,
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: isMobile ? 12 : 14,
+                                  ),
                         ),
                       ],
                     ),
@@ -73,8 +77,8 @@ class ProgressScreen extends StatelessWidget {
             Text(
               'Courses Breakdown',
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontSize: isMobile ? 16 : 18,
-              ),
+                    fontSize: isMobile ? 16 : 18,
+                  ),
             ),
             const SizedBox(height: 12),
             Card(
@@ -100,18 +104,24 @@ class ProgressScreen extends StatelessWidget {
                             children: [
                               Text(
                                 'Course ${index + 1}',
-                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: isMobile ? 12 : 14,
-                                ),
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodyMedium
+                                    ?.copyWith(
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: isMobile ? 12 : 14,
+                                    ),
                                 overflow: TextOverflow.ellipsis,
                               ),
                               Text(
                                 'FAS${100 + index}',
-                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                  color: AppColors.grey500,
-                                  fontSize: isMobile ? 11 : 12,
-                                ),
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodySmall
+                                    ?.copyWith(
+                                      color: AppColors.grey500,
+                                      fontSize: isMobile ? 11 : 12,
+                                    ),
                               ),
                             ],
                           ),
@@ -121,7 +131,8 @@ class ProgressScreen extends StatelessWidget {
                           height: isMobile ? 40 : 50,
                           child: Container(
                             decoration: BoxDecoration(
-                              color: gradeColors[grades[index]]?.withOpacity(0.1),
+                              color:
+                                  gradeColors[grades[index]]?.withOpacity(0.1),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Center(

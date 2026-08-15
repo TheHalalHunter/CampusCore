@@ -8,7 +8,7 @@ class CommunityScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isMobile = Responsive.isMobile(context);
-    final padding = Responsive.getPadding(context);
+    final padding = Responsive.getPaddingEdgeInsets(context);
 
     return Scaffold(
       appBar: AppBar(
@@ -23,8 +23,8 @@ class CommunityScreen extends StatelessWidget {
             Text(
               'Q&A Forum',
               style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                fontSize: isMobile ? 24 : 32,
-              ),
+                    fontSize: isMobile ? 24 : 32,
+                  ),
             ),
             const SizedBox(height: 24),
             Card(
@@ -59,18 +59,24 @@ class CommunityScreen extends StatelessWidget {
                               children: [
                                 Text(
                                   'Student ${index + 1}',
-                                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: isMobile ? 12 : 14,
-                                  ),
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodyMedium
+                                      ?.copyWith(
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: isMobile ? 12 : 14,
+                                      ),
                                   overflow: TextOverflow.ellipsis,
                                 ),
                                 Text(
                                   '${index + 1} hours ago',
-                                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color: AppColors.grey500,
-                                    fontSize: isMobile ? 10 : 12,
-                                  ),
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodySmall
+                                      ?.copyWith(
+                                        color: AppColors.grey500,
+                                        fontSize: isMobile ? 10 : 12,
+                                      ),
                                 ),
                               ],
                             ),
@@ -81,9 +87,9 @@ class CommunityScreen extends StatelessWidget {
                       Text(
                         'How do I approach problem ${index + 1}?',
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
-                          fontSize: isMobile ? 12 : 14,
-                        ),
+                              fontWeight: FontWeight.w600,
+                              fontSize: isMobile ? 12 : 14,
+                            ),
                         overflow: TextOverflow.ellipsis,
                         maxLines: 2,
                       ),
@@ -139,10 +145,10 @@ class _BadgeChip extends StatelessWidget {
       child: Text(
         label,
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-          color: color,
-          fontWeight: FontWeight.w600,
-          fontSize: isMobile ? 10 : 12,
-        ),
+              color: color,
+              fontWeight: FontWeight.w600,
+              fontSize: isMobile ? 10 : 12,
+            ),
       ),
     );
   }

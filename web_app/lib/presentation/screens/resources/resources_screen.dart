@@ -8,7 +8,7 @@ class ResourcesScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isMobile = Responsive.isMobile(context);
-    final padding = Responsive.getPadding(context);
+    final padding = Responsive.getPaddingEdgeInsets(context);
     final spacing = Responsive.getSpacing(context);
 
     return Scaffold(
@@ -24,8 +24,8 @@ class ResourcesScreen extends StatelessWidget {
             Text(
               'Learning Resources',
               style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                fontSize: isMobile ? 24 : 32,
-              ),
+                    fontSize: isMobile ? 24 : 32,
+                  ),
             ),
             SizedBox(height: spacing + 8),
             Card(
@@ -58,19 +58,25 @@ class ResourcesScreen extends StatelessWidget {
                           children: [
                             Text(
                               'Lecture Notes - Week ${index + 1}',
-                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                fontWeight: FontWeight.w600,
-                                fontSize: isMobile ? 12 : 14,
-                              ),
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: isMobile ? 12 : 14,
+                                  ),
                               overflow: TextOverflow.ellipsis,
                             ),
                             const SizedBox(height: 4),
                             Text(
                               '2.4 MB • PDF',
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: AppColors.grey500,
-                                fontSize: isMobile ? 11 : 12,
-                              ),
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodySmall
+                                  ?.copyWith(
+                                    color: AppColors.grey500,
+                                    fontSize: isMobile ? 11 : 12,
+                                  ),
                             ),
                           ],
                         ),
@@ -81,7 +87,8 @@ class ResourcesScreen extends StatelessWidget {
                           onPressed: () {},
                         )
                       else
-                        Icon(Icons.download_outlined, size: 18, color: AppColors.primary),
+                        Icon(Icons.download_outlined,
+                            size: 18, color: AppColors.primary),
                     ],
                   ),
                 ),
