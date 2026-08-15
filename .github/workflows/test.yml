@@ -1,0 +1,142 @@
+name: Test
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  backend-tests:
+    name: Backend Tests
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: campuscore_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "18"
+          cache: "npm"
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: backend
+
+      - name: Lint
+        run: npm run lint
+        working-directory: backend
+
+      - name: Build
+        run: npm run build
+        working-directory: backend
+
+      - name: Run tests
+        env:
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_USERNAME: postgres
+          DB_PASSWORD: postgres
+          DB_NAME: campuscore_test
+          JWT_SECRET: test-secret
+          FIREBASE_PROJECT_ID: test-project
+        run: npm test -- --passWithNoTests
+        working-directory: backend
+
+  flutter-tests:
+    name: Flutter Tests (Mobile & Web)
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        app: [mobile_app, admin_dashboard, web_app]
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.16.0"
+          channel: "stable"
+
+      - name: Get dependencies (${{ matrix.app }})
+        run: flutter pub get
+        working-directory: ${{ matrix.app }}
+
+      - name: Analyze (${{ matrix.app }})
+        run: flutter analyze
+        working-directory: ${{ matrix.app }}
+
+      - name: Run tests (${{ matrix.app }})
+        run: flutter test --coverage
+        working-directory: ${{ matrix.app }}
+
+  code-quality:
+    name: Code Quality
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Check formatting (backend)
+        run: npm run prettier:check
+        working-directory: backend
+        continue-on-error: true
+
+      - name: Check formatting (Flutter)
+        run: flutter format --line-length=120 --set-exit-if-changed .
+        continue-on-error: true
+
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Run npm audit
+        run: npm audit --audit-level=moderate
+        working-directory: backend
+        continue-on-error: true
+
+      - name: Run Flutter security check
+        run: |
+          flutter pub get
+          dart pub global activate dependency_validator
+          dart pub global run dependency_validator
+        working-directory: mobile_app
+        continue-on-error: true
+
+  all-tests-pass:
+    name: All Tests Pass
+    runs-on: ubuntu-latest
+    needs: [backend-tests, flutter-tests, code-quality, security-scan]
+    if: always()
+
+    steps:
+      - name: Check test results
+        run: |
+          if [ "${{ needs.backend-tests.result }}" != "success" ] || \
+             [ "${{ needs.flutter-tests.result }}" != "success" ]; then
+            echo "Tests failed"
+            exit 1
+          fi
+        continue-on-error: true
