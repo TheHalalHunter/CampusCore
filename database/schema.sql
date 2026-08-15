@@ -39,6 +39,7 @@ CREATE TABLE users (
   department_id             UUID REFERENCES departments(id) ON DELETE SET NULL,
   academic_level            VARCHAR(10),
   matric_number             VARCHAR(50) UNIQUE,
+  stellar_address           VARCHAR(56) UNIQUE,
   is_email_verified         BOOLEAN NOT NULL DEFAULT FALSE,
   is_active                 BOOLEAN NOT NULL DEFAULT TRUE,
   reputation_points         INTEGER NOT NULL DEFAULT 0,

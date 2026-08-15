@@ -12,15 +12,19 @@ export class ExamLockService {
     @InjectRepository(ExamLock)
     private readonly examLockRepo: Repository<ExamLock>,
   ) {}
-
   /**
    * Create a new exam lock period
    */
   async create(dto: CreateExamLockDto, adminId: string): Promise<ExamLock> {
+    const startsAt = new Date(dto.startsAt);
+    const endsAt = new Date(dto.endsAt);
+
     const examLock = this.examLockRepo.create({
       ...dto,
+      startsAt,
+      endsAt,
       createdBy: adminId,
-      active: this.isCurrentlyActive(dto.startsAt, dto.endsAt),
+      active: this.isCurrentlyActive(startsAt, endsAt),
     });
     return this.examLockRepo.save(examLock);
   }
@@ -98,13 +102,17 @@ export class ExamLockService {
    * Update an exam lock
    */
   async update(id: string, dto: Partial<CreateExamLockDto>): Promise<ExamLock> {
-    await this.examLockRepo.update(id, {
-      ...dto,
-      active:
-        dto.startsAt && dto.endsAt
-          ? this.isCurrentlyActive(dto.startsAt, dto.endsAt)
-          : undefined,
-    });
+    const updateData: any = { ...dto };
+
+    if (dto.startsAt && dto.endsAt) {
+      const startsAt = new Date(dto.startsAt);
+      const endsAt = new Date(dto.endsAt);
+      updateData.startsAt = startsAt;
+      updateData.endsAt = endsAt;
+      updateData.active = this.isCurrentlyActive(startsAt, endsAt);
+    }
+
+    await this.examLockRepo.update(id, updateData);
     return this.examLockRepo.findOne({ where: { id } });
   }
 

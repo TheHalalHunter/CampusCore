@@ -1,12 +1,6 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import {
-  Keypair,
-  Networks,
-  TransactionBuilder,
-  BASE_FEE,
-  noop,
-} from "@stellar/stellar-sdk";
+import { Keypair, TransactionBuilder, BASE_FEE } from "@stellar/stellar-sdk";
 import { ReputationContractService } from "./contracts/reputation.contract";
 import { BadgeContractService } from "./contracts/badge.contract";
 import { ContributionContractService } from "./contracts/contribution.contract";
@@ -32,8 +26,8 @@ export class StellarService {
     const isTestnet = network === "testnet";
 
     this.networkPassphrase = isTestnet
-      ? Networks.TESTNET_NETWORK_PASSPHRASE
-      : Networks.PUBLIC_NETWORK_PASSPHRASE;
+      ? "Test SDF Network ; September 2015"
+      : "Public Global Stellar Network ; September 2015";
     this.rpcUrl = isTestnet
       ? "https://soroban-testnet.stellar.org"
       : "https://soroban-mainnet.stellar.org";

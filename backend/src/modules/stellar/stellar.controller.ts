@@ -8,13 +8,17 @@ import {
   BadRequestException,
 } from "@nestjs/common";
 import { StellarService } from "./stellar.service";
+import { UsersService } from "../users/users.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
 import { User } from "../users/entities/user.entity";
 
 @Controller("stellar")
 export class StellarController {
-  constructor(private stellarService: StellarService) {}
+  constructor(
+    private stellarService: StellarService,
+    private usersService: UsersService,
+  ) {}
 
   /**
    * POST /stellar/wallet/connect
@@ -31,13 +35,12 @@ export class StellarController {
       throw new BadRequestException("Invalid Stellar address");
     }
 
-    // In a real implementation, store this mapping in the database
-    // user.stellarAddress = stellarAddress;
-    // await usersService.save(user);
+    // Save the Stellar address to the user's profile
+    await this.usersService.update(user.id, { stellarAddress });
 
     return {
       success: true,
-      message: "Wallet connected",
+      message: "Wallet connected successfully",
       stellarAddress,
       userId: user.id,
     };

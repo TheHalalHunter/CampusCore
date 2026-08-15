@@ -1,5 +1,5 @@
-import { IsString, IsOptional, IsEnum } from 'class-validator';
-import { ApiPropertyOptional } from '@nestjs/swagger';
+import { IsString, IsOptional, IsEnum } from "class-validator";
+import { ApiPropertyOptional } from "@nestjs/swagger";
 
 export class UpdateUserDto {
   @ApiPropertyOptional()
@@ -26,4 +26,9 @@ export class UpdateUserDto {
   @IsOptional()
   @IsString()
   matricNumber?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  stellarAddress?: string;
 }

@@ -15,7 +15,7 @@ import { RolesGuard } from "../../common/guards/roles.guard";
 import { Roles } from "../../common/decorators/roles.decorator";
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
 import { User } from "../users/entities/user.entity";
-import { UserRole } from "../users/entities/user.entity";
+import { UserRole } from "../users/enums/user-role.enum";
 
 @Controller("exam-lock")
 export class ExamLockController {
