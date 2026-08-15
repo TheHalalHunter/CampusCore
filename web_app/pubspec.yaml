@@ -23,11 +23,11 @@ dependencies:
   dio: ^5.4.1
 
   # Firebase
-  firebase_core: ^2.27.1
-  firebase_auth: ^4.17.9
-  firebase_storage: ^11.6.10
-  firebase_messaging: ^14.7.19
-  google_sign_in: ^6.2.1
+  firebase_core: ^2.24.0
+  firebase_auth: ^4.15.0
+  firebase_storage: ^11.5.0
+  firebase_messaging: ^14.7.0
+  google_sign_in: ^6.2.0
 
   # Local storage
   shared_preferences: ^2.2.3
