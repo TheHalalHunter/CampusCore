@@ -1,8 +1,14 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from "typeorm";
 
-@Entity('departments')
+@Entity("departments")
 export class Department {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn("uuid")
   id: string;
 
   @Column()
@@ -11,15 +17,15 @@ export class Department {
   @Column({ nullable: true })
   description: string;
 
-  @Column({ name: 'university_name' })
+  @Column({ name: "university_name" })
   universityName: string;
 
-  @Column({ name: 'is_active', default: true })
+  @Column({ name: "is_active", default: true })
   isActive: boolean;
 
-  @CreateDateColumn({ name: 'created_at' })
+  @CreateDateColumn({ name: "created_at" })
   createdAt: Date;
 
-  @UpdateDateColumn({ name: 'updated_at' })
+  @UpdateDateColumn({ name: "updated_at" })
   updatedAt: Date;
 }

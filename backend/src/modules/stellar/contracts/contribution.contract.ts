@@ -25,8 +25,11 @@ export class ContributionContractService {
     studentAddress: string,
     resourceHash: string,
     courseId: string,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     backendKeypair: Keypair,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     networkPassphrase: string,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     rpcUrl: string,
   ): Promise<string> {
     try {
@@ -50,7 +53,11 @@ export class ContributionContractService {
   /**
    * Verify that a resource contribution exists on-chain
    */
-  async verify(resourceHash: string, rpcUrl: string): Promise<boolean> {
+  async verify(
+    resourceHash: string,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    rpcUrl: string,
+  ): Promise<boolean> {
     try {
       this.logger.debug(`Soroban call: contribution.verify("${resourceHash}")`);
 
@@ -67,6 +74,7 @@ export class ContributionContractService {
    */
   async getContributions(
     studentAddress: string,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     rpcUrl: string,
   ): Promise<any[]> {
     try {

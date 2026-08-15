@@ -1,6 +1,6 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import { Keypair, TransactionBuilder, BASE_FEE } from "@stellar/stellar-sdk";
+import { Keypair } from "@stellar/stellar-sdk";
 import { ReputationContractService } from "./contracts/reputation.contract";
 import { BadgeContractService } from "./contracts/badge.contract";
 import { ContributionContractService } from "./contracts/contribution.contract";

@@ -1,7 +1,7 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { Course } from './entities/course.entity';
+import { Injectable, NotFoundException } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { Course } from "./entities/course.entity";
 
 @Injectable()
 export class CoursesService {
@@ -14,7 +14,7 @@ export class CoursesService {
   findByDepartment(departmentId: string): Promise<Course[]> {
     return this.repo.find({
       where: { departmentId, isActive: true },
-      order: { academicLevel: 'ASC', semester: 'ASC' },
+      order: { academicLevel: "ASC", semester: "ASC" },
     });
   }
 
@@ -22,13 +22,13 @@ export class CoursesService {
   findByLevel(departmentId: string, level: string): Promise<Course[]> {
     return this.repo.find({
       where: { departmentId, academicLevel: level, isActive: true },
-      order: { semester: 'ASC' },
+      order: { semester: "ASC" },
     });
   }
 
   async findOne(id: string): Promise<Course> {
     const course = await this.repo.findOne({ where: { id } });
-    if (!course) throw new NotFoundException('Course not found');
+    if (!course) throw new NotFoundException("Course not found");
     return course;
   }
 

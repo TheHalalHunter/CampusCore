@@ -1,8 +1,12 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { User } from './entities/user.entity';
-import { UpdateUserDto } from './dto/update-user.dto';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+} from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { User } from "./entities/user.entity";
+import { UpdateUserDto } from "./dto/update-user.dto";
 
 @Injectable()
 export class UsersService {
@@ -13,7 +17,7 @@ export class UsersService {
 
   async findById(id: string): Promise<User> {
     const user = await this.usersRepository.findOne({ where: { id } });
-    if (!user) throw new NotFoundException('User not found');
+    if (!user) throw new NotFoundException("User not found");
     return user;
   }
 
@@ -27,7 +31,7 @@ export class UsersService {
 
   async create(data: Partial<User>): Promise<User> {
     const existing = await this.findByEmail(data.email);
-    if (existing) throw new ConflictException('Email already registered');
+    if (existing) throw new ConflictException("Email already registered");
     const user = this.usersRepository.create(data);
     return this.usersRepository.save(user);
   }
@@ -43,12 +47,18 @@ export class UsersService {
   }
 
   async addReputationPoints(id: string, points: number): Promise<void> {
-    await this.usersRepository.increment({ id }, 'reputationPoints', points);
+    await this.usersRepository.increment({ id }, "reputationPoints", points);
   }
 
   async getPublicProfile(id: string): Promise<Partial<User>> {
     const user = await this.findById(id);
-    const { firebaseUid, isEmailVerified, acceptedIntegrityPolicy, ...publicData } = user;
+    // Exclude sensitive fields from public profile
+    const {
+      firebaseUid: _fb,
+      isEmailVerified: _ev,
+      acceptedIntegrityPolicy: _ap,
+      ...publicData
+    } = user;
     return publicData;
   }
 }

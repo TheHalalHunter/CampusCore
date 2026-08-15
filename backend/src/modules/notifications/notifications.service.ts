@@ -1,7 +1,7 @@
-import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { Notification, NotificationType } from './entities/notification.entity';
+import { Injectable } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { Notification, NotificationType } from "./entities/notification.entity";
 
 @Injectable()
 export class NotificationsService {
@@ -24,7 +24,7 @@ export class NotificationsService {
   getUserNotifications(userId: string): Promise<Notification[]> {
     return this.repo.find({
       where: { userId },
-      order: { createdAt: 'DESC' },
+      order: { createdAt: "DESC" },
       take: 50,
     });
   }

@@ -4,8 +4,6 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
-  ManyToOne,
-  JoinColumn,
   Index,
 } from "typeorm";
 import { UserRole } from "../enums/user-role.enum";

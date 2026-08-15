@@ -1,6 +1,6 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import { Keypair, TransactionBuilder, BASE_FEE } from "@stellar/stellar-sdk";
+import { Keypair } from "@stellar/stellar-sdk";
 
 @Injectable()
 export class ReputationContractService {
@@ -25,8 +25,11 @@ export class ReputationContractService {
     studentAddress: string,
     points: number,
     reason: string,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     backendKeypair: Keypair,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     networkPassphrase: string,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     rpcUrl: string,
   ): Promise<string> {
     try {
@@ -57,7 +60,11 @@ export class ReputationContractService {
   /**
    * Get balance from the reputation token contract
    */
-  async getBalance(studentAddress: string, rpcUrl: string): Promise<number> {
+  async getBalance(
+    studentAddress: string,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    rpcUrl: string,
+  ): Promise<number> {
     try {
       this.logger.debug(
         `Soroban call: reputation.get_balance(${studentAddress})`,

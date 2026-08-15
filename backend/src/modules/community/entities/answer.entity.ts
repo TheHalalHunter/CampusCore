@@ -1,31 +1,37 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from "typeorm";
 
-@Entity('answers')
+@Entity("answers")
 export class Answer {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn("uuid")
   id: string;
 
-  @Column({ type: 'text' })
+  @Column({ type: "text" })
   body: string;
 
-  @Column({ name: 'question_id' })
+  @Column({ name: "question_id" })
   questionId: string;
 
-  @Column({ name: 'author_id' })
+  @Column({ name: "author_id" })
   authorId: string;
 
-  @Column({ name: 'upvote_count', default: 0 })
+  @Column({ name: "upvote_count", default: 0 })
   upvoteCount: number;
 
-  @Column({ name: 'is_verified', default: false })
+  @Column({ name: "is_verified", default: false })
   isVerified: boolean;
 
-  @Column({ name: 'is_flagged', default: false })
+  @Column({ name: "is_flagged", default: false })
   isFlagged: boolean;
 
-  @CreateDateColumn({ name: 'created_at' })
+  @CreateDateColumn({ name: "created_at" })
   createdAt: Date;
 
-  @UpdateDateColumn({ name: 'updated_at' })
+  @UpdateDateColumn({ name: "updated_at" })
   updatedAt: Date;
 }

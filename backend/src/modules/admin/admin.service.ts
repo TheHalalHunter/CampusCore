@@ -1,8 +1,8 @@
-import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { User } from '../users/entities/user.entity';
-import { UserRole } from '../users/enums/user-role.enum';
+import { Injectable } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { User } from "../users/entities/user.entity";
+import { UserRole } from "../users/enums/user-role.enum";
 
 @Injectable()
 export class AdminService {
@@ -13,12 +13,14 @@ export class AdminService {
 
   async getPlatformStats(): Promise<object> {
     const totalUsers = await this.usersRepo.count();
-    const activeUsers = await this.usersRepo.count({ where: { isActive: true } });
+    const activeUsers = await this.usersRepo.count({
+      where: { isActive: true },
+    });
     const byRole = await this.usersRepo
-      .createQueryBuilder('u')
-      .select('u.role', 'role')
-      .addSelect('COUNT(*)', 'count')
-      .groupBy('u.role')
+      .createQueryBuilder("u")
+      .select("u.role", "role")
+      .addSelect("COUNT(*)", "count")
+      .groupBy("u.role")
       .getRawMany();
 
     return { totalUsers, activeUsers, byRole };
@@ -28,7 +30,7 @@ export class AdminService {
     return this.usersRepo.findAndCount({
       skip: (page - 1) * limit,
       take: limit,
-      order: { createdAt: 'DESC' },
+      order: { createdAt: "DESC" },
     });
   }
 

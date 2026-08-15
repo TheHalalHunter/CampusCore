@@ -21,8 +21,11 @@ export class BadgeContractService {
     studentAddress: string,
     badgeType: string,
     metadataUri: string,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     backendKeypair: Keypair,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     networkPassphrase: string,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     rpcUrl: string,
   ): Promise<string> {
     try {
@@ -46,7 +49,11 @@ export class BadgeContractService {
   /**
    * Get all badges for a student
    */
-  async getBadges(studentAddress: string, rpcUrl: string): Promise<any[]> {
+  async getBadges(
+    studentAddress: string,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    rpcUrl: string,
+  ): Promise<any[]> {
     try {
       this.logger.debug(`Soroban call: badge.get_badges(${studentAddress})`);
 
@@ -65,6 +72,7 @@ export class BadgeContractService {
   async hasBadge(
     studentAddress: string,
     badgeType: string,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     rpcUrl: string,
   ): Promise<boolean> {
     try {
