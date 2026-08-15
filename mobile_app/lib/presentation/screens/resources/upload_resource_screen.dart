@@ -4,13 +4,13 @@ import 'package:go_router/go_router.dart';
 import '../../../app/theme/app_theme.dart';
 import '../../providers/upload_provider.dart';
 import '../../providers/courses_provider.dart';
-import '../../providers/department_provider.dart';
 
 class UploadResourceScreen extends ConsumerStatefulWidget {
   const UploadResourceScreen({super.key});
 
   @override
-  ConsumerState<UploadResourceScreen> createState() => _UploadResourceScreenState();
+  ConsumerState<UploadResourceScreen> createState() =>
+      _UploadResourceScreenState();
 }
 
 class _UploadResourceScreenState extends ConsumerState<UploadResourceScreen> {
@@ -24,14 +24,37 @@ class _UploadResourceScreenState extends ConsumerState<UploadResourceScreen> {
   bool _isUploading = false;
 
   final _resourceTypes = [
-    {'value': 'lecture_note',     'label': 'Lecture Note',     'icon': Icons.description_outlined},
-    {'value': 'past_question',    'label': 'Past Question',    'icon': Icons.quiz_outlined},
-    {'value': 'slide',            'label': 'Slide',            'icon': Icons.slideshow_outlined},
-    {'value': 'practical_manual', 'label': 'Practical Manual', 'icon': Icons.science_outlined},
-    {'value': 'assignment',       'label': 'Assignment',       'icon': Icons.assignment_outlined},
+    {
+      'value': 'lecture_note',
+      'label': 'Lecture Note',
+      'icon': Icons.description_outlined
+    },
+    {
+      'value': 'past_question',
+      'label': 'Past Question',
+      'icon': Icons.quiz_outlined
+    },
+    {'value': 'slide', 'label': 'Slide', 'icon': Icons.slideshow_outlined},
+    {
+      'value': 'practical_manual',
+      'label': 'Practical Manual',
+      'icon': Icons.science_outlined
+    },
+    {
+      'value': 'assignment',
+      'label': 'Assignment',
+      'icon': Icons.assignment_outlined
+    },
   ];
 
-  final _years = ['2024/2025', '2023/2024', '2022/2023', '2021/2022', '2020/2021', '2019/2020'];
+  final _years = [
+    '2024/2025',
+    '2023/2024',
+    '2022/2023',
+    '2021/2022',
+    '2020/2021',
+    '2019/2020'
+  ];
 
   @override
   void dispose() {
@@ -79,7 +102,9 @@ class _UploadResourceScreenState extends ConsumerState<UploadResourceScreen> {
 
               // Resource type selector
               const Text('Resource Type',
-                  style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                  style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary)),
               const SizedBox(height: 10),
               Wrap(
                 spacing: 8,
@@ -87,15 +112,19 @@ class _UploadResourceScreenState extends ConsumerState<UploadResourceScreen> {
                 children: _resourceTypes.map((type) {
                   final selected = _selectedType == type['value'];
                   return GestureDetector(
-                    onTap: () => setState(() => _selectedType = type['value'] as String),
+                    onTap: () =>
+                        setState(() => _selectedType = type['value'] as String),
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 200),
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 8),
                       decoration: BoxDecoration(
-                        color: selected ? AppColors.primary : AppColors.surfaceAlt,
+                        color:
+                            selected ? AppColors.primary : AppColors.surfaceAlt,
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
-                          color: selected ? AppColors.primary : AppColors.border,
+                          color:
+                              selected ? AppColors.primary : AppColors.border,
                         ),
                       ),
                       child: Row(
@@ -104,14 +133,19 @@ class _UploadResourceScreenState extends ConsumerState<UploadResourceScreen> {
                           Icon(
                             type['icon'] as IconData,
                             size: 16,
-                            color: selected ? Colors.white : AppColors.textSecondary,
+                            color: selected
+                                ? Colors.white
+                                : AppColors.textSecondary,
                           ),
                           const SizedBox(width: 6),
                           Text(
                             type['label'] as String,
                             style: TextStyle(
-                              color: selected ? Colors.white : AppColors.textSecondary,
-                              fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                              color: selected
+                                  ? Colors.white
+                                  : AppColors.textSecondary,
+                              fontWeight:
+                                  selected ? FontWeight.w700 : FontWeight.w500,
                               fontSize: 13,
                             ),
                           ),
@@ -125,20 +159,25 @@ class _UploadResourceScreenState extends ConsumerState<UploadResourceScreen> {
 
               // Title
               const Text('Title',
-                  style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                  style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary)),
               const SizedBox(height: 8),
               TextFormField(
                 controller: _titleCtrl,
                 decoration: const InputDecoration(
                   hintText: 'e.g. AQU 201 Lecture Notes Week 3',
                 ),
-                validator: (v) => v == null || v.isEmpty ? 'Title is required' : null,
+                validator: (v) =>
+                    v == null || v.isEmpty ? 'Title is required' : null,
               ),
               const SizedBox(height: 16),
 
               // Description
               const Text('Description (optional)',
-                  style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                  style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary)),
               const SizedBox(height: 8),
               TextFormField(
                 controller: _descCtrl,
@@ -151,7 +190,9 @@ class _UploadResourceScreenState extends ConsumerState<UploadResourceScreen> {
 
               // Course selector
               const Text('Course',
-                  style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                  style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary)),
               const SizedBox(height: 8),
               coursesAsync.when(
                 data: (courses) => DropdownButtonFormField<String>(
@@ -169,17 +210,18 @@ class _UploadResourceScreenState extends ConsumerState<UploadResourceScreen> {
                       borderSide: const BorderSide(color: AppColors.border),
                     ),
                   ),
-                  items: courses.map((c) => DropdownMenuItem(
-                    value: c.id,
-                    child: Text('${c.courseCode} — ${c.title}',
-                        overflow: TextOverflow.ellipsis),
-                  )).toList(),
+                  items: courses
+                      .map((c) => DropdownMenuItem(
+                            value: c.id,
+                            child: Text('${c.courseCode} — ${c.title}',
+                                overflow: TextOverflow.ellipsis),
+                          ))
+                      .toList(),
                   onChanged: (val) {
                     setState(() {
                       _selectedCourseId = val;
-                      _selectedCourseName = courses
-                          .firstWhere((c) => c.id == val)
-                          .title;
+                      _selectedCourseName =
+                          courses.firstWhere((c) => c.id == val).title;
                     });
                   },
                   validator: (v) => v == null ? 'Please select a course' : null,
@@ -191,7 +233,9 @@ class _UploadResourceScreenState extends ConsumerState<UploadResourceScreen> {
 
               // Academic year
               const Text('Academic Year (optional)',
-                  style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                  style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary)),
               const SizedBox(height: 8),
               DropdownButtonFormField<String>(
                 value: _academicYear,
@@ -208,17 +252,21 @@ class _UploadResourceScreenState extends ConsumerState<UploadResourceScreen> {
                     borderSide: const BorderSide(color: AppColors.border),
                   ),
                 ),
-                items: _years.map((y) => DropdownMenuItem(
-                  value: y,
-                  child: Text(y),
-                )).toList(),
+                items: _years
+                    .map((y) => DropdownMenuItem(
+                          value: y,
+                          child: Text(y),
+                        ))
+                    .toList(),
                 onChanged: (val) => setState(() => _academicYear = val),
               ),
               const SizedBox(height: 24),
 
               // File picker
               const Text('File',
-                  style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                  style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary)),
               const SizedBox(height: 8),
               _FilePicker(
                 onFilePicked: (path, name) {
@@ -234,7 +282,8 @@ class _UploadResourceScreenState extends ConsumerState<UploadResourceScreen> {
                     LinearProgressIndicator(
                       value: uploadState.progress,
                       backgroundColor: AppColors.grey200,
-                      valueColor: const AlwaysStoppedAnimation(AppColors.primary),
+                      valueColor:
+                          const AlwaysStoppedAnimation(AppColors.primary),
                       borderRadius: BorderRadius.circular(4),
                       minHeight: 8,
                     ),
@@ -268,7 +317,9 @@ class _UploadResourceScreenState extends ConsumerState<UploadResourceScreen> {
               ElevatedButton.icon(
                 onPressed: uploadState.isUploading ? null : _submit,
                 icon: const Icon(Icons.upload_file, size: 18),
-                label: Text(uploadState.isUploading ? 'Uploading...' : 'Submit for Review'),
+                label: Text(uploadState.isUploading
+                    ? 'Uploading...'
+                    : 'Submit for Review'),
               ),
             ],
           ),
@@ -291,12 +342,12 @@ class _UploadResourceScreenState extends ConsumerState<UploadResourceScreen> {
     }
 
     final success = await ref.read(uploadProvider.notifier).upload(
-      title: _titleCtrl.text.trim(),
-      description: _descCtrl.text.trim(),
-      type: _selectedType,
-      courseId: _selectedCourseId!,
-      academicYear: _academicYear,
-    );
+          title: _titleCtrl.text.trim(),
+          description: _descCtrl.text.trim(),
+          type: _selectedType,
+          courseId: _selectedCourseId!,
+          academicYear: _academicYear,
+        );
 
     if (success && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -353,14 +404,16 @@ class _FilePicker extends ConsumerWidget {
                     ),
                   ),
                   TextButton(
-                    onPressed: () => ref.read(uploadProvider.notifier).clearFile(),
+                    onPressed: () =>
+                        ref.read(uploadProvider.notifier).clearFile(),
                     child: const Text('Change'),
                   ),
                 ],
               )
             : const Column(
                 children: [
-                  Icon(Icons.cloud_upload_outlined, size: 40, color: AppColors.textHint),
+                  Icon(Icons.cloud_upload_outlined,
+                      size: 40, color: AppColors.textHint),
                   SizedBox(height: 8),
                   Text(
                     'Tap to select a file',

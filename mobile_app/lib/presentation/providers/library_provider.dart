@@ -1,11 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/models/resource_model.dart';
 import '../../core/network/api_client.dart';
-import '../../core/constants/api_constants.dart';
 
 // ─── Personal Library (saved resources) ──────────────────────────────────────
 
-final personalLibraryProvider = FutureProvider<List<ResourceModel>>((ref) async {
+final personalLibraryProvider =
+    FutureProvider<List<ResourceModel>>((ref) async {
   try {
     final api = ref.read(apiClientProvider);
     final response = await api.get('/personal-library');
@@ -20,7 +20,8 @@ final personalLibraryProvider = FutureProvider<List<ResourceModel>>((ref) async 
 
 final bookmarkedIdsProvider = StateProvider<Set<String>>((ref) => {});
 
-final bookmarkProvider = NotifierProvider<BookmarkNotifier, Set<String>>(BookmarkNotifier.new);
+final bookmarkProvider =
+    NotifierProvider<BookmarkNotifier, Set<String>>(BookmarkNotifier.new);
 
 class BookmarkNotifier extends Notifier<Set<String>> {
   @override

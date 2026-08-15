@@ -1,11 +1,11 @@
 name: campuscore
 description: CampusCore - Learn. Connect. Achieve. Academic platform for Nigerian university students.
 version: 1.0.0+1
-publish_to: 'none'
+publish_to: "none"
 
 environment:
-  sdk: '>=3.2.0 <4.0.0'
-  flutter: '>=3.16.0'
+  sdk: ">=3.2.0 <4.0.0"
+  flutter: ">=3.16.0"
 
 dependencies:
   flutter:
@@ -22,11 +22,11 @@ dependencies:
   dio: ^5.4.1
 
   # Firebase
-  firebase_core: ^2.27.1
-  firebase_auth: ^4.17.9
-  firebase_storage: ^11.6.10
-  firebase_messaging: ^14.7.19
-  google_sign_in: ^6.2.1
+  firebase_core: ^2.24.0
+  firebase_auth: ^4.15.0
+  firebase_storage: ^11.5.0
+  firebase_messaging: ^14.7.0
+  google_sign_in: ^6.2.0
 
   # Local storage & offline
   hive_flutter: ^1.1.0

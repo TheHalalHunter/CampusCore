@@ -6,7 +6,6 @@ import '../../../app/theme/app_theme.dart';
 import '../../../app/router/app_router.dart';
 import '../../../data/models/resource_model.dart';
 import '../../providers/library_provider.dart';
-import '../../providers/resources_provider.dart';
 
 class LibraryScreen extends ConsumerWidget {
   const LibraryScreen({super.key});
@@ -65,7 +64,8 @@ class _SavedTab extends ConsumerWidget {
           return _EmptyLibrary(
             icon: Icons.bookmark_outline,
             title: 'No saved resources yet',
-            subtitle: 'Browse courses and save resources to access them quickly here.',
+            subtitle:
+                'Browse courses and save resources to access them quickly here.',
             actionLabel: 'Browse Courses',
             onAction: () => context.go(AppRoutes.courses),
           );
@@ -141,7 +141,8 @@ class _LibraryResourceCard extends ConsumerWidget {
             color: _typeColor(resource.type).withOpacity(0.1),
             borderRadius: BorderRadius.circular(10),
           ),
-          child: Icon(_typeIcon(resource.type), color: _typeColor(resource.type), size: 22),
+          child: Icon(_typeIcon(resource.type),
+              color: _typeColor(resource.type), size: 22),
         ),
         title: Text(
           resource.title,
@@ -155,13 +156,16 @@ class _LibraryResourceCard extends ConsumerWidget {
           children: [
             Text(
               resource.typeLabel,
-              style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+              style:
+                  const TextStyle(color: AppColors.textSecondary, fontSize: 12),
             ),
             if (resource.academicYear != null) ...[
-              const Text(' • ', style: TextStyle(color: AppColors.textHint, fontSize: 12)),
+              const Text(' • ',
+                  style: TextStyle(color: AppColors.textHint, fontSize: 12)),
               Text(
                 resource.academicYear!,
-                style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                style: const TextStyle(
+                    color: AppColors.textSecondary, fontSize: 12),
               ),
             ],
           ],
@@ -172,13 +176,16 @@ class _LibraryResourceCard extends ConsumerWidget {
             IconButton(
               icon: Icon(
                 isBookmarked ? Icons.bookmark : Icons.bookmark_outline,
-                color: isBookmarked ? AppColors.primary : AppColors.textSecondary,
+                color:
+                    isBookmarked ? AppColors.primary : AppColors.textSecondary,
                 size: 20,
               ),
-              onPressed: () => ref.read(bookmarkProvider.notifier).toggle(resource.id),
+              onPressed: () =>
+                  ref.read(bookmarkProvider.notifier).toggle(resource.id),
             ),
             IconButton(
-              icon: const Icon(Icons.download_outlined, color: AppColors.primary, size: 20),
+              icon: const Icon(Icons.download_outlined,
+                  color: AppColors.primary, size: 20),
               onPressed: () => _download(context, resource),
             ),
           ],
@@ -200,21 +207,31 @@ class _LibraryResourceCard extends ConsumerWidget {
 
   Color _typeColor(String type) {
     switch (type) {
-      case 'lecture_note': return AppColors.info;
-      case 'past_question': return AppColors.accent;
-      case 'slide': return AppColors.success;
-      case 'practical_manual': return AppColors.primary;
-      default: return AppColors.textSecondary;
+      case 'lecture_note':
+        return AppColors.info;
+      case 'past_question':
+        return AppColors.accent;
+      case 'slide':
+        return AppColors.success;
+      case 'practical_manual':
+        return AppColors.primary;
+      default:
+        return AppColors.textSecondary;
     }
   }
 
   IconData _typeIcon(String type) {
     switch (type) {
-      case 'lecture_note': return Icons.description_outlined;
-      case 'past_question': return Icons.quiz_outlined;
-      case 'slide': return Icons.slideshow_outlined;
-      case 'practical_manual': return Icons.science_outlined;
-      default: return Icons.insert_drive_file_outlined;
+      case 'lecture_note':
+        return Icons.description_outlined;
+      case 'past_question':
+        return Icons.quiz_outlined;
+      case 'slide':
+        return Icons.slideshow_outlined;
+      case 'practical_manual':
+        return Icons.science_outlined;
+      default:
+        return Icons.insert_drive_file_outlined;
     }
   }
 }
@@ -239,7 +256,8 @@ class _BookmarkCard extends ConsumerWidget {
         ),
         trailing: IconButton(
           icon: const Icon(Icons.bookmark, color: AppColors.primary, size: 20),
-          onPressed: () => ref.read(bookmarkProvider.notifier).toggle(resourceId),
+          onPressed: () =>
+              ref.read(bookmarkProvider.notifier).toggle(resourceId),
         ),
       ),
     );

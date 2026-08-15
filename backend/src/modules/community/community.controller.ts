@@ -70,8 +70,8 @@ export class CommunityController {
   @ApiOperation({
     summary: "Verify an answer as correct (moderator/admin only)",
   })
-  verifyAnswer(@Param("id") id: string, @CurrentUser("id") modId: string) {
-    return this.service.verifyAnswer(id, modId);
+  verifyAnswer(@Param("id") id: string) {
+    return this.service.verifyAnswer(id);
   }
 
   @Post("flag/:type/:id")
