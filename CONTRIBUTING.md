@@ -169,13 +169,14 @@ These are the active development sprints. Pick one and open an issue to claim it
 
 | Sprint | Module | Status |
 |--------|--------|--------|
-| 5 | Resource Library (upload/download) | 🔓 Open |
-| 6 | Community Q&A (real data) | 🔓 Open |
-| 7 | AI Study Assistant (full flow) | 🔓 Open |
-| 8 | Progress Tracker (per topic) | 🔓 Open |
-| 9 | GPA/CGPA Calculator (save results) | 🔓 Open |
-| 10 | Admin Dashboard (Flutter Web) | 🔓 Open |
-| 11 | Stellar Integration (see STELLAR.md) | 🔓 Open |
+| 5 | Resource Library (upload/download) | ✅ Done |
+| 6 | Community Q&A (real data) | ✅ Done |
+| 7 | AI Study Assistant (full flow) | ✅ Done |
+| 8 | Progress Tracker (per topic) | ✅ Done |
+| 9 | GPA/CGPA Calculator (save results) | ✅ Done |
+| 10 | Admin Dashboard (Flutter Web) | ✅ Done |
+| 11 | Stellar Integration (see STELLAR.md) | ⭐ Next Wave |
+| 12 | Testing & QA | 🔓 Open |
 
 ---
 

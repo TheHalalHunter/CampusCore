@@ -101,14 +101,14 @@ CampusCore/
 | 2      | Authentication      | ✅ Done      |
 | 3      | Home Dashboard      | ✅ Done      |
 | 4      | Course Module       | ✅ Done      |
-| 5      | Resource Library    | 🔓 Open      |
-| 6      | Community Q&A       | 🔓 Open      |
-| 7      | AI Study Assistant  | 🔓 Open      |
-| 8      | Progress Tracker    | 🔓 Open      |
-| 9      | GPA Calculator      | 🔓 Open      |
-| 10     | Admin Dashboard     | 🔓 Open      |
+| 5      | Resource Library    | ✅ Done      |
+| 6      | Community Q&A       | ✅ Done      |
+| 7      | AI Study Assistant  | ✅ Done      |
+| 8      | Progress Tracker    | ✅ Done      |
+| 9      | GPA Calculator      | ✅ Done      |
+| 10     | Admin Dashboard     | ✅ Done      |
 | 11     | Stellar Integration | ⭐ Next Wave |
-| 12     | Testing & QA        | ⏳           |
+| 12     | Testing & QA        | 🔓 Open      |
 | 13     | Google Play Release | ⏳           |
 
 ---
