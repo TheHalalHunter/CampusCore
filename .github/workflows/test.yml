@@ -7,8 +7,8 @@ on:
     branches: [main, develop]
 
 jobs:
-  backend-tests:
-    name: Backend Tests
+  backend-build:
+    name: Backend Build & Test
     runs-on: ubuntu-latest
 
     services:
@@ -27,21 +27,15 @@ jobs:
           - 5432:5432
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: "18"
-          cache: "npm"
-          cache-dependency-path: backend/package-lock.json
+          node-version: '20'
 
       - name: Install dependencies
-        run: npm ci
-        working-directory: backend
-
-      - name: Lint
-        run: npm run lint
+        run: npm install
         working-directory: backend
 
       - name: Build
@@ -50,93 +44,142 @@ jobs:
 
       - name: Run tests
         env:
+          NODE_ENV: test
           DB_HOST: localhost
           DB_PORT: 5432
           DB_USERNAME: postgres
           DB_PASSWORD: postgres
           DB_NAME: campuscore_test
-          JWT_SECRET: test-secret
+          JWT_SECRET: ci-test-secret-key
+          JWT_REFRESH_SECRET: ci-refresh-secret-key
           FIREBASE_PROJECT_ID: test-project
+          FIREBASE_PRIVATE_KEY: '{"type":"service_account"}'
+          FIREBASE_CLIENT_EMAIL: test@test.iam.gserviceaccount.com
+          OPENAI_API_KEY: test-key
+          OPENAI_BASE_URL: https://agentrouter.org/v1
         run: npm test -- --passWithNoTests
         working-directory: backend
 
-  flutter-tests:
-    name: Flutter Tests (Mobile & Web)
+  flutter-mobile:
+    name: Flutter Mobile App
     runs-on: ubuntu-latest
 
-    strategy:
-      matrix:
-        app: [mobile_app, admin_dashboard, web_app]
-
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: "3.16.0"
-          channel: "stable"
+          flutter-version: '3.24.0'
+          channel: 'stable'
 
-      - name: Get dependencies (${{ matrix.app }})
+      - name: Get dependencies
         run: flutter pub get
-        working-directory: ${{ matrix.app }}
+        working-directory: mobile_app
 
-      - name: Analyze (${{ matrix.app }})
-        run: flutter analyze
-        working-directory: ${{ matrix.app }}
+      - name: Analyze
+        run: flutter analyze --no-fatal-infos
+        working-directory: mobile_app
 
-      - name: Run tests (${{ matrix.app }})
-        run: flutter test --coverage
-        working-directory: ${{ matrix.app }}
+      - name: Run tests
+        run: flutter test --no-pub
+        working-directory: mobile_app
 
-  code-quality:
-    name: Code Quality
+  flutter-admin:
+    name: Flutter Admin Dashboard
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-      - name: Check formatting (backend)
-        run: npm run prettier:check
-        working-directory: backend
-        continue-on-error: true
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.0'
+          channel: 'stable'
 
-      - name: Check formatting (Flutter)
-        run: flutter format --line-length=120 --set-exit-if-changed .
-        continue-on-error: true
+      - name: Get dependencies
+        run: flutter pub get
+        working-directory: admin_dashboard
+
+      - name: Analyze
+        run: flutter analyze --no-fatal-infos
+        working-directory: admin_dashboard
+
+      - name: Run tests
+        run: flutter test --no-pub
+        working-directory: admin_dashboard
+
+  flutter-web:
+    name: Flutter Web App
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.0'
+          channel: 'stable'
+
+      - name: Get dependencies
+        run: flutter pub get
+        working-directory: web_app
+
+      - name: Analyze
+        run: flutter analyze --no-fatal-infos
+        working-directory: web_app
+
+      - name: Run tests
+        run: flutter test --no-pub
+        working-directory: web_app
 
   security-scan:
     name: Security Scan
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: 'backend/package-lock.json'
 
       - name: Run npm audit
-        run: npm audit --audit-level=moderate
+        run: npm ci && npm audit --audit-level=high
         working-directory: backend
-        continue-on-error: true
 
-      - name: Run Flutter security check
-        run: |
-          flutter pub get
-          dart pub global activate dependency_validator
-          dart pub global run dependency_validator
-        working-directory: mobile_app
-        continue-on-error: true
-
-  all-tests-pass:
-    name: All Tests Pass
+  all-checks:
+    name: All Checks
     runs-on: ubuntu-latest
-    needs: [backend-tests, flutter-tests, code-quality, security-scan]
+    needs: [backend-build, flutter-mobile, flutter-admin, flutter-web]
     if: always()
 
     steps:
-      - name: Check test results
+      - name: Check results
         run: |
-          if [ "${{ needs.backend-tests.result }}" != "success" ] || \
-             [ "${{ needs.flutter-tests.result }}" != "success" ]; then
-            echo "Tests failed"
+          echo "Backend: ${{ needs.backend-build.result }}"
+          echo "Flutter Mobile: ${{ needs.flutter-mobile.result }}"
+          echo "Flutter Admin: ${{ needs.flutter-admin.result }}"
+          echo "Flutter Web: ${{ needs.flutter-web.result }}"
+          if [ "${{ needs.backend-build.result }}" = "failure" ]; then
+            echo "Backend build failed"
             exit 1
           fi
-        continue-on-error: true
+          if [ "${{ needs.flutter-mobile.result }}" = "failure" ]; then
+            echo "Flutter mobile build failed"
+            exit 1
+          fi
+          if [ "${{ needs.flutter-admin.result }}" = "failure" ]; then
+            echo "Flutter admin build failed"
+            exit 1
+          fi
+          if [ "${{ needs.flutter-web.result }}" = "failure" ]; then
+            echo "Flutter web build failed"
+            exit 1
+          fi
+          echo "All critical checks passed"

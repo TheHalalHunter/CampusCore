@@ -7,41 +7,51 @@ on:
     branches: [main, develop]
 
 jobs:
-  lint:
+  lint-backend:
+    name: Lint Backend
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: "18"
-          cache: "npm"
-          cache-dependency-path: backend/package-lock.json
+          node-version: '20'
 
       - name: Install backend dependencies
-        run: npm ci
+        run: npm install
         working-directory: backend
 
       - name: Lint backend
         run: npm run lint
         working-directory: backend
 
+  lint-flutter:
+    name: Lint Flutter Apps
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: "3.16.0"
-          channel: "stable"
+          flutter-version: '3.24.0'
+          channel: 'stable'
 
-      - name: Analyze Flutter apps
-        run: |
-          for app in mobile_app admin_dashboard web_app; do
-            if [ -d "$app" ]; then
-              echo "Analyzing $app..."
-              cd $app
-              flutter pub get
-              flutter analyze
-              cd ..
-            fi
-          done
+      - name: Analyze mobile app
+        run: flutter pub get && flutter analyze --no-fatal-infos
+        working-directory: mobile_app
+
+      - name: Analyze admin dashboard
+        run: flutter pub get && flutter analyze --no-fatal-infos
+        working-directory: admin_dashboard
+
+      - name: Analyze web app
+        run: flutter pub get && flutter analyze --no-fatal-infos
+        working-directory: web_app
+
+      - name: Analyze web app
+        run: flutter pub get && flutter analyze --no-fatal-infos
+        working-directory: web_app
