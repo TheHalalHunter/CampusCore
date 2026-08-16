@@ -141,16 +141,7 @@ class _QuestionDetailScreenState
                             ),
                           )
                         else
-                          // Verified answers first, then by upvotes
-                          ...([
-                            ...answers.where((a) => a.isVerified),
-                            ...answers.where((a) => !a.isVerified)
-                              ..sort((a, b) =>
-                                  b.upvoteCount.compareTo(a.upvoteCount)),
-                          ].map((answer) => _AnswerCard(
-                                answer: answer,
-                                questionId: widget.questionId,
-                              ))),
+                          ..._buildSortedAnswers(answers, widget.questionId),
                       ],
                     ),
                     loading: () => const Center(
@@ -299,6 +290,15 @@ class _QuestionDetailScreenState
       ),
     );
   }
+}
+
+List<Widget> _buildSortedAnswers(List<AnswerModel> answers, String questionId) {
+  final verified = answers.where((a) => a.isVerified).toList();
+  final unverified = answers.where((a) => !a.isVerified).toList()
+    ..sort((a, b) => b.upvoteCount.compareTo(a.upvoteCount));
+  return [...verified, ...unverified]
+      .map((a) => _AnswerCard(answer: a, questionId: questionId))
+      .toList();
 }
 
 // ─── Question card ────────────────────────────────────────────────────────────
