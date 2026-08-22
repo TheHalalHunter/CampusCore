@@ -101,25 +101,25 @@ export class GamificationService {
       );
     }
 
-    // Bookworm — 50+ rep points (proxy for activity)
+    // Bookworm — 50+ rep (active learner: downloads, views, progress)
     if (user.reputationPoints >= 50 && !hasBadge(BadgeType.BOOKWORM)) {
       await this.awardBadge(userId, BadgeType.BOOKWORM, user.stellarAddress);
     }
 
-    // Top Contributor — 100+ rep points
-    if (user.reputationPoints >= 100 && !hasBadge(BadgeType.TOP_CONTRIBUTOR)) {
+    // Community Helper — 75+ rep (sustained Q&A and community activity)
+    if (user.reputationPoints >= 75 && !hasBadge(BadgeType.COMMUNITY_HELPER)) {
       await this.awardBadge(
         userId,
-        BadgeType.TOP_CONTRIBUTOR,
+        BadgeType.COMMUNITY_HELPER,
         user.stellarAddress,
       );
     }
 
-    // Community Helper — 50+ rep points (answering focus)
-    if (user.reputationPoints >= 50 && !hasBadge(BadgeType.COMMUNITY_HELPER)) {
+    // Top Contributor — 100+ rep
+    if (user.reputationPoints >= 100 && !hasBadge(BadgeType.TOP_CONTRIBUTOR)) {
       await this.awardBadge(
         userId,
-        BadgeType.COMMUNITY_HELPER,
+        BadgeType.TOP_CONTRIBUTOR,
         user.stellarAddress,
       );
     }

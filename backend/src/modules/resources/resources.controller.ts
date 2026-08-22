@@ -33,6 +33,21 @@ export class ResourcesController {
     return this.service.findByCourse(courseId);
   }
 
+  @Post()
+  @ApiOperation({ summary: "Submit a resource for review" })
+  submit(@CurrentUser() user: User, @Body() body: any) {
+    return this.service.submit(user.id, body);
+  }
+
+  // Static sub-paths must come BEFORE :id to avoid route shadowing
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.MODERATOR, UserRole.ADMIN)
+  @Get("moderation/pending")
+  @ApiOperation({ summary: "List pending resources (moderator/admin only)" })
+  getPending() {
+    return this.service.findPending();
+  }
+
   @Public()
   @Get(":id")
   @ApiOperation({ summary: "Get a resource by ID" })
@@ -44,20 +59,6 @@ export class ResourcesController {
   @ApiOperation({ summary: "Increment download count" })
   trackDownload(@Param("id") id: string) {
     return this.service.incrementDownload(id);
-  }
-
-  @Post()
-  @ApiOperation({ summary: "Submit a resource for review" })
-  submit(@CurrentUser() user: User, @Body() body: any) {
-    return this.service.submit(user.id, body);
-  }
-
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.MODERATOR, UserRole.ADMIN)
-  @Get("moderation/pending")
-  @ApiOperation({ summary: "List pending resources (moderator/admin only)" })
-  getPending() {
-    return this.service.findPending();
   }
 
   @UseGuards(RolesGuard)

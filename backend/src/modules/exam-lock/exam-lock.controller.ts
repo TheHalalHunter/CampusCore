@@ -8,15 +8,19 @@ import {
   Body,
   UseGuards,
 } from "@nestjs/common";
+import { ApiTags, ApiBearerAuth, ApiOperation } from "@nestjs/swagger";
 import { ExamLockService } from "./exam-lock.service";
 import { CreateExamLockDto } from "./dto/create-exam-lock.dto";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { RolesGuard } from "../../common/guards/roles.guard";
 import { Roles } from "../../common/decorators/roles.decorator";
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
+import { Public } from "../../common/decorators/public.decorator";
 import { User } from "../users/entities/user.entity";
 import { UserRole } from "../users/enums/user-role.enum";
 
+@ApiTags("Exam Lock")
+@ApiBearerAuth()
 @Controller("exam-lock")
 export class ExamLockController {
   constructor(private examLockService: ExamLockService) {}
@@ -55,9 +59,12 @@ export class ExamLockController {
 
   /**
    * GET /exam-lock/active
-   * Get currently active exam locks (public)
+   * Get currently active exam locks (public — no auth required)
+   * Must be declared BEFORE /:id to avoid route shadowing.
    */
+  @Public()
   @Get("active")
+  @ApiOperation({ summary: "Get currently active exam locks" })
   async getActive() {
     const locks = await this.examLockService.getActiveExamLocks();
     return {
@@ -71,10 +78,12 @@ export class ExamLockController {
 
   /**
    * GET /exam-lock/status
-   * Check if AI/discussions are locked (for student)
+   * Check if AI/discussions are locked for the authenticated student.
+   * Must be declared BEFORE /:id to avoid route shadowing.
    */
   @Get("status")
   @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: "Check lock status for current user" })
   async getStatus(@CurrentUser() user: User) {
     const aiLocked = await this.examLockService.isAILocked(user.academicLevel);
     const discussionsLocked = await this.examLockService.areDiscussionsLocked(

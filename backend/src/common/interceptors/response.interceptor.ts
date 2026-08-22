@@ -13,7 +13,10 @@ export interface ApiResponse<T> {
   message?: string;
 }
 
-/** Wraps all successful responses in a standard { success, data } envelope */
+/** Wraps all successful responses in a standard { success, data } envelope.
+ *  If a controller already returns a shaped { success, data } object the
+ *  interceptor passes it through untouched to prevent double-wrapping.
+ */
 @Injectable()
 export class ResponseInterceptor<T> implements NestInterceptor<
   T,
@@ -24,11 +27,17 @@ export class ResponseInterceptor<T> implements NestInterceptor<
     next: CallHandler,
   ): Observable<ApiResponse<T>> {
     return next.handle().pipe(
-      map((data) => ({
-        success: true,
-        data: data?.data !== undefined ? data.data : data,
-        message: data?.message,
-      })),
+      map((data) => {
+        // Already wrapped — pass through as-is
+        if (data !== null && typeof data === 'object' && 'success' in data) {
+          return data;
+        }
+        return {
+          success: true,
+          data,
+          message: undefined,
+        };
+      }),
     );
   }
 }

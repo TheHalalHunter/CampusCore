@@ -2,6 +2,7 @@ import { Module } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { ThrottlerModule } from "@nestjs/throttler";
+import { FirebaseModule } from "./config/firebase.module";
 
 import { AuthModule } from "./modules/auth/auth.module";
 import { UsersModule } from "./modules/users/users.module";
@@ -15,6 +16,7 @@ import { NotificationsModule } from "./modules/notifications/notifications.modul
 import { GamificationModule } from "./modules/gamification/gamification.module";
 import { StellarModule } from "./modules/stellar/stellar.module";
 import { AdminModule } from "./modules/admin/admin.module";
+import { ExamLockModule } from "./modules/exam-lock/exam-lock.module";
 
 @Module({
   imports: [
@@ -54,6 +56,9 @@ import { AdminModule } from "./modules/admin/admin.module";
       inject: [ConfigService],
     }),
 
+    // Firebase Admin SDK (global — available to all modules)
+    FirebaseModule,
+
     // Feature modules
     AuthModule,
     UsersModule,
@@ -67,6 +72,7 @@ import { AdminModule } from "./modules/admin/admin.module";
     GamificationModule,
     StellarModule,
     AdminModule,
+    ExamLockModule,
   ],
 })
 export class AppModule {}

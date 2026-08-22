@@ -26,6 +26,7 @@ class ApiConstants {
   static const String aiQuiz = '/ai/quiz';
   static const String aiSummarize = '/ai/summarize';
   static const String aiFlashcards = '/ai/flashcards';
+  static const String aiPredictTopics = '/ai/predict-topics';
 
   // Progress
   static const String progress = '/progress';

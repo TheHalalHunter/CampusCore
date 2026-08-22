@@ -1,24 +1,48 @@
+import { Injectable, OnModuleInit, Logger } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
 import * as admin from "firebase-admin";
 
-let firebaseApp: admin.app.App;
+/**
+ * Injectable wrapper around Firebase Admin SDK.
+ * Initializes exactly once and exposes the app instance.
+ * Import FirebaseModule and inject FirebaseAdminService wherever Firebase is needed.
+ */
+@Injectable()
+export class FirebaseAdminService implements OnModuleInit {
+  private readonly logger = new Logger(FirebaseAdminService.name);
+  private app: admin.app.App;
 
-export function initializeFirebase(): admin.app.App {
-  if (!firebaseApp) {
-    firebaseApp = admin.initializeApp({
+  constructor(private readonly config: ConfigService) {}
+
+  onModuleInit() {
+    if (admin.apps.length > 0) {
+      this.app = admin.apps[0];
+      return;
+    }
+
+    this.app = admin.initializeApp({
       credential: admin.credential.cert({
-        projectId: process.env.FIREBASE_PROJECT_ID,
-        privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
-        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+        projectId: this.config.get<string>("FIREBASE_PROJECT_ID"),
+        privateKey: this.config
+          .get<string>("FIREBASE_PRIVATE_KEY")
+          ?.replace(/\\n/g, "\n"),
+        clientEmail: this.config.get<string>("FIREBASE_CLIENT_EMAIL"),
       }),
-      storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
+      storageBucket: this.config.get<string>("FIREBASE_STORAGE_BUCKET"),
     });
-  }
-  return firebaseApp;
-}
 
-export function getFirebaseAdmin(): admin.app.App {
-  if (!firebaseApp) {
-    return initializeFirebase();
+    this.logger.log("Firebase Admin SDK initialized");
   }
-  return firebaseApp;
+
+  getApp(): admin.app.App {
+    return this.app;
+  }
+
+  auth(): admin.auth.Auth {
+    return this.app.auth();
+  }
+
+  storage(): admin.storage.Storage {
+    return this.app.storage();
+  }
 }

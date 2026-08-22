@@ -1,22 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/models/resource_model.dart';
-import '../../core/network/api_client.dart';
 
-// ─── Personal Library (saved resources) ──────────────────────────────────────
-
-final personalLibraryProvider =
-    FutureProvider<List<ResourceModel>>((ref) async {
-  try {
-    final api = ref.read(apiClientProvider);
-    final response = await api.get('/personal-library');
-    final data = response.data['data'] ?? response.data;
-    return (data as List).map((r) => ResourceModel.fromJson(r)).toList();
-  } catch (_) {
-    return [];
-  }
-});
-
-// ─── Bookmarks (local + synced) ───────────────────────────────────────────────
+// ─── Bookmarks (local state only) ────────────────────────────────────────────
+// The personal library is kept in memory as a set of bookmarked resource IDs.
+// Full server-side persistence will be wired up once the /personal-library
+// backend endpoint is implemented.
 
 final bookmarkedIdsProvider = StateProvider<Set<String>>((ref) => {});
 
@@ -35,21 +23,19 @@ class BookmarkNotifier extends Notifier<Set<String>> {
       current.add(resourceId);
     }
     state = current;
-    _sync(resourceId, current.contains(resourceId));
   }
 
   bool isBookmarked(String resourceId) => state.contains(resourceId);
-
-  Future<void> _sync(String resourceId, bool add) async {
-    try {
-      final api = ref.read(apiClientProvider);
-      if (add) {
-        await api.post('/personal-library', data: {'resourceId': resourceId});
-      } else {
-        await api.delete('/personal-library/$resourceId');
-      }
-    } catch (_) {
-      // Sync failed — local state is still updated
-    }
-  }
 }
+
+// ─── Personal Library (bookmarked resources) ─────────────────────────────────
+// Derives the list of saved resources from the resources cache + bookmark IDs.
+// Kept as a separate provider so the UI can consume it independently.
+
+final personalLibraryProvider =
+    Provider<List<ResourceModel>>((ref) {
+  // The library screen should pass the full resource list from
+  // resourcesByCourseProvider and filter by bookmarked IDs here.
+  // Until the screen wires in the resource list, this returns empty.
+  return const [];
+});

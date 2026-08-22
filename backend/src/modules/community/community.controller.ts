@@ -10,6 +10,8 @@ import {
 } from "@nestjs/common";
 import { ApiTags, ApiBearerAuth, ApiOperation } from "@nestjs/swagger";
 import { CommunityService } from "./community.service";
+import { PostQuestionDto } from "./dto/post-question.dto";
+import { PostAnswerDto } from "./dto/post-answer.dto";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { RolesGuard } from "../../common/guards/roles.guard";
 import { Roles } from "../../common/decorators/roles.decorator";
@@ -44,8 +46,8 @@ export class CommunityController {
 
   @Post("questions")
   @ApiOperation({ summary: "Post a new question" })
-  postQuestion(@CurrentUser() user: User, @Body() body: any) {
-    return this.service.postQuestion(user.id, body);
+  postQuestion(@CurrentUser() user: User, @Body() dto: PostQuestionDto) {
+    return this.service.postQuestion(user.id, dto);
   }
 
   @Post("questions/:id/answers")
@@ -53,9 +55,9 @@ export class CommunityController {
   postAnswer(
     @Param("id") questionId: string,
     @CurrentUser() user: User,
-    @Body("body") body: string,
+    @Body() dto: PostAnswerDto,
   ) {
-    return this.service.postAnswer(user.id, questionId, body);
+    return this.service.postAnswer(user.id, questionId, dto.body);
   }
 
   @Patch("questions/:id/resolve")

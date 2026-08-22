@@ -5,11 +5,10 @@ import {
 } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import { ConfigService } from "@nestjs/config";
-import * as admin from "firebase-admin";
 import { UsersService } from "../users/users.service";
 import { FirebaseAuthDto } from "./dto/firebase-auth.dto";
 import { User } from "../users/entities/user.entity";
-import { initializeFirebase } from "../../config/firebase.config";
+import { FirebaseAdminService } from "../../config/firebase.config";
 
 @Injectable()
 export class AuthService {
@@ -17,9 +16,8 @@ export class AuthService {
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
     private readonly config: ConfigService,
-  ) {
-    initializeFirebase();
-  }
+    private readonly firebase: FirebaseAdminService,
+  ) {}
 
   /**
    * Verifies the Firebase ID token and creates/returns a platform JWT.
@@ -32,9 +30,9 @@ export class AuthService {
     isNewUser: boolean;
   }> {
     // 1. Verify Firebase token
-    let decodedToken: admin.auth.DecodedIdToken;
+    let decodedToken: import("firebase-admin").auth.DecodedIdToken;
     try {
-      decodedToken = await admin.auth().verifyIdToken(dto.idToken);
+      decodedToken = await this.firebase.auth().verifyIdToken(dto.idToken);
     } catch {
       throw new UnauthorizedException("Invalid Firebase token");
     }
