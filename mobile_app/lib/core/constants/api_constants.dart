@@ -9,6 +9,7 @@ class ApiConstants {
 
   // Users
   static const String me = '/users/me';
+  static const String acceptPolicy = '/users/me/accept-policy';
 
   // Departments
   static const String departments = '/departments';
@@ -36,4 +37,16 @@ class ApiConstants {
 
   // Gamification
   static const String badges = '/gamification/badges';
+
+  // Connections
+  static const String connections = '/connections';
+  static const String connectionRequest = '/connections/request';
+  static const String connectionsPendingReceived = '/connections/pending/received';
+  static const String connectionsPendingSent = '/connections/pending/sent';
+
+  // Search
+  static const String search = '/search';
+
+  // Discussions
+  static const String discussions = '/discussions';
 }

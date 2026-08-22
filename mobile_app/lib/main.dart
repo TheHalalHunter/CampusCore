@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:hive_flutter/hive_flutter.dart';
 
 import 'app/app.dart';
 import 'firebase_options.dart';
+import 'core/storage/offline_cache.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -14,8 +14,8 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  // Initialize local storage
-  await Hive.initFlutter();
+  // Initialize Hive + open offline cache boxes
+  await OfflineCache.init();
 
   runApp(
     const ProviderScope(

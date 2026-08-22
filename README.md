@@ -38,13 +38,9 @@ CampusCore is open for contributions. We welcome developers of all levels.
 
 **Priority areas right now:**
 
-- Sprint 5 — Resource Library (upload/download)
-- Sprint 6 — Community Q&A (real data)
-- Sprint 7 — AI Study Assistant
-- Sprint 8 — Progress Tracker
-- Sprint 9 — GPA Calculator
-- Sprint 10 — Admin Dashboard
-- **Sprint 11 — Stellar Integration** ⭐
+- **Stellar Integration** ⭐ — on-chain reputation, badges, contribution proof
+- Testing & QA — unit tests for backend modules, widget tests for Flutter
+- Google Play release preparation
 
 ---
 
@@ -72,7 +68,7 @@ CampusCore/
 | Web App         | Flutter Web                        |
 | Admin Dashboard | Flutter Web                        |
 | Backend API     | NestJS (Node.js + TypeScript)      |
-| Database        | PostgreSQL 15 (hosted on Supabase) |
+| Database        | PostgreSQL 15                      |
 | Authentication  | Firebase Authentication            |
 | File Storage    | Firebase Storage                   |
 | Notifications   | Firebase Cloud Messaging           |
@@ -95,21 +91,103 @@ CampusCore/
 
 ## Development Sprints
 
-| Sprint | Module              | Status       |
-| ------ | ------------------- | ------------ |
-| 1      | Project Setup       | ✅ Done      |
-| 2      | Authentication      | ✅ Done      |
-| 3      | Home Dashboard      | ✅ Done      |
-| 4      | Course Module       | ✅ Done      |
-| 5      | Resource Library    | ✅ Done      |
-| 6      | Community Q&A       | ✅ Done      |
-| 7      | AI Study Assistant  | ✅ Done      |
-| 8      | Progress Tracker    | ✅ Done      |
-| 9      | GPA Calculator      | ✅ Done      |
-| 10     | Admin Dashboard     | ✅ Done      |
-| 11     | Stellar Integration | ⭐ Next Wave |
-| 12     | Testing & QA        | 🔓 Open      |
-| 13     | Google Play Release | ⏳           |
+| Sprint | Module                        | Status      |
+| ------ | ----------------------------- | ----------- |
+| 1      | Project Setup                 | ✅ Done     |
+| 2      | Authentication                | ✅ Done     |
+| 3      | Home Dashboard                | ✅ Done     |
+| 4      | Course Module                 | ✅ Done     |
+| 5      | Resource Library              | ✅ Done     |
+| 6      | Community Q&A                 | ✅ Done     |
+| 7      | AI Study Assistant            | ✅ Done     |
+| 8      | Progress Tracker              | ✅ Done     |
+| 9      | GPA Calculator                | ✅ Done     |
+| 10     | Admin Dashboard               | ✅ Done     |
+| 11     | Auth Completion               | ✅ Done     |
+| 12     | Connections                   | ✅ Done     |
+| 13     | Global Search                 | ✅ Done     |
+| 14     | Community Extension           | ✅ Done     |
+| 15     | Offline Caching               | ✅ Done     |
+| 16     | Admin Completion              | ✅ Done     |
+| 17     | Stellar Integration           | ⭐ Next Wave |
+| 18     | Testing & QA                  | 🔓 Open     |
+| 19     | Google Play Release           | ⏳          |
+
+---
+
+## What's Built
+
+### Backend (NestJS)
+
+All 15 modules fully implemented:
+
+| Module          | Endpoints                                                         |
+| --------------- | ----------------------------------------------------------------- |
+| **Auth**        | Login/register via Firebase, JWT refresh                         |
+| **Users**       | Profile CRUD, accept integrity policy, reputation points          |
+| **Departments** | List, create, update (admin)                                      |
+| **Courses**     | List by dept/level, create/update (admin)                         |
+| **Resources**   | Upload, approve/reject, download tracking                         |
+| **Community**   | Q&A questions, answers, upvote/downvote, flag, verify             |
+| **Discussions** | Level-based threads, replies, pin, flag (new)                     |
+| **AI**          | Explain, quiz, flashcards, summarise, predict topics + usage log  |
+| **Progress**    | Topic completion, course progress, semester overview              |
+| **Gamification**| Reputation events, badge award + on-chain via Stellar             |
+| **Notifications**| Create, list, mark read                                          |
+| **Admin**       | Platform stats, user management, role changes                     |
+| **Exam Lock**   | Create/list/delete exam lock periods, AI+discussion restrictions  |
+| **Connections** | Send/accept/remove/list peer connections (new)                    |
+| **Search**      | Global search across courses, resources, Q&A (new)               |
+| **Stellar**     | Wallet connect, on-chain reputation, badge mint, contribution proof|
+
+### Mobile App (Flutter)
+
+All screens built and wired to real backend data:
+
+| Screen                     | Description                                             |
+| -------------------------- | ------------------------------------------------------- |
+| Onboarding                 | App intro flow                                          |
+| Login / Register           | Firebase email + Google sign-in                         |
+| **Integrity Policy**       | Scroll-to-accept policy screen, first login gate (new)  |
+| Home                       | Personalized dashboard                                  |
+| Courses                    | Course list, detail, level filter                       |
+| Resources                  | Course resources, viewer, upload                        |
+| Community Q&A              | Questions, answers, upvote/downvote (new)               |
+| **Discussions**            | Level-based threads, thread detail, reply (new)         |
+| AI Assistant               | Explain, quiz, flashcards, summarise                    |
+| Progress                   | Topic completion, course/semester overview              |
+| GPA Calculator             | Nigerian 5-point GPA/CGPA calculator                    |
+| Library                    | Bookmarked resources (local state)                      |
+| **Search**                 | Global search — courses, resources, questions (new)     |
+| Profile                    | Own profile view                                        |
+| **Public Profile**         | Peer profile with connect button (new)                  |
+| Notifications              | Notification list, mark read                            |
+
+### Admin Dashboard (Flutter Web)
+
+| Screen                     | Description                                             |
+| -------------------------- | ------------------------------------------------------- |
+| Dashboard                  | Platform stats overview                                 |
+| Users                      | User list, suspend, role change                         |
+| Moderation                 | Pending resource queue, approve/reject                  |
+| Departments                | Department management                                   |
+| **Courses**                | Course management — create/edit per department (new)    |
+| **Exam Lock**              | Create/delete exam lock periods, AI + discussion control (new) |
+| **Gamification**           | Badge distribution, reputation leaderboard (new)        |
+| Reports                    | Flagged content reports                                 |
+| Settings                   | Platform settings                                       |
+
+### Recent Fixes (Codebase Audit)
+
+- `ResponseInterceptor` and `AllExceptionsFilter` now registered globally in `main.ts`
+- `ConfigService` replaces all `process.env` direct access
+- AI default model corrected to `gpt-4o-mini`
+- AI usage logging wired end-to-end
+- Firebase config rewritten as injectable `FirebaseAdminService`
+- Route ordering fixed (`moderation/pending`, `exam-lock/active` before `:id` params)
+- Community DTOs added (`PostQuestionDto`, `PostAnswerDto`)
+- Gamification badge thresholds separated (Bookworm 50, Community Helper 75)
+- `library_provider.dart` broken `/personal-library` calls removed
 
 ---
 
@@ -119,7 +197,7 @@ CampusCore/
 
 - Node.js >= 18
 - Flutter SDK >= 3.16
-- PostgreSQL 15 or Supabase account
+- PostgreSQL 15
 - Firebase project
 
 ### Backend
@@ -132,12 +210,12 @@ cp .env.example .env
 npm run start:dev
 ```
 
-### Mobile / Web App
+### Mobile App
 
 ```bash
 cd mobile_app
 flutter pub get
-flutter run -d web-server --web-port 8080 --web-hostname localhost
+flutter run
 ```
 
 ### Admin Dashboard
@@ -157,7 +235,7 @@ flutter run -d web-server --web-port 8081 --web-hostname localhost
 | [PRD.md](documentation/PRD.md)                                                           | Full product requirements        |
 | [ARCHITECTURE.md](documentation/ARCHITECTURE.md)                                         | System architecture              |
 | [API.md](api/API.md)                                                                     | REST API documentation           |
-| [Stellar Integration](https://github.com/TheHalalHunter/CampusCore/blob/main/STELLAR.md) | Stellar/Soroban integration spec |
+| [STELLAR.md](STELLAR.md)                                                                 | Stellar/Soroban integration spec |
 | [CONTRIBUTING.md](CONTRIBUTING.md)                                                       | How to contribute                |
 
 ---

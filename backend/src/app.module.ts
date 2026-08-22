@@ -17,6 +17,9 @@ import { GamificationModule } from "./modules/gamification/gamification.module";
 import { StellarModule } from "./modules/stellar/stellar.module";
 import { AdminModule } from "./modules/admin/admin.module";
 import { ExamLockModule } from "./modules/exam-lock/exam-lock.module";
+import { ConnectionsModule } from "./modules/connections/connections.module";
+import { SearchModule } from "./modules/search/search.module";
+import { DiscussionsModule } from "./modules/discussions/discussions.module";
 
 @Module({
   imports: [
@@ -73,6 +76,9 @@ import { ExamLockModule } from "./modules/exam-lock/exam-lock.module";
     StellarModule,
     AdminModule,
     ExamLockModule,
+    ConnectionsModule,
+    SearchModule,
+    DiscussionsModule,
   ],
 })
 export class AppModule {}

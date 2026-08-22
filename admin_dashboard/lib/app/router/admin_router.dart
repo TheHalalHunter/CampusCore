@@ -8,6 +8,9 @@ import '../../presentation/screens/resources/moderation_screen.dart';
 import '../../presentation/screens/departments/departments_screen.dart';
 import '../../presentation/screens/reports/reports_screen.dart';
 import '../../presentation/screens/settings/settings_screen.dart';
+import '../../presentation/screens/exam_lock/exam_lock_screen.dart';
+import '../../presentation/screens/courses/courses_management_screen.dart';
+import '../../presentation/screens/gamification/gamification_screen.dart';
 import '../../presentation/shell/admin_shell.dart';
 
 final adminRouterProvider = Provider<GoRouter>((ref) {
@@ -38,6 +41,15 @@ final adminRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(
               path: AdminRoutes.settings,
               builder: (_, __) => const SettingsScreen()),
+          GoRoute(
+              path: AdminRoutes.examLock,
+              builder: (_, __) => const ExamLockScreen()),
+          GoRoute(
+              path: AdminRoutes.courses,
+              builder: (_, __) => const CoursesManagementScreen()),
+          GoRoute(
+              path: AdminRoutes.gamification,
+              builder: (_, __) => const GamificationScreen()),
         ],
       ),
     ],
@@ -52,4 +64,7 @@ class AdminRoutes {
   static const String departments = '/departments';
   static const String reports = '/reports';
   static const String settings = '/settings';
+  static const String examLock = '/exam-lock';
+  static const String courses = '/courses';
+  static const String gamification = '/gamification';
 }

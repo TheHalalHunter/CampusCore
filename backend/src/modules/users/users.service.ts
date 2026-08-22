@@ -50,6 +50,11 @@ export class UsersService {
     await this.usersRepository.increment({ id }, "reputationPoints", points);
   }
 
+  async acceptIntegrityPolicy(id: string): Promise<{ accepted: boolean }> {
+    await this.usersRepository.update(id, { acceptedIntegrityPolicy: true });
+    return { accepted: true };
+  }
+
   async getPublicProfile(id: string): Promise<Partial<User>> {
     const user = await this.findById(id);
     // Exclude sensitive fields from public profile

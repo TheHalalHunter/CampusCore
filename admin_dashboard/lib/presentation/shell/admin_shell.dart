@@ -58,6 +58,9 @@ class _AdminSidebar extends StatelessWidget {
     _NavItem(icon: Icons.people_outlined, label: 'Users', route: AdminRoutes.users),
     _NavItem(icon: Icons.fact_check_outlined, label: 'Moderation', route: AdminRoutes.moderation),
     _NavItem(icon: Icons.school_outlined, label: 'Departments', route: AdminRoutes.departments),
+    _NavItem(icon: Icons.menu_book_outlined, label: 'Courses', route: AdminRoutes.courses),
+    _NavItem(icon: Icons.lock_clock_outlined, label: 'Exam Lock', route: AdminRoutes.examLock),
+    _NavItem(icon: Icons.military_tech_outlined, label: 'Gamification', route: AdminRoutes.gamification),
     _NavItem(icon: Icons.flag_outlined, label: 'Reports', route: AdminRoutes.reports),
     _NavItem(icon: Icons.settings_outlined, label: 'Settings', route: AdminRoutes.settings),
   ];

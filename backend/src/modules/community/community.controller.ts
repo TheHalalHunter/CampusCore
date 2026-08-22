@@ -81,4 +81,28 @@ export class CommunityController {
   flag(@Param("type") type: "question" | "answer", @Param("id") id: string) {
     return this.service.flagContent(type, id);
   }
+
+  @Post("questions/:id/upvote")
+  @ApiOperation({ summary: "Upvote a question" })
+  upvoteQuestion(@Param("id") id: string) {
+    return this.service.upvoteQuestion(id);
+  }
+
+  @Post("questions/:id/downvote")
+  @ApiOperation({ summary: "Downvote a question" })
+  downvoteQuestion(@Param("id") id: string) {
+    return this.service.downvoteQuestion(id);
+  }
+
+  @Post("answers/:id/upvote")
+  @ApiOperation({ summary: "Upvote an answer" })
+  upvoteAnswer(@Param("id") id: string) {
+    return this.service.upvoteAnswer(id);
+  }
+
+  @Post("answers/:id/downvote")
+  @ApiOperation({ summary: "Downvote an answer" })
+  downvoteAnswer(@Param("id") id: string) {
+    return this.service.downvoteAnswer(id);
+  }
 }

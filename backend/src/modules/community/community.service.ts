@@ -95,4 +95,41 @@ export class CommunityService {
       await this.answersRepo.update(id, { isFlagged: true });
     }
   }
+
+  // --- Upvotes ---
+
+  async upvoteQuestion(id: string): Promise<{ upvoteCount: number }> {
+    await this.questionsRepo.increment({ id }, "upvoteCount", 1);
+    const q = await this.questionsRepo.findOne({ where: { id } });
+    return { upvoteCount: q?.upvoteCount ?? 0 };
+  }
+
+  async downvoteQuestion(id: string): Promise<{ upvoteCount: number }> {
+    // Prevent going below 0
+    await this.questionsRepo
+      .createQueryBuilder()
+      .update()
+      .set({ upvoteCount: () => "GREATEST(upvote_count - 1, 0)" })
+      .where("id = :id", { id })
+      .execute();
+    const q = await this.questionsRepo.findOne({ where: { id } });
+    return { upvoteCount: q?.upvoteCount ?? 0 };
+  }
+
+  async upvoteAnswer(id: string): Promise<{ upvoteCount: number }> {
+    await this.answersRepo.increment({ id }, "upvoteCount", 1);
+    const a = await this.answersRepo.findOne({ where: { id } });
+    return { upvoteCount: a?.upvoteCount ?? 0 };
+  }
+
+  async downvoteAnswer(id: string): Promise<{ upvoteCount: number }> {
+    await this.answersRepo
+      .createQueryBuilder()
+      .update()
+      .set({ upvoteCount: () => "GREATEST(upvote_count - 1, 0)" })
+      .where("id = :id", { id })
+      .execute();
+    const a = await this.answersRepo.findOne({ where: { id } });
+    return { upvoteCount: a?.upvoteCount ?? 0 };
+  }
 }

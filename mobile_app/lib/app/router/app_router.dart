@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../presentation/screens/auth/login_screen.dart';
 import '../../presentation/screens/auth/register_screen.dart';
 import '../../presentation/screens/auth/onboarding_screen.dart';
+import '../../presentation/screens/auth/integrity_policy_screen.dart';
 import '../../presentation/screens/home/home_screen.dart';
 import '../../presentation/screens/courses/courses_screen.dart';
 import '../../presentation/screens/courses/course_detail_screen.dart';
@@ -14,12 +15,17 @@ import '../../presentation/screens/resources/upload_resource_screen.dart';
 import '../../presentation/screens/community/community_screen.dart';
 import '../../presentation/screens/community/question_detail_screen.dart';
 import '../../presentation/screens/community/post_question_screen.dart';
+import '../../presentation/screens/community/discussions_screen.dart';
+import '../../presentation/screens/community/thread_detail_screen.dart';
 import '../../presentation/screens/ai_assistant/ai_assistant_screen.dart';
 import '../../presentation/screens/progress/progress_screen.dart';
 import '../../presentation/screens/gpa_calculator/gpa_calculator_screen.dart';
 import '../../presentation/screens/library/library_screen.dart';
 import '../../presentation/screens/profile/profile_screen.dart';
+import '../../presentation/screens/profile/public_profile_screen.dart';
 import '../../presentation/screens/notifications/notifications_screen.dart';
+import '../../presentation/screens/search/search_screen.dart';
+import '../../presentation/providers/user_provider.dart';
 
 export 'app_router.dart';
 
@@ -27,11 +33,28 @@ final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     initialLocation: AppRoutes.onboarding,
     debugLogDiagnostics: false,
+    // Redirect to integrity policy if user hasn't accepted it yet
+    redirect: (context, state) {
+      final user = ref.read(currentUserProvider).valueOrNull;
+      final onPolicyScreen = state.matchedLocation == AppRoutes.integrityPolicy;
+      final onAuthScreens = [
+        AppRoutes.onboarding,
+        AppRoutes.login,
+        AppRoutes.register,
+      ].contains(state.matchedLocation);
+
+      // If user is logged in, hasn't accepted policy, and isn't already on the policy screen
+      if (user != null && !user.acceptedIntegrityPolicy && !onPolicyScreen && !onAuthScreens) {
+        return AppRoutes.integrityPolicy;
+      }
+      return null;
+    },
     routes: [
       // Auth flow
       GoRoute(path: AppRoutes.onboarding, builder: (_, __) => const OnboardingScreen()),
       GoRoute(path: AppRoutes.login, builder: (_, __) => const LoginScreen()),
       GoRoute(path: AppRoutes.register, builder: (_, __) => const RegisterScreen()),
+      GoRoute(path: AppRoutes.integrityPolicy, builder: (_, __) => const IntegrityPolicyScreen()),
 
       // Main shell with bottom navigation
       ShellRoute(
@@ -68,6 +91,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(path: AppRoutes.notifications,  builder: (_, __) => const NotificationsScreen()),
       GoRoute(path: AppRoutes.uploadResource, builder: (_, __) => const UploadResourceScreen()),
       GoRoute(path: AppRoutes.postQuestion,   builder: (_, __) => const PostQuestionScreen()),
+      GoRoute(path: AppRoutes.search,          builder: (_, __) => const SearchScreen()),
+      GoRoute(path: AppRoutes.discussions,     builder: (_, __) => const DiscussionsScreen()),
+      GoRoute(
+        path: '${AppRoutes.discussions}/:threadId',
+        builder: (_, state) => ThreadDetailScreen(threadId: state.pathParameters['threadId']!),
+      ),
+      GoRoute(
+        path: '${AppRoutes.profile}/:userId',
+        builder: (_, state) => PublicProfileScreen(userId: state.pathParameters['userId']!),
+      ),
     ],
   );
 });
@@ -76,6 +109,7 @@ class AppRoutes {
   static const String onboarding = '/';
   static const String login = '/login';
   static const String register = '/register';
+  static const String integrityPolicy = '/integrity-policy';
   static const String home = '/home';
   static const String courses = '/courses';
   static const String resources = '/resources';
@@ -88,6 +122,9 @@ class AppRoutes {
   static const String notifications  = '/notifications';
   static const String uploadResource = '/upload-resource';
   static const String postQuestion   = '/post-question';
+  static const String search         = '/search';
+  static const String discussions    = '/discussions';
+  static const String publicProfile  = '/profile';
 }
 
 /// Bottom navigation shell

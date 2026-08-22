@@ -1,4 +1,4 @@
-import { Controller, Get, Patch, Body, Param, UseGuards } from "@nestjs/common";
+import { Controller, Get, Patch, Body, Param, UseGuards, HttpCode, HttpStatus } from "@nestjs/common";
 import { ApiTags, ApiBearerAuth, ApiOperation } from "@nestjs/swagger";
 import { UsersService } from "./users.service";
 import { UpdateUserDto } from "./dto/update-user.dto";
@@ -23,6 +23,13 @@ export class UsersController {
   @ApiOperation({ summary: "Update current user profile" })
   updateMe(@CurrentUser("id") userId: string, @Body() dto: UpdateUserDto) {
     return this.usersService.update(userId, dto);
+  }
+
+  @Patch("me/accept-policy")
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: "Accept the Academic Integrity Policy (first login)" })
+  acceptPolicy(@CurrentUser("id") userId: string) {
+    return this.usersService.acceptIntegrityPolicy(userId);
   }
 
   @Get(":id/profile")

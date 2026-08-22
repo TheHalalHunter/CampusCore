@@ -8,6 +8,8 @@ class UserModel {
   final String? academicLevel;
   final int reputationPoints;
 
+  final bool acceptedIntegrityPolicy;
+
   const UserModel({
     required this.id,
     required this.email,
@@ -17,6 +19,7 @@ class UserModel {
     this.departmentId,
     this.academicLevel,
     required this.reputationPoints,
+    required this.acceptedIntegrityPolicy,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
@@ -30,6 +33,8 @@ class UserModel {
       academicLevel: json['academicLevel'] as String? ?? json['academic_level'] as String?,
       reputationPoints: (json['reputationPoints'] as num?)?.toInt() ??
           (json['reputation_points'] as num?)?.toInt() ?? 0,
+      acceptedIntegrityPolicy: json['acceptedIntegrityPolicy'] as bool? ??
+          json['accepted_integrity_policy'] as bool? ?? false,
     );
   }
 
