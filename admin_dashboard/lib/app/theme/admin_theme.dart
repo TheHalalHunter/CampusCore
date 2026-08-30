@@ -11,6 +11,7 @@ class AdminColors {
   static const Color info = Color(0xFF3B82F6);
   static const Color background = Color(0xFFF3F4F6);
   static const Color surface = Colors.white;
+  static const Color grey300 = Color(0xFFD1D5DB);
   static const Color grey600 = Color(0xFF4B5563);
   static const Color grey800 = Color(0xFF1F2937);
   static const Color grey900 = Color(0xFF111827);
@@ -28,7 +29,7 @@ class AdminTheme {
       ),
       fontFamily: 'Nunito',
       scaffoldBackgroundColor: AdminColors.background,
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         elevation: 0,
         color: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),

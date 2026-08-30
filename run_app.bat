@@ -4,7 +4,7 @@ echo  CampusCore Mobile App (Web)
 echo ================================================
 echo.
 echo When the app is ready, open Chrome and go to:
-echo   http://localhost:3080
+echo   http://localhost:5080
 echo.
 echo Press Ctrl+C to stop the server.
 echo.
@@ -23,6 +23,6 @@ echo Getting packages...
 call flutter pub get
 
 echo Starting server...
-call flutter run -d web-server --web-port 3080 --web-hostname localhost
+call flutter run -d web-server --web-port 5080 --web-hostname localhost
 
 pause

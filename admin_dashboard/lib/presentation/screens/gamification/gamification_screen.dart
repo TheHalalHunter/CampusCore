@@ -59,7 +59,7 @@ final gamificationOverviewProvider =
   // Fetch top users by reputation (sorted desc)
   final usersResponse = await adminApi.get(
     '/admin/users',
-    queryParameters: {'limit': 20, 'page': 1},
+    params: {'limit': 20, 'page': 1},
   );
   final usersRaw = (usersResponse.data['data'] ?? usersResponse.data);
   final usersList = (usersRaw is List

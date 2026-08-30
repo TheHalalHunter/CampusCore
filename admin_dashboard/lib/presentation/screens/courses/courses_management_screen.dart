@@ -59,7 +59,7 @@ final adminDepartmentsProvider = FutureProvider<List<Map<String, dynamic>>>((ref
 final adminCoursesProvider =
     FutureProvider.family<List<AdminCourseModel>, String>((ref, departmentId) async {
   try {
-    final response = await adminApi.get('/courses', queryParameters: {'departmentId': departmentId});
+    final response = await adminApi.get('/courses', params: {'departmentId': departmentId});
     final data = (response.data['data'] ?? response.data) as List;
     return data.map((c) => AdminCourseModel.fromJson(c as Map<String, dynamic>)).toList();
   } catch (_) {

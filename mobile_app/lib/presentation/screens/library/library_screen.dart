@@ -56,35 +56,23 @@ class _SavedTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final libraryAsync = ref.watch(personalLibraryProvider);
+    final resources = ref.watch(personalLibraryProvider);
 
-    return libraryAsync.when(
-      data: (resources) {
-        if (resources.isEmpty) {
-          return _EmptyLibrary(
-            icon: Icons.bookmark_outline,
-            title: 'No saved resources yet',
-            subtitle:
-                'Browse courses and save resources to access them quickly here.',
-            actionLabel: 'Browse Courses',
-            onAction: () => context.go(AppRoutes.courses),
-          );
-        }
-        return ListView.separated(
-          padding: const EdgeInsets.all(16),
-          itemCount: resources.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 8),
-          itemBuilder: (_, i) => _LibraryResourceCard(resource: resources[i]),
-        );
-      },
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (_, __) => _EmptyLibrary(
-        icon: Icons.wifi_off,
-        title: 'Could not load library',
-        subtitle: 'Make sure the backend is running.',
-        actionLabel: 'Retry',
-        onAction: () => ref.refresh(personalLibraryProvider),
-      ),
+    if (resources.isEmpty) {
+      return _EmptyLibrary(
+        icon: Icons.bookmark_outline,
+        title: 'No saved resources yet',
+        subtitle:
+            'Browse courses and save resources to access them quickly here.',
+        actionLabel: 'Browse Courses',
+        onAction: () => context.go(AppRoutes.courses),
+      );
+    }
+    return ListView.separated(
+      padding: const EdgeInsets.all(16),
+      itemCount: resources.length,
+      separatorBuilder: (_, __) => const SizedBox(height: 8),
+      itemBuilder: (_, i) => _LibraryResourceCard(resource: resources[i]),
     );
   }
 }

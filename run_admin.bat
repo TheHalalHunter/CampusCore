@@ -4,7 +4,7 @@ echo  CampusCore Admin Dashboard
 echo ================================================
 echo.
 echo When ready, open Chrome and go to:
-echo   http://localhost:3081
+echo   http://localhost:5081
 echo.
 echo Press Ctrl+C to stop the server.
 echo.
@@ -23,6 +23,6 @@ echo Getting packages...
 call flutter pub get
 
 echo Starting server...
-call flutter run -d web-server --web-port 3081 --web-hostname localhost
+call flutter run -d web-server --web-port 5081 --web-hostname localhost
 
 pause
