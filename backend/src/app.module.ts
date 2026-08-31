@@ -20,6 +20,7 @@ import { ExamLockModule } from "./modules/exam-lock/exam-lock.module";
 import { ConnectionsModule } from "./modules/connections/connections.module";
 import { SearchModule } from "./modules/search/search.module";
 import { DiscussionsModule } from "./modules/discussions/discussions.module";
+import { GpaModule } from "./modules/gpa/gpa.module";
 
 @Module({
   imports: [
@@ -79,6 +80,7 @@ import { DiscussionsModule } from "./modules/discussions/discussions.module";
     ConnectionsModule,
     SearchModule,
     DiscussionsModule,
+    GpaModule,
   ],
 })
 export class AppModule {}

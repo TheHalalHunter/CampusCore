@@ -5,6 +5,7 @@ import '../../../app/theme/app_theme.dart';
 import '../../../app/router/app_router.dart';
 import '../../../data/models/question_model.dart';
 import '../../providers/community_provider.dart';
+import 'discussions_screen.dart';
 
 class CommunityScreen extends ConsumerStatefulWidget {
   const CommunityScreen({super.key});
@@ -13,171 +14,196 @@ class CommunityScreen extends ConsumerStatefulWidget {
   ConsumerState<CommunityScreen> createState() => _CommunityScreenState();
 }
 
-class _CommunityScreenState extends ConsumerState<CommunityScreen> {
+class _CommunityScreenState extends ConsumerState<CommunityScreen>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabCtrl;
   String _selectedLevel = 'All';
-
   final _levels = ['All', '100L', '200L', '300L', '400L', '500L'];
 
   @override
-  Widget build(BuildContext context) {
-    final questionsAsync = ref.watch(
-      questionsProvider((
-        courseId: null,
-        level: _selectedLevel == 'All' ? null : _selectedLevel,
-      )),
-    );
+  void initState() {
+    super.initState();
+    _tabCtrl = TabController(length: 2, vsync: this);
+  }
 
+  @override
+  void dispose() {
+    _tabCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Community'),
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(52),
-          child: Container(
-            color: AppColors.surface,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: _levels.map((level) {
-                  final selected = _selectedLevel == level;
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: GestureDetector(
-                      onTap: () => setState(() => _selectedLevel = level),
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 7),
-                        decoration: BoxDecoration(
-                          color: selected
-                              ? AppColors.primary
-                              : AppColors.surfaceAlt,
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: selected
-                                ? AppColors.primary
-                                : AppColors.border,
-                          ),
-                        ),
-                        child: Text(
-                          level,
-                          style: TextStyle(
-                            color: selected
-                                ? Colors.white
-                                : AppColors.textSecondary,
-                            fontWeight: selected
-                                ? FontWeight.w700
-                                : FontWeight.w500,
-                            fontSize: 13,
-                          ),
-                        ),
-                      ),
-                    ),
-                  );
-                }).toList(),
-              ),
-            ),
-          ),
+        bottom: TabBar(
+          controller: _tabCtrl,
+          tabs: const [
+            Tab(text: 'Q&A'),
+            Tab(text: 'Discussions'),
+          ],
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => context.push(AppRoutes.postQuestion),
-        icon: const Icon(Icons.add),
-        label: const Text('Ask Question'),
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
+      body: TabBarView(
+        controller: _tabCtrl,
+        children: [
+          _QATab(
+            selectedLevel: _selectedLevel,
+            levels: _levels,
+            onLevelChanged: (l) => setState(() => _selectedLevel = l),
+          ),
+          const DiscussionsScreen(),
+        ],
       ),
-      body: questionsAsync.when(
-        data: (questions) {
-          if (questions.isEmpty) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(32),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 80,
-                      height: 80,
-                      decoration: BoxDecoration(
-                        color: AppColors.primary.withOpacity(0.08),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(Icons.forum_outlined,
-                          size: 40, color: AppColors.primary),
-                    ),
-                    const SizedBox(height: 20),
-                    const Text(
-                      'No questions yet',
-                      style: TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      'Be the first to ask a question in this level.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(color: AppColors.textSecondary),
-                    ),
-                    const SizedBox(height: 24),
-                    ElevatedButton.icon(
-                      icon: const Icon(Icons.add, size: 18),
-                      label: const Text('Ask a Question'),
-                      onPressed: () => context.push(AppRoutes.postQuestion),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          }
-
-          return RefreshIndicator(
-            onRefresh: () async => ref.invalidate(allQuestionsProvider),
-            color: AppColors.primary,
-            child: ListView.separated(
-              padding: const EdgeInsets.all(16),
-              itemCount: questions.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 8),
-              itemBuilder: (_, i) => _QuestionCard(question: questions[i]),
-            ),
-          );
-        },
-        loading: () => ListView.separated(
-          padding: const EdgeInsets.all(16),
-          itemCount: 5,
-          separatorBuilder: (_, __) => const SizedBox(height: 8),
-          itemBuilder: (_, __) => Container(
-            height: 100,
-            decoration: BoxDecoration(
-              color: AppColors.grey200,
-              borderRadius: BorderRadius.circular(16),
-            ),
-          ),
-        ),
-        error: (_, __) => Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.wifi_off, size: 48, color: AppColors.textHint),
-              const SizedBox(height: 12),
-              const Text('Could not load questions.',
-                  style: TextStyle(color: AppColors.textSecondary)),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () => ref.invalidate(allQuestionsProvider),
-                child: const Text('Retry'),
-              ),
-            ],
-          ),
+      floatingActionButton: AnimatedBuilder(
+        animation: _tabCtrl,
+        builder: (_, __) => FloatingActionButton.extended(
+          onPressed: () => _tabCtrl.index == 0
+              ? context.push(AppRoutes.postQuestion)
+              : null,
+          icon: const Icon(Icons.add),
+          label: Text(_tabCtrl.index == 0 ? 'Ask Question' : 'New Thread'),
+          backgroundColor: AppColors.primary,
+          foregroundColor: Colors.white,
         ),
       ),
     );
   }
 }
 
-// ─── Question Card ────────────────────────────────────────────────────────────
+// ─── Q&A Tab ──────────────────────────────────────────────────────────────────
+
+class _QATab extends ConsumerWidget {
+  final String selectedLevel;
+  final List<String> levels;
+  final void Function(String) onLevelChanged;
+
+  const _QATab({
+    required this.selectedLevel,
+    required this.levels,
+    required this.onLevelChanged,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final questionsAsync = ref.watch(
+      questionsProvider((
+        courseId: null,
+        level: selectedLevel == 'All' ? null : selectedLevel,
+      )),
+    );
+
+    return Column(
+      children: [
+        // Level filter
+        Container(
+          color: AppColors.surface,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: levels.map((level) {
+                final selected = selectedLevel == level;
+                return Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: GestureDetector(
+                    onTap: () => onLevelChanged(level),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
+                      decoration: BoxDecoration(
+                        color: selected ? AppColors.primary : AppColors.surfaceAlt,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: selected ? AppColors.primary : AppColors.border),
+                      ),
+                      child: Text(level,
+                          style: TextStyle(
+                            color: selected ? Colors.white : AppColors.textSecondary,
+                            fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                            fontSize: 13,
+                          )),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+        ),
+
+        // Questions list
+        Expanded(
+          child: questionsAsync.when(
+            data: (questions) {
+              if (questions.isEmpty) {
+                return Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(32),
+                    child: Column(mainAxisSize: MainAxisSize.min, children: [
+                      Container(
+                        width: 80, height: 80,
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withOpacity(0.08), shape: BoxShape.circle),
+                        child: const Icon(Icons.forum_outlined, size: 40, color: AppColors.primary),
+                      ),
+                      const SizedBox(height: 20),
+                      const Text('No questions yet',
+                          style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700,
+                              color: AppColors.textPrimary)),
+                      const SizedBox(height: 8),
+                      const Text('Be the first to ask a question.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: AppColors.textSecondary)),
+                      const SizedBox(height: 24),
+                      ElevatedButton.icon(
+                        icon: const Icon(Icons.add, size: 18),
+                        label: const Text('Ask a Question'),
+                        onPressed: () => context.push(AppRoutes.postQuestion),
+                      ),
+                    ]),
+                  ),
+                );
+              }
+              return RefreshIndicator(
+                onRefresh: () async => ref.invalidate(allQuestionsProvider),
+                color: AppColors.primary,
+                child: ListView.separated(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: questions.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 8),
+                  itemBuilder: (_, i) => _QuestionCard(question: questions[i]),
+                ),
+              );
+            },
+            loading: () => ListView.separated(
+              padding: const EdgeInsets.all(16),
+              itemCount: 5,
+              separatorBuilder: (_, __) => const SizedBox(height: 8),
+              itemBuilder: (_, __) => Container(
+                height: 100,
+                decoration: BoxDecoration(color: AppColors.grey200,
+                    borderRadius: BorderRadius.circular(16)),
+              ),
+            ),
+            error: (_, __) => Center(
+              child: Column(mainAxisSize: MainAxisSize.min, children: [
+                const Icon(Icons.wifi_off, size: 48, color: AppColors.textHint),
+                const SizedBox(height: 12),
+                const Text('Could not load questions.',
+                    style: TextStyle(color: AppColors.textSecondary)),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () => ref.invalidate(allQuestionsProvider),
+                  child: const Text('Retry'),
+                ),
+              ]),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
 
 class _QuestionCard extends StatelessWidget {
   final QuestionModel question;

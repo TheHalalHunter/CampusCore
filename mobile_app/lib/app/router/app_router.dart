@@ -23,6 +23,7 @@ import '../../presentation/screens/gpa_calculator/gpa_calculator_screen.dart';
 import '../../presentation/screens/library/library_screen.dart';
 import '../../presentation/screens/profile/profile_screen.dart';
 import '../../presentation/screens/profile/public_profile_screen.dart';
+import '../../presentation/screens/profile/connections_screen.dart';
 import '../../presentation/screens/notifications/notifications_screen.dart';
 import '../../presentation/screens/search/search_screen.dart';
 import '../../presentation/providers/user_provider.dart';
@@ -93,6 +94,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(path: AppRoutes.postQuestion,   builder: (_, __) => const PostQuestionScreen()),
       GoRoute(path: AppRoutes.search,          builder: (_, __) => const SearchScreen()),
       GoRoute(path: AppRoutes.discussions,     builder: (_, __) => const DiscussionsScreen()),
+      GoRoute(path: AppRoutes.connections,     builder: (_, __) => const ConnectionsScreen()),
       GoRoute(
         path: '${AppRoutes.discussions}/:threadId',
         builder: (_, state) => ThreadDetailScreen(threadId: state.pathParameters['threadId']!),
@@ -124,7 +126,8 @@ class AppRoutes {
   static const String postQuestion   = '/post-question';
   static const String search         = '/search';
   static const String discussions    = '/discussions';
-  static const String publicProfile  = '/profile';
+  static const String connections    = '/connections';
+  static const String publicProfile  = '/profile/:userId';
 }
 
 /// Bottom navigation shell

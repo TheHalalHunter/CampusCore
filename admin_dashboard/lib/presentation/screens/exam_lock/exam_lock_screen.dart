@@ -212,7 +212,7 @@ class _ExamLockScreenState extends ConsumerState<ExamLockScreen> {
     );
     if (confirm != true) return;
     try {
-      await adminApi.patch('/exam-lock/$id'); // backend uses DELETE, patch workaround
+      await adminApi.delete('/exam-lock/$id');
       ref.invalidate(examLocksProvider);
     } catch (_) {
       if (mounted) {

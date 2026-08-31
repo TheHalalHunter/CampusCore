@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../app/theme/app_theme.dart';
 import '../../../data/models/question_model.dart';
 import '../../providers/community_provider.dart';
+import '../../providers/discussions_provider.dart';
 
 class QuestionDetailScreen extends ConsumerStatefulWidget {
   final String questionId;
@@ -303,12 +304,12 @@ List<Widget> _buildSortedAnswers(List<AnswerModel> answers, String questionId) {
 
 // ─── Question card ────────────────────────────────────────────────────────────
 
-class _QuestionCard extends StatelessWidget {
+class _QuestionCard extends ConsumerWidget {
   final QuestionModel question;
   const _QuestionCard({required this.question});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -429,30 +430,31 @@ class _QuestionCard extends StatelessWidget {
           const Divider(),
           const SizedBox(height: 8),
 
-          // Stats
+          // Stats with upvote button
           Row(
             children: [
-              const Icon(Icons.thumb_up_outlined,
-                  size: 16, color: AppColors.textSecondary),
-              const SizedBox(width: 4),
-              Text(
-                '${question.upvoteCount} upvotes',
-                style: const TextStyle(
-                  color: AppColors.textSecondary,
-                  fontSize: 13,
-                ),
+              GestureDetector(
+                onTap: () => ref.read(upvoteProvider.notifier)
+                    .upvoteQuestion(question.id, question.upvoteCount),
+                child: Row(children: [
+                  Icon(Icons.thumb_up_outlined,
+                      size: 16,
+                      color: ref.watch(upvoteProvider)['q_${question.id}'] != null
+                          ? AppColors.primary
+                          : AppColors.textSecondary),
+                  const SizedBox(width: 4),
+                  Text(
+                    '${ref.watch(upvoteProvider.select((s) => s['q_${question.id}'] ?? question.upvoteCount))} upvotes',
+                    style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                  ),
+                ]),
               ),
               const SizedBox(width: 16),
               const Icon(Icons.question_answer_outlined,
                   size: 16, color: AppColors.textSecondary),
               const SizedBox(width: 4),
-              Text(
-                '${question.answerCount} answers',
-                style: const TextStyle(
-                  color: AppColors.textSecondary,
-                  fontSize: 13,
-                ),
-              ),
+              Text('${question.answerCount} answers',
+                  style: const TextStyle(color: AppColors.textSecondary, fontSize: 13)),
             ],
           ),
         ],
@@ -538,29 +540,28 @@ class _AnswerCard extends ConsumerWidget {
               ),
               const Spacer(),
               // Upvote button
-              InkWell(
-                onTap: () {},
-                borderRadius: BorderRadius.circular(8),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 8, vertical: 4),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.thumb_up_outlined,
-                          size: 16, color: AppColors.textSecondary),
+              Consumer(builder: (context, ref, _) {
+                final count = ref.watch(upvoteProvider.select(
+                    (s) => s['a_${answer.id}'] ?? answer.upvoteCount));
+                return InkWell(
+                  onTap: () => ref.read(upvoteProvider.notifier)
+                      .upvoteAnswer(answer.id, answer.upvoteCount),
+                  borderRadius: BorderRadius.circular(8),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    child: Row(children: [
+                      Icon(Icons.thumb_up_outlined, size: 16,
+                          color: ref.watch(upvoteProvider)['a_${answer.id}'] != null
+                              ? AppColors.primary
+                              : AppColors.textSecondary),
                       const SizedBox(width: 4),
-                      Text(
-                        '${answer.upvoteCount} helpful',
-                        style: const TextStyle(
-                          color: AppColors.textSecondary,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
+                      Text('$count helpful',
+                          style: const TextStyle(color: AppColors.textSecondary,
+                              fontSize: 12, fontWeight: FontWeight.w500)),
+                    ]),
                   ),
-                ),
-              ),
+                );
+              }),
               const SizedBox(width: 4),
               // Flag button
               InkWell(

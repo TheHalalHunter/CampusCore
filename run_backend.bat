@@ -1,11 +1,19 @@
 @echo off
-echo Starting CampusCore Backend API...
+echo ================================================
+echo  CampusCore Backend API
+echo ================================================
 echo.
-echo API: http://localhost:3000/api/v1
-echo Docs: http://localhost:3000/api/docs
+echo API will be available at:
+echo   http://localhost:3000/api/v1
 echo.
-echo Press Ctrl+C to stop.
+echo Swagger docs at:
+echo   http://localhost:3000/api/docs
 echo.
-cd /d "C:\Users\USER\Documents\CampusCore\backend"
-npm run start:dev
+echo Press Ctrl+C to stop the server.
+echo.
+
+cd /d "C:\Users\USER\OneDrive\Documents\CampusCore\backend"
+
+call npm run start:dev
+
 pause

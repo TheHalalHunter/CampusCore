@@ -39,6 +39,12 @@ class HomeScreen extends ConsumerWidget {
               ],
             ),
             actions: [
+              // Search
+              IconButton(
+                icon: const Icon(Icons.search, color: AppColors.textPrimary),
+                tooltip: 'Search',
+                onPressed: () => context.push(AppRoutes.search),
+              ),
               // Notification bell with unread badge
               Stack(
                 children: [

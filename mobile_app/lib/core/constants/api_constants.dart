@@ -49,4 +49,8 @@ class ApiConstants {
 
   // Discussions
   static const String discussions = '/discussions';
+
+  // GPA
+  static const String gpaSemesters = '/gpa/semesters';
+  static const String gpaCgpa = '/gpa/cgpa';
 }
