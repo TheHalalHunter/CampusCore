@@ -7,6 +7,7 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { Question } from "./entities/question.entity";
 import { Answer } from "./entities/answer.entity";
+import { GamificationService } from "../gamification/gamification.service";
 
 @Injectable()
 export class CommunityService {
@@ -15,6 +16,7 @@ export class CommunityService {
     private readonly questionsRepo: Repository<Question>,
     @InjectRepository(Answer)
     private readonly answersRepo: Repository<Answer>,
+    private readonly gamification: GamificationService,
   ) {}
 
   // --- Questions ---
@@ -46,7 +48,11 @@ export class CommunityService {
     data: Partial<Question>,
   ): Promise<Question> {
     const question = this.questionsRepo.create({ ...data, authorId });
-    return this.questionsRepo.save(question);
+    const saved = await this.questionsRepo.save(question);
+    // Award reputation for posting a question
+    await this.gamification.awardPoints(authorId, "QUESTION_POSTED");
+    await this.gamification.checkAndAwardBadges(authorId);
+    return saved;
   }
 
   // --- Answers ---
@@ -67,6 +73,9 @@ export class CommunityService {
     const answer = this.answersRepo.create({ authorId, questionId, body });
     const saved = await this.answersRepo.save(answer);
     await this.questionsRepo.increment({ id: questionId }, "answerCount", 1);
+    // Award reputation for posting an answer
+    await this.gamification.awardPoints(authorId, "ANSWER_POSTED");
+    await this.gamification.checkAndAwardBadges(authorId);
     return saved;
   }
 

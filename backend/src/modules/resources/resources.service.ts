@@ -8,12 +8,14 @@ import { Repository } from "typeorm";
 import { Resource, ResourceStatus } from "./entities/resource.entity";
 import { UserRole } from "../users/enums/user-role.enum";
 import { User } from "../users/entities/user.entity";
+import { GamificationService } from "../gamification/gamification.service";
 
 @Injectable()
 export class ResourcesService {
   constructor(
     @InjectRepository(Resource)
     private readonly repo: Repository<Resource>,
+    private readonly gamification: GamificationService,
   ) {}
 
   /** Public: approved resources for a course */
@@ -59,7 +61,24 @@ export class ResourcesService {
     resource.status = status;
     resource.reviewedBy = reviewer.id;
     resource.reviewNote = reviewNote;
-    return this.repo.save(resource);
+    const saved = await this.repo.save(resource);
+
+    // Award reputation points and record on-chain contribution if approved
+    if (status === ResourceStatus.APPROVED) {
+      // Get uploader to find their Stellar address
+      const uploader = await this.repo.manager.findOne(
+        require("../users/entities/user.entity").User,
+        { where: { id: resource.uploaderId } },
+      );
+      await this.gamification.awardPoints(
+        resource.uploaderId,
+        "UPLOAD_APPROVED",
+        uploader?.stellarAddress,
+      );
+      await this.gamification.checkAndAwardBadges(resource.uploaderId);
+    }
+
+    return saved;
   }
 
   /** Pending resources queue for moderators */

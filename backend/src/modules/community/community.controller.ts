@@ -7,11 +7,13 @@ import {
   Body,
   Query,
   UseGuards,
+  ForbiddenException,
 } from "@nestjs/common";
 import { ApiTags, ApiBearerAuth, ApiOperation } from "@nestjs/swagger";
 import { CommunityService } from "./community.service";
 import { PostQuestionDto } from "./dto/post-question.dto";
 import { PostAnswerDto } from "./dto/post-answer.dto";
+import { ExamLockService } from "../exam-lock/exam-lock.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { RolesGuard } from "../../common/guards/roles.guard";
 import { Roles } from "../../common/decorators/roles.decorator";
@@ -24,7 +26,21 @@ import { User } from "../users/entities/user.entity";
 @UseGuards(JwtAuthGuard)
 @Controller("community")
 export class CommunityController {
-  constructor(private readonly service: CommunityService) {}
+  constructor(
+    private readonly service: CommunityService,
+    private readonly examLock: ExamLockService,
+  ) {}
+
+  private async checkDiscussionsLock(user: User): Promise<void> {
+    const locked = await this.examLock.areDiscussionsLocked(user.academicLevel);
+    if (locked) {
+      const details = await this.examLock.getActiveLockDetails(user.academicLevel);
+      const reason = details?.reason ? ` Reason: ${details.reason}` : "";
+      throw new ForbiddenException(
+        `Community Q&A is disabled during the exam period.${reason}`,
+      );
+    }
+  }
 
   @Get("questions")
   @ApiOperation({ summary: "Browse questions (filter by dept, course, level)" })
@@ -46,17 +62,19 @@ export class CommunityController {
 
   @Post("questions")
   @ApiOperation({ summary: "Post a new question" })
-  postQuestion(@CurrentUser() user: User, @Body() dto: PostQuestionDto) {
+  async postQuestion(@CurrentUser() user: User, @Body() dto: PostQuestionDto) {
+    await this.checkDiscussionsLock(user);
     return this.service.postQuestion(user.id, dto);
   }
 
   @Post("questions/:id/answers")
   @ApiOperation({ summary: "Answer a question" })
-  postAnswer(
+  async postAnswer(
     @Param("id") questionId: string,
     @CurrentUser() user: User,
     @Body() dto: PostAnswerDto,
   ) {
+    await this.checkDiscussionsLock(user);
     return this.service.postAnswer(user.id, questionId, dto.body);
   }
 
