@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import '../../core/network/api_client.dart';
 import '../../core/storage/token_storage.dart';
 import '../../core/constants/api_constants.dart';
+import '../../core/services/fcm_service.dart';
 
 // Expose the current Firebase user state
 final authStateProvider = StreamProvider<User?>((ref) {
@@ -118,9 +119,10 @@ class AuthNotifier extends Notifier<AsyncValue<User?>> {
       final tokenStorage = ref.read(tokenStorageProvider);
       await tokenStorage.saveAccessToken(response.data['data']['accessToken']);
       await tokenStorage.saveRefreshToken(response.data['data']['refreshToken']);
+      // Register FCM token after successful login
+      await FcmService.init(ref);
     } catch (e) {
       // Backend unavailable — Firebase auth succeeded but platform JWT not stored
-      // App will work in limited mode until backend is reachable
       print('Backend token exchange failed: $e');
     }
   }

@@ -8,6 +8,8 @@ import { Repository } from "typeorm";
 import { Question } from "./entities/question.entity";
 import { Answer } from "./entities/answer.entity";
 import { GamificationService } from "../gamification/gamification.service";
+import { NotificationsService } from "../notifications/notifications.service";
+import { NotificationType } from "../notifications/entities/notification.entity";
 
 @Injectable()
 export class CommunityService {
@@ -17,6 +19,7 @@ export class CommunityService {
     @InjectRepository(Answer)
     private readonly answersRepo: Repository<Answer>,
     private readonly gamification: GamificationService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   // --- Questions ---
@@ -69,13 +72,23 @@ export class CommunityService {
     questionId: string,
     body: string,
   ): Promise<Answer> {
-    await this.findQuestion(questionId); // ensure question exists
+    const question = await this.findQuestion(questionId);
     const answer = this.answersRepo.create({ authorId, questionId, body });
     const saved = await this.answersRepo.save(answer);
     await this.questionsRepo.increment({ id: questionId }, "answerCount", 1);
     // Award reputation for posting an answer
     await this.gamification.awardPoints(authorId, "ANSWER_POSTED");
     await this.gamification.checkAndAwardBadges(authorId);
+    // Notify the question author (not self)
+    if (question.authorId !== authorId) {
+      await this.notifications.create({
+        userId: question.authorId,
+        title: "New answer on your question",
+        body: `Someone answered: "${question.title}"`,
+        type: NotificationType.QUESTION_ANSWERED,
+        relatedId: questionId,
+      });
+    }
     return saved;
   }
 
@@ -83,7 +96,18 @@ export class CommunityService {
     const answer = await this.answersRepo.findOne({ where: { id: answerId } });
     if (!answer) throw new NotFoundException("Answer not found");
     answer.isVerified = true;
-    return this.answersRepo.save(answer);
+    const saved = await this.answersRepo.save(answer);
+    // Award helpful points and notify the answer author
+    await this.gamification.awardPoints(answer.authorId, "ANSWER_HELPFUL");
+    await this.gamification.checkAndAwardBadges(answer.authorId);
+    await this.notifications.create({
+      userId: answer.authorId,
+      title: "Your answer was verified! ✅",
+      body: "A moderator marked your answer as the best answer.",
+      type: NotificationType.ANSWER_VERIFIED,
+      relatedId: answer.questionId,
+    });
+    return saved;
   }
 
   async markResolved(questionId: string, userId: string): Promise<Question> {

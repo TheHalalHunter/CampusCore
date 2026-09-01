@@ -10,6 +10,7 @@ class ApiConstants {
   // Users
   static const String me = '/users/me';
   static const String acceptPolicy = '/users/me/accept-policy';
+  static const String updateFcmToken = '/users/me';
 
   // Departments
   static const String departments = '/departments';

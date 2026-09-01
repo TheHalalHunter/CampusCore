@@ -5,12 +5,14 @@ import { ResourcesService } from "./resources.service";
 import { ResourcesController } from "./resources.controller";
 import { GamificationModule } from "../gamification/gamification.module";
 import { UsersModule } from "../users/users.module";
+import { NotificationsModule } from "../notifications/notifications.module";
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Resource]),
     GamificationModule,
     UsersModule,
+    NotificationsModule,
   ],
   providers: [ResourcesService],
   controllers: [ResourcesController],

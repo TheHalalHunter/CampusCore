@@ -31,4 +31,9 @@ export class UpdateUserDto {
   @IsOptional()
   @IsString()
   stellarAddress?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  fcmToken?: string;
 }

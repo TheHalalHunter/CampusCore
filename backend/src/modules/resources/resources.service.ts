@@ -9,6 +9,8 @@ import { Resource, ResourceStatus } from "./entities/resource.entity";
 import { UserRole } from "../users/enums/user-role.enum";
 import { User } from "../users/entities/user.entity";
 import { GamificationService } from "../gamification/gamification.service";
+import { NotificationsService } from "../notifications/notifications.service";
+import { NotificationType } from "../notifications/entities/notification.entity";
 
 @Injectable()
 export class ResourcesService {
@@ -16,6 +18,7 @@ export class ResourcesService {
     @InjectRepository(Resource)
     private readonly repo: Repository<Resource>,
     private readonly gamification: GamificationService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   /** Public: approved resources for a course */
@@ -63,19 +66,39 @@ export class ResourcesService {
     resource.reviewNote = reviewNote;
     const saved = await this.repo.save(resource);
 
-    // Award reputation points and record on-chain contribution if approved
+    // Award reputation points and notify uploader
     if (status === ResourceStatus.APPROVED) {
-      // Get uploader to find their Stellar address
-      const uploader = await this.repo.manager.findOne(
-        require("../users/entities/user.entity").User,
-        { where: { id: resource.uploaderId } },
-      );
+      const uploader = await this.repo.manager.findOne(User, {
+        where: { id: resource.uploaderId },
+      });
       await this.gamification.awardPoints(
         resource.uploaderId,
         "UPLOAD_APPROVED",
         uploader?.stellarAddress,
       );
       await this.gamification.checkAndAwardBadges(resource.uploaderId);
+      await this.notifications.create({
+        userId: resource.uploaderId,
+        title: "Upload Approved! 🎉",
+        body: `Your resource "${resource.title}" has been approved and is now live.`,
+        type: NotificationType.UPLOAD_APPROVED,
+        relatedId: resource.id,
+        fcmToken: uploader?.fcmToken,
+      });
+    } else {
+      const uploader = await this.repo.manager.findOne(User, {
+        where: { id: resource.uploaderId },
+      });
+      await this.notifications.create({
+        userId: resource.uploaderId,
+        title: "Upload Not Approved",
+        body: reviewNote
+          ? `Your resource "${resource.title}" was not approved. Reason: ${reviewNote}`
+          : `Your resource "${resource.title}" was not approved.`,
+        type: NotificationType.UPLOAD_REJECTED,
+        relatedId: resource.id,
+        fcmToken: uploader?.fcmToken,
+      });
     }
 
     return saved;

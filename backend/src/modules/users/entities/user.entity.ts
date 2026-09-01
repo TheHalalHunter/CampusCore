@@ -60,6 +60,9 @@ export class User {
   @Column({ name: "stellar_address", nullable: true, unique: true })
   stellarAddress: string;
 
+  @Column({ name: "fcm_token", nullable: true })
+  fcmToken: string;
+
   @CreateDateColumn({ name: "created_at" })
   createdAt: Date;
 
