@@ -106,6 +106,37 @@ class AuthNotifier extends Notifier<AsyncValue<User?>> {
     state = const AsyncValue.data(null);
   }
 
+  /// Called from the register screen after Firebase account creation.
+  /// Sends fullName, departmentId, and academicLevel to the backend.
+  Future<void> registerWithFirebase({
+    required User firebaseUser,
+    required String fullName,
+    String? departmentId,
+    String? academicLevel,
+  }) async {
+    try {
+      final idToken = await firebaseUser.getIdToken();
+      final apiClient = ref.read(apiClientProvider);
+      final response = await apiClient.post(
+        ApiConstants.login,
+        data: {
+          'idToken': idToken,
+          'fullName': fullName,
+          if (departmentId != null) 'departmentId': departmentId,
+          if (academicLevel != null) 'academicLevel': academicLevel,
+        },
+      );
+      final tokenStorage = ref.read(tokenStorageProvider);
+      await tokenStorage.saveAccessToken(response.data['data']['accessToken']);
+      await tokenStorage.saveRefreshToken(response.data['data']['refreshToken']);
+      await FcmService.init(ref);
+      state = AsyncValue.data(firebaseUser);
+    } catch (e, st) {
+      state = AsyncValue.error(e.toString(), st);
+      rethrow;
+    }
+  }
+
   /// Exchanges Firebase ID token for platform JWT.
   /// Fails silently if backend is unavailable — Firebase auth still works.
   Future<void> _exchangeFirebaseToken(User firebaseUser) async {
