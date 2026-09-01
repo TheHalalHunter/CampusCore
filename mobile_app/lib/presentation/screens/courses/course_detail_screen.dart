@@ -8,6 +8,7 @@ import '../../../data/models/resource_model.dart';
 import '../../providers/courses_provider.dart';
 import '../../providers/resources_provider.dart';
 import '../../providers/library_provider.dart';
+import '../../providers/progress_provider.dart';
 
 class CourseDetailScreen extends ConsumerStatefulWidget {
   final String courseId;
@@ -24,7 +25,7 @@ class _CourseDetailScreenState extends ConsumerState<CourseDetailScreen>
   @override
   void initState() {
     super.initState();
-    _tabs = TabController(length: 5, vsync: this);
+    _tabs = TabController(length: 6, vsync: this);
   }
 
   @override
@@ -56,6 +57,7 @@ class _CourseDetailScreenState extends ConsumerState<CourseDetailScreen>
             Tab(text: 'Notes'),
             Tab(text: 'Past Q.'),
             Tab(text: 'Slides'),
+            Tab(text: 'Progress'),
             Tab(text: 'AI Tutor'),
           ],
         ),
@@ -76,6 +78,9 @@ class _CourseDetailScreenState extends ConsumerState<CourseDetailScreen>
                 semester: course.semester,
                 units: course.creditUnits,
                 description: course.description,
+                onNotesTab: () => _tabs.animateTo(1),
+                onPastQTab: () => _tabs.animateTo(2),
+                onSlidesTab: () => _tabs.animateTo(3),
               ),
               // Notes
               _ResourcesTab(courseId: widget.courseId, type: 'lecture_note'),
@@ -83,8 +88,10 @@ class _CourseDetailScreenState extends ConsumerState<CourseDetailScreen>
               _ResourcesTab(courseId: widget.courseId, type: 'past_question'),
               // Slides
               _ResourcesTab(courseId: widget.courseId, type: 'slide'),
+              // Progress
+              _ProgressTab(courseId: widget.courseId),
               // AI Tutor
-              _AiTutorTab(courseTitle: course.title),
+              _AiTutorTab(courseTitle: course.title, courseId: widget.courseId),
             ],
           );
         },
@@ -104,6 +111,9 @@ class _OverviewTab extends StatelessWidget {
   final int semester;
   final int units;
   final String? description;
+  final VoidCallback onNotesTab;
+  final VoidCallback onPastQTab;
+  final VoidCallback onSlidesTab;
 
   const _OverviewTab({
     required this.title,
@@ -112,6 +122,9 @@ class _OverviewTab extends StatelessWidget {
     required this.semester,
     required this.units,
     this.description,
+    required this.onNotesTab,
+    required this.onPastQTab,
+    required this.onSlidesTab,
   });
 
   @override
@@ -204,18 +217,21 @@ class _OverviewTab extends StatelessWidget {
             color: AppColors.info,
             label: 'Lecture Notes',
             subtitle: 'Download course notes',
+            onTap: onNotesTab,
           ),
           _StudyMaterialLink(
             icon: Icons.quiz_outlined,
             color: AppColors.accent,
             label: 'Past Questions',
             subtitle: 'Practice with past exam questions',
+            onTap: onPastQTab,
           ),
           _StudyMaterialLink(
             icon: Icons.slideshow_outlined,
             color: AppColors.success,
             label: 'Slides',
             subtitle: 'Presentation slides',
+            onTap: onSlidesTab,
           ),
         ],
       ),
@@ -252,12 +268,14 @@ class _StudyMaterialLink extends StatelessWidget {
   final Color color;
   final String label;
   final String subtitle;
+  final VoidCallback onTap;
 
   const _StudyMaterialLink({
     required this.icon,
     required this.color,
     required this.label,
     required this.subtitle,
+    required this.onTap,
   });
 
   @override
@@ -265,6 +283,7 @@ class _StudyMaterialLink extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.only(bottom: 10),
       child: ListTile(
+        onTap: onTap,
         leading: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
@@ -273,22 +292,11 @@ class _StudyMaterialLink extends StatelessWidget {
           ),
           child: Icon(icon, color: color, size: 20),
         ),
-        title: Text(
-          label,
-          style: const TextStyle(
-            fontWeight: FontWeight.w600,
-            color: AppColors.textPrimary,
-          ),
-        ),
-        subtitle: Text(
-          subtitle,
-          style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
-        ),
-        trailing: const Icon(
-          Icons.arrow_forward_ios,
-          size: 14,
-          color: AppColors.textSecondary,
-        ),
+        title: Text(label,
+            style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+        subtitle: Text(subtitle,
+            style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+        trailing: const Icon(Icons.arrow_forward_ios, size: 14, color: AppColors.textSecondary),
       ),
     );
   }
@@ -449,11 +457,114 @@ class _ResourceCard extends ConsumerWidget {
   }
 }
 
+// ─── Progress Tab ─────────────────────────────────────────────────────────────
+
+class _ProgressTab extends ConsumerWidget {
+  final String courseId;
+  const _ProgressTab({required this.courseId});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final progressAsync = ref.watch(courseProgressProvider(courseId));
+
+    return progressAsync.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (_, __) => const Center(
+          child: Text('Could not load progress.',
+              style: TextStyle(color: AppColors.textSecondary))),
+      data: (data) {
+        if (data.topics.isEmpty) {
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(32),
+              child: Column(mainAxisSize: MainAxisSize.min, children: const [
+                Icon(Icons.track_changes_outlined, size: 56, color: AppColors.grey400),
+                SizedBox(height: 16),
+                Text('No topics tracked yet',
+                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+                SizedBox(height: 8),
+                Text('Go to Progress screen to mark topics as complete.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: AppColors.textSecondary)),
+              ]),
+            ),
+          );
+        }
+
+        return SingleChildScrollView(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Overall progress card
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [AppColors.primary, AppColors.primaryLight],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Column(children: [
+                  Text('${data.percentage}%',
+                      style: const TextStyle(
+                          color: Colors.white, fontSize: 48,
+                          fontWeight: FontWeight.w700, height: 1)),
+                  const SizedBox(height: 6),
+                  const Text('Course Completion',
+                      style: TextStyle(color: Colors.white70, fontSize: 14)),
+                  const SizedBox(height: 12),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(6),
+                    child: LinearProgressIndicator(
+                      value: data.percentage / 100,
+                      minHeight: 8,
+                      backgroundColor: Colors.white.withOpacity(0.3),
+                      valueColor: const AlwaysStoppedAnimation(Colors.white),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text('${data.completedCount} of ${data.totalCount} topics done',
+                      style: const TextStyle(color: Colors.white70, fontSize: 12)),
+                ]),
+              ),
+              const SizedBox(height: 20),
+
+              const Text('Topics',
+                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+              const SizedBox(height: 12),
+
+              ...data.topics.map((t) => Card(
+                margin: const EdgeInsets.only(bottom: 8),
+                child: ListTile(
+                  leading: Icon(
+                    t.isCompleted ? Icons.check_circle : Icons.radio_button_unchecked,
+                    color: t.isCompleted ? AppColors.success : AppColors.grey400,
+                  ),
+                  title: Text(t.topicTitle,
+                      style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          decoration: t.isCompleted ? TextDecoration.lineThrough : null,
+                          color: t.isCompleted ? AppColors.textSecondary : AppColors.textPrimary)),
+                ),
+              )),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
 // ─── AI Tutor Tab ─────────────────────────────────────────────────────────────
 
 class _AiTutorTab extends StatelessWidget {
   final String courseTitle;
-  const _AiTutorTab({required this.courseTitle});
+  final String courseId;
+  const _AiTutorTab({required this.courseTitle, required this.courseId});
 
   @override
   Widget build(BuildContext context) {

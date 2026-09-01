@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../app/theme/app_theme.dart';
+import '../../../core/network/api_client.dart';
+import '../../../core/constants/api_constants.dart';
 import '../../../data/models/question_model.dart';
 import '../../providers/community_provider.dart';
 import '../../providers/discussions_provider.dart';
@@ -263,27 +265,29 @@ class _QuestionDetailScreenState
       builder: (_) => AlertDialog(
         title: const Text('Flag this question?'),
         content: const Text(
-          'This will report the question to moderators for review.',
-        ),
+            'This will report the question to moderators for review.'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel')),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.error,
-              foregroundColor: Colors.white,
-              minimumSize: const Size(80, 40),
-            ),
-            onPressed: () {
+                backgroundColor: AppColors.error,
+                foregroundColor: Colors.white,
+                minimumSize: const Size(80, 40)),
+            onPressed: () async {
               Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Question flagged for review.'),
-                  backgroundColor: AppColors.warning,
-                ),
-              );
+              try {
+                final api = ref.read(apiClientProvider);
+                await api.post(
+                    '${ApiConstants.questions.replaceAll('/questions', '')}/flag/question/${widget.questionId}');
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                    content: Text('Question flagged for review.'),
+                    backgroundColor: AppColors.warning,
+                  ));
+                }
+              } catch (_) {}
             },
             child: const Text('Flag'),
           ),
@@ -565,7 +569,19 @@ class _AnswerCard extends ConsumerWidget {
               const SizedBox(width: 4),
               // Flag button
               InkWell(
-                onTap: () {},
+                onTap: () async {
+                  try {
+                    final api = ref.read(apiClientProvider);
+                    await api.post(
+                        '${ApiConstants.questions.replaceAll('/questions', '')}/flag/answer/${answer.id}');
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                        content: Text('Answer flagged for review.'),
+                        backgroundColor: AppColors.warning,
+                      ));
+                    }
+                  } catch (_) {}
+                },
                 borderRadius: BorderRadius.circular(8),
                 child: const Padding(
                   padding: EdgeInsets.all(4),

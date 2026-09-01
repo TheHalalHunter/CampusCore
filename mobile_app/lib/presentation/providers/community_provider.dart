@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/models/question_model.dart';
 import '../../core/network/api_client.dart';
 import '../../core/constants/api_constants.dart';
+import '../../core/utils/error_helper.dart';
 import 'department_provider.dart';
 
 // ─── Questions ────────────────────────────────────────────────────────────────
@@ -76,7 +77,7 @@ class PostQuestionNotifier extends Notifier<AsyncValue<void>> {
       ref.invalidate(allQuestionsProvider);
       return true;
     } catch (e, st) {
-      state = AsyncValue.error(e, st);
+      state = AsyncValue.error(extractErrorMessage(e), st);
       return false;
     }
   }
@@ -103,7 +104,7 @@ class PostAnswerNotifier extends Notifier<AsyncValue<void>> {
       ref.invalidate(answersProvider(questionId));
       return true;
     } catch (e, st) {
-      state = AsyncValue.error(e, st);
+      state = AsyncValue.error(extractErrorMessage(e), st);
       return false;
     }
   }

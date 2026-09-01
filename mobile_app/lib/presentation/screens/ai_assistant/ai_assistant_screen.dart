@@ -195,8 +195,43 @@ class _AiErrorCard extends StatelessWidget {
   final String error;
   const _AiErrorCard({required this.error});
 
+  bool get _isExamLock =>
+      error.toLowerCase().contains('exam period') ||
+      error.toLowerCase().contains('disabled during');
+
   @override
   Widget build(BuildContext context) {
+    if (_isExamLock) {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppColors.warning.withOpacity(0.08),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.warning.withOpacity(0.4)),
+        ),
+        child: Column(
+          children: [
+            const Icon(Icons.lock_clock, color: AppColors.warning, size: 36),
+            const SizedBox(height: 12),
+            const Text(
+              'AI Locked During Exam Period',
+              style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 16,
+                  color: AppColors.textPrimary),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              error,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                  color: AppColors.textSecondary, fontSize: 13, height: 1.5),
+            ),
+          ],
+        ),
+      );
+    }
+
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -209,10 +244,8 @@ class _AiErrorCard extends StatelessWidget {
           const Icon(Icons.error_outline, color: AppColors.error, size: 20),
           const SizedBox(width: 10),
           Expanded(
-            child: Text(
-              error,
-              style: const TextStyle(color: AppColors.error, fontSize: 13),
-            ),
+            child: Text(error,
+                style: const TextStyle(color: AppColors.error, fontSize: 13)),
           ),
         ],
       ),

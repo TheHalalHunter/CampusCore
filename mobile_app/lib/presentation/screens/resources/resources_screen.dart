@@ -7,6 +7,7 @@ import '../../../data/models/resource_model.dart';
 import '../../providers/resources_provider.dart';
 import '../../providers/library_provider.dart';
 import '../widgets/common/error_view.dart';
+import '../widgets/common/offline_banner.dart';
 
 class ResourcesScreen extends ConsumerStatefulWidget {
   final String courseId;
@@ -85,7 +86,9 @@ class _ResourcesScreenState extends ConsumerState<ResourcesScreen> {
 
           // Resources list
           Expanded(
-            child: resourcesAsync.when(
+            child: OfflineBanner(
+              cacheKey: 'resources_course_${widget.courseId}',
+              child: resourcesAsync.when(
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (e, _) => ErrorView(
                 message: 'Could not load resources. Check your connection.',
@@ -130,8 +133,9 @@ class _ResourcesScreenState extends ConsumerState<ResourcesScreen> {
                   ),
                 );
               },
-            ),
-          ),
+            ),   // closes OfflineBanner child: resourcesAsync.when(
+            ), // closes OfflineBanner(
+          ),   // closes Expanded(
         ],
       ),
     );

@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/network/api_client.dart';
 import '../../core/constants/api_constants.dart';
+import '../../core/utils/error_helper.dart';
 
 // ─── State models ─────────────────────────────────────────────────────────────
 
@@ -87,7 +88,7 @@ class ExplainNotifier extends Notifier<AiResponse> {
         result: data.toString(),
       );
     } catch (e) {
-      state = AiResponse(error: 'Could not get explanation. Make sure the backend is running and your OpenAI key is set.');
+      state = AiResponse(error: extractErrorMessage(e));
     }
   }
 
@@ -168,7 +169,7 @@ class QuizNotifier extends Notifier<QuizState> {
       final questions = raw.map((q) => QuizQuestion.fromJson(q as Map<String, dynamic>)).toList();
       state = QuizState(questions: questions);
     } catch (e) {
-      state = QuizState(error: 'Could not generate quiz. Please try again.');
+      state = QuizState(error: extractErrorMessage(e));
     }
   }
 
@@ -251,7 +252,7 @@ class FlashcardsNotifier extends Notifier<FlashcardsState> {
       final cards = raw.map((c) => Flashcard.fromJson(c as Map<String, dynamic>)).toList();
       state = FlashcardsState(cards: cards);
     } catch (e) {
-      state = FlashcardsState(error: 'Could not generate flashcards. Please try again.');
+      state = FlashcardsState(error: extractErrorMessage(e));
     }
   }
 
@@ -292,7 +293,7 @@ class SummarizeNotifier extends Notifier<AiResponse> {
       final data = response.data['data'] ?? response.data;
       state = AiResponse(content: data.toString());
     } catch (e) {
-      state = AiResponse(error: 'Could not summarize. Please try again.');
+      state = AiResponse(error: extractErrorMessage(e));
     }
   }
 
