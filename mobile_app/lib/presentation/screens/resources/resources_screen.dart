@@ -6,8 +6,8 @@ import '../../../app/router/app_router.dart';
 import '../../../data/models/resource_model.dart';
 import '../../providers/resources_provider.dart';
 import '../../providers/library_provider.dart';
-import '../widgets/common/error_view.dart';
-import '../widgets/common/offline_banner.dart';
+import '../../widgets/common/error_view.dart';
+import '../../widgets/common/offline_banner.dart';
 
 class ResourcesScreen extends ConsumerStatefulWidget {
   final String courseId;

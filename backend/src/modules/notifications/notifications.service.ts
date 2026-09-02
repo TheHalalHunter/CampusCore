@@ -1,6 +1,7 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
+import * as admin from "firebase-admin";
 import { Notification, NotificationType } from "./entities/notification.entity";
 import { FirebaseAdminService } from "../../config/firebase.config";
 
@@ -57,7 +58,7 @@ export class NotificationsService {
     data?: Record<string, string>,
   ): Promise<void> {
     try {
-      await this.firebase.auth().app.messaging().send({
+      await admin.messaging().send({
         token: fcmToken,
         notification: { title, body },
         data,
