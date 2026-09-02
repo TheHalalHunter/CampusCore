@@ -4,7 +4,8 @@ import 'package:go_router/go_router.dart';
 import '../../../app/theme/app_theme.dart';
 import '../../../app/router/app_router.dart';
 import '../../../data/models/question_model.dart';
-import '../../providers/community_provider.dart';
+import '../../providers/paginated_provider.dart';
+import '../widgets/common/load_more_list.dart';
 import 'discussions_screen.dart';
 
 class CommunityScreen extends ConsumerStatefulWidget {
@@ -51,7 +52,14 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen>
           _QATab(
             selectedLevel: _selectedLevel,
             levels: _levels,
-            onLevelChanged: (l) => setState(() => _selectedLevel = l),
+            onLevelChanged: (l) {
+              setState(() => _selectedLevel = l);
+              // Reload with new level filter
+              ref.read(paginatedQuestionsProvider.notifier).load(
+                    level: l == 'All' ? null : l,
+                    refresh: true,
+                  );
+            },
           ),
           const DiscussionsScreen(),
         ],
@@ -86,16 +94,20 @@ class _QATab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final questionsAsync = ref.watch(
-      questionsProvider((
-        courseId: null,
-        level: selectedLevel == 'All' ? null : selectedLevel,
-      )),
-    );
+    final paginated = ref.watch(paginatedQuestionsProvider);
+
+    // Trigger initial load
+    if (paginated.currentPage == 0 && !paginated.isLoading) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref.read(paginatedQuestionsProvider.notifier).load(
+              level: selectedLevel == 'All' ? null : selectedLevel,
+            );
+      });
+    }
 
     return Column(
       children: [
-        // Level filter
+        // Level filter chips
         Container(
           color: AppColors.surface,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -113,8 +125,9 @@ class _QATab extends ConsumerWidget {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 16, vertical: 7),
                       decoration: BoxDecoration(
-                        color:
-                            selected ? AppColors.primary : AppColors.surfaceAlt,
+                        color: selected
+                            ? AppColors.primary
+                            : AppColors.surfaceAlt,
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
                             color: selected
@@ -126,8 +139,9 @@ class _QATab extends ConsumerWidget {
                             color: selected
                                 ? Colors.white
                                 : AppColors.textSecondary,
-                            fontWeight:
-                                selected ? FontWeight.w700 : FontWeight.w500,
+                            fontWeight: selected
+                                ? FontWeight.w700
+                                : FontWeight.w500,
                             fontSize: 13,
                           )),
                     ),
@@ -138,85 +152,106 @@ class _QATab extends ConsumerWidget {
           ),
         ),
 
-        // Questions list
-        Expanded(
-          child: questionsAsync.when(
-            data: (questions) {
-              if (questions.isEmpty) {
-                return Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(32),
-                    child: Column(mainAxisSize: MainAxisSize.min, children: [
-                      Container(
-                        width: 80,
-                        height: 80,
-                        decoration: BoxDecoration(
-                            color: AppColors.primary.withValues(alpha: 0.08),
-                            shape: BoxShape.circle),
-                        child: const Icon(Icons.forum_outlined,
-                            size: 40, color: AppColors.primary),
-                      ),
-                      const SizedBox(height: 20),
-                      const Text('No questions yet',
-                          style: TextStyle(
-                              fontSize: 17,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.textPrimary)),
-                      const SizedBox(height: 8),
-                      const Text('Be the first to ask a question.',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(color: AppColors.textSecondary)),
-                      const SizedBox(height: 24),
-                      ElevatedButton.icon(
-                        icon: const Icon(Icons.add, size: 18),
-                        label: const Text('Ask a Question'),
-                        onPressed: () => context.push(AppRoutes.postQuestion),
-                      ),
-                    ]),
-                  ),
-                );
-              }
-              return RefreshIndicator(
-                onRefresh: () async => ref.invalidate(allQuestionsProvider),
-                color: AppColors.primary,
-                child: ListView.separated(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: questions.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 8),
-                  itemBuilder: (_, i) => _QuestionCard(question: questions[i]),
-                ),
-              );
-            },
-            loading: () => ListView.separated(
-              padding: const EdgeInsets.all(16),
-              itemCount: 5,
-              separatorBuilder: (_, __) => const SizedBox(height: 8),
-              itemBuilder: (_, __) => Container(
-                height: 100,
-                decoration: BoxDecoration(
-                    color: AppColors.grey200,
-                    borderRadius: BorderRadius.circular(16)),
-              ),
-            ),
-            error: (_, __) => Center(
-              child: Column(mainAxisSize: MainAxisSize.min, children: [
-                const Icon(Icons.wifi_off, size: 48, color: AppColors.textHint),
-                const SizedBox(height: 12),
-                const Text('Could not load questions.',
-                    style: TextStyle(color: AppColors.textSecondary)),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () => ref.invalidate(allQuestionsProvider),
-                  child: const Text('Retry'),
-                ),
-              ]),
-            ),
-          ),
-        ),
+        // Questions list — paginated
+        Expanded(child: _buildBody(context, ref, paginated)),
       ],
     );
   }
+
+  Widget _buildBody(BuildContext context, WidgetRef ref,
+      PaginatedState<QuestionModel> paginated) {
+    if (paginated.isLoading) {
+      return ListView.separated(
+        padding: const EdgeInsets.all(16),
+        itemCount: 5,
+        separatorBuilder: (_, __) => const SizedBox(height: 8),
+        itemBuilder: (_, __) => Container(
+          height: 100,
+          decoration: BoxDecoration(
+              color: AppColors.grey200,
+              borderRadius: BorderRadius.circular(16)),
+        ),
+      );
+    }
+
+    if (paginated.error != null && paginated.items.isEmpty) {
+      return Center(
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          const Icon(Icons.wifi_off, size: 48, color: AppColors.textHint),
+          const SizedBox(height: 12),
+          Text(paginated.error!,
+              style: const TextStyle(color: AppColors.textSecondary)),
+          const SizedBox(height: 16),
+          ElevatedButton(
+            onPressed: () => ref
+                .read(paginatedQuestionsProvider.notifier)
+                .load(
+                    level: selectedLevel == 'All' ? null : selectedLevel,
+                    refresh: true),
+            child: const Text('Retry'),
+          ),
+        ]),
+      );
+    }
+
+    if (paginated.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.08),
+                  shape: BoxShape.circle),
+              child: const Icon(Icons.forum_outlined,
+                  size: 40, color: AppColors.primary),
+            ),
+            const SizedBox(height: 20),
+            const Text('No questions yet',
+                style: TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary)),
+            const SizedBox(height: 8),
+            const Text('Be the first to ask a question.',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: AppColors.textSecondary)),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              icon: const Icon(Icons.add, size: 18),
+              label: const Text('Ask a Question'),
+              onPressed: () => context.push(AppRoutes.postQuestion),
+            ),
+          ]),
+        ),
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: () => ref
+          .read(paginatedQuestionsProvider.notifier)
+          .load(
+              level: selectedLevel == 'All' ? null : selectedLevel,
+              refresh: true),
+      color: AppColors.primary,
+      child: LoadMoreList(
+        padding: const EdgeInsets.all(16),
+        itemCount: paginated.items.length,
+        separatorBuilder: (_, __) => const SizedBox(height: 8),
+        isLoadingMore: paginated.isLoadingMore,
+        hasMore: paginated.hasMore,
+        onLoadMore: () => ref
+            .read(paginatedQuestionsProvider.notifier)
+            .load(level: selectedLevel == 'All' ? null : selectedLevel),
+        itemBuilder: (_, i) => _QuestionCard(question: paginated.items[i]),
+      ),
+    );
+  }
 }
+
+// ─── Question Card ────────────────────────────────────────────────────────────
 
 class _QuestionCard extends StatelessWidget {
   final QuestionModel question;
@@ -226,92 +261,67 @@ class _QuestionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       child: InkWell(
-        onTap: () => context.push(
-          '${AppRoutes.community}/questions/${question.id}',
-        ),
+        onTap: () =>
+            context.push('${AppRoutes.community}/questions/${question.id}'),
         borderRadius: BorderRadius.circular(16),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header row
-              Row(
-                children: [
-                  CircleAvatar(
-                    radius: 16,
-                    backgroundColor: AppColors.primary.withValues(alpha: 0.15),
-                    child: Text(
-                      question.authorId.substring(0, 1).toUpperCase(),
-                      style: const TextStyle(
+              Row(children: [
+                CircleAvatar(
+                  radius: 16,
+                  backgroundColor: AppColors.primary.withValues(alpha: 0.15),
+                  child: Text(
+                    question.authorId.substring(0, 1).toUpperCase(),
+                    style: const TextStyle(
                         color: AppColors.primary,
                         fontWeight: FontWeight.w700,
-                        fontSize: 13,
-                      ),
-                    ),
+                        fontSize: 13),
                   ),
-                  const SizedBox(width: 8),
-                  if (question.academicLevel != null)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: AppColors.primary.withValues(alpha: 0.08),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        question.academicLevel!,
-                        style: const TextStyle(
-                          color: AppColors.primary,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                  const Spacer(),
-                  Text(
-                    question.timeAgo,
-                    style: const TextStyle(
-                      color: AppColors.textHint,
-                      fontSize: 12,
-                    ),
-                  ),
-                  if (question.isResolved) ...[
-                    const SizedBox(width: 6),
-                    const Icon(Icons.check_circle,
-                        color: AppColors.success, size: 16),
-                  ],
-                ],
-              ),
-              const SizedBox(height: 10),
-
-              // Title
-              Text(
-                question.title,
-                style: const TextStyle(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 15,
-                  color: AppColors.textPrimary,
-                  height: 1.3,
                 ),
-              ),
-
-              // Body preview
+                const SizedBox(width: 8),
+                if (question.academicLevel != null)
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(6)),
+                    child: Text(question.academicLevel!,
+                        style: const TextStyle(
+                            color: AppColors.primary,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700)),
+                  ),
+                const Spacer(),
+                Text(question.timeAgo,
+                    style: const TextStyle(
+                        color: AppColors.textHint, fontSize: 12)),
+                if (question.isResolved) ...[
+                  const SizedBox(width: 6),
+                  const Icon(Icons.check_circle,
+                      color: AppColors.success, size: 16),
+                ],
+              ]),
+              const SizedBox(height: 10),
+              Text(question.title,
+                  style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 15,
+                      color: AppColors.textPrimary,
+                      height: 1.3)),
               if (question.body.isNotEmpty) ...[
                 const SizedBox(height: 6),
-                Text(
-                  question.body,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: AppColors.textSecondary,
-                    fontSize: 13,
-                    height: 1.4,
-                  ),
-                ),
+                Text(question.body,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 13,
+                        height: 1.4)),
               ],
-
-              // Tags
               if (question.tags.isNotEmpty) ...[
                 const SizedBox(height: 10),
                 Wrap(
@@ -322,39 +332,28 @@ class _QuestionCard extends StatelessWidget {
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 8, vertical: 3),
                             decoration: BoxDecoration(
-                              color: AppColors.surfaceAlt,
-                              borderRadius: BorderRadius.circular(6),
-                              border: Border.all(color: AppColors.border),
-                            ),
-                            child: Text(
-                              tag,
-                              style: const TextStyle(
-                                color: AppColors.textSecondary,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
+                                color: AppColors.surfaceAlt,
+                                borderRadius: BorderRadius.circular(6),
+                                border: Border.all(color: AppColors.border)),
+                            child: Text(tag,
+                                style: const TextStyle(
+                                    color: AppColors.textSecondary,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w500)),
                           ))
                       .toList(),
                 ),
               ],
-
               const SizedBox(height: 12),
-
-              // Footer stats
-              Row(
-                children: [
-                  _StatChip(
+              Row(children: [
+                _StatChip(
                     icon: Icons.question_answer_outlined,
-                    label: '${question.answerCount} answers',
-                  ),
-                  const SizedBox(width: 12),
-                  _StatChip(
+                    label: '${question.answerCount} answers'),
+                const SizedBox(width: 12),
+                _StatChip(
                     icon: Icons.thumb_up_outlined,
-                    label: '${question.upvoteCount}',
-                  ),
-                ],
-              ),
+                    label: '${question.upvoteCount}'),
+              ]),
             ],
           ),
         ),
@@ -370,20 +369,14 @@ class _StatChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 15, color: AppColors.textSecondary),
-        const SizedBox(width: 4),
-        Text(
-          label,
+    return Row(mainAxisSize: MainAxisSize.min, children: [
+      Icon(icon, size: 15, color: AppColors.textSecondary),
+      const SizedBox(width: 4),
+      Text(label,
           style: const TextStyle(
-            color: AppColors.textSecondary,
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      ],
-    );
+              color: AppColors.textSecondary,
+              fontSize: 12,
+              fontWeight: FontWeight.w500)),
+    ]);
   }
 }

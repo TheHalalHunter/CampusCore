@@ -109,7 +109,8 @@ CampusCore/
 | 14     | Community Extension           | ✅ Done     |
 | 15     | Offline Caching               | ✅ Done     |
 | 16     | Admin Completion              | ✅ Done     |
-| 17     | Stellar Integration           | ⭐ Next Wave |
+| 17     | Infinite Scroll / Pagination       | ✅ Done     |
+| 18     | Stellar Integration           | ⭐ Next Wave |
 | 18     | Testing & QA                  | 🔓 Open     |
 | 19     | Google Play Release           | ⏳          |
 
@@ -200,7 +201,7 @@ All screens built and wired to real backend data:
 - PostgreSQL 15
 - Firebase project
 
-### Backend
+### Backend (Local)
 
 ```bash
 cd backend
@@ -210,12 +211,27 @@ cp .env.example .env
 npm run start:dev
 ```
 
-### Mobile App
+### Backend (Production — Railway)
+
+1. Go to [railway.app](https://railway.app) → New Project → Deploy from GitHub
+2. Set root directory to `backend`
+3. Add all `.env` variables in Railway environment tab
+4. Railway auto-builds from `Dockerfile` and gives you a URL
+5. Set `ALLOWED_ORIGINS` to your Flutter web URL
+
+### Mobile App (Local)
 
 ```bash
 cd mobile_app
 flutter pub get
-flutter run
+flutter run --dart-define=API_BASE_URL=http://localhost:3000/api/v1
+# Or use run_app.bat
+```
+
+### Mobile App (Production build)
+
+```bash
+flutter build apk --dart-define=API_BASE_URL=https://your-app.railway.app/api/v1
 ```
 
 ### Admin Dashboard
@@ -223,8 +239,16 @@ flutter run
 ```bash
 cd admin_dashboard
 flutter pub get
-flutter run -d web-server --web-port 8081 --web-hostname localhost
+flutter run -d web-server --web-port 5081 --dart-define=API_BASE_URL=http://localhost:3000/api/v1
+# Or use run_admin.bat
 ```
+
+### Database Migrations
+
+Run all files in `database/migrations/` in order in Supabase SQL editor:
+- `001_add_missing_tables.sql`
+- `002_add_fcm_token.sql`
+- `003_add_study_streaks.sql`
 
 ---
 
