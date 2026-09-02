@@ -2,7 +2,10 @@ import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AdminApiClient {
-  static const String baseUrl = 'http://localhost:3000/api/v1';
+  static const String baseUrl = String.fromEnvironment(
+    'API_BASE_URL',
+    defaultValue: 'http://localhost:3000/api/v1',
+  );
   late final Dio _dio;
 
   AdminApiClient() {

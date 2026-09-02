@@ -23,6 +23,6 @@ echo Getting packages...
 call flutter pub get
 
 echo Starting server...
-call flutter run -d web-server --web-port 5080 --web-hostname localhost
+call flutter run -d web-server --web-port 5080 --web-hostname localhost --dart-define=API_BASE_URL=http://localhost:3000/api/v1
 
 pause

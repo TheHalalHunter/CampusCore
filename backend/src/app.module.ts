@@ -42,8 +42,18 @@ import { GpaModule } from "./modules/gpa/gpa.module";
         database: config.get("DB_NAME"),
         entities: [__dirname + "/**/*.entity{.ts,.js}"],
         migrations: [__dirname + "/database/migrations/*{.ts,.js}"],
-        synchronize: false, // schema managed manually via database/schema.sql
+        synchronize: false,
         logging: config.get("NODE_ENV") === "development",
+        // SSL required for Supabase in production
+        ssl: config.get("NODE_ENV") === "production"
+          ? { rejectUnauthorized: false }
+          : false,
+        // Connection pool settings for production
+        extra: {
+          max: 10,
+          idleTimeoutMillis: 30000,
+          connectionTimeoutMillis: 5000,
+        },
       }),
       inject: [ConfigService],
     }),

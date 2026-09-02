@@ -9,37 +9,45 @@ import { AllExceptionsFilter } from "./common/filters/http-exception.filter";
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const config = app.get(ConfigService);
+  const isProduction = config.get("NODE_ENV") === "production";
+
+  // Trust Railway / reverse-proxy headers (needed for correct IP logging)
+  if (isProduction) {
+    app.getHttpAdapter().getInstance().set("trust proxy", 1);
+  }
 
   // Global prefix
   app.setGlobalPrefix("api/v1");
 
-  // CORS
+  // CORS — allow configured origins + localhost for development
   const allowedOrigins = config.get<string>("ALLOWED_ORIGINS");
   app.enableCors({
-    origin: allowedOrigins ? allowedOrigins.split(",") : ["http://localhost:3001"],
+    origin: allowedOrigins
+      ? allowedOrigins.split(",").map((o) => o.trim())
+      : ["http://localhost:3001", "http://localhost:5080", "http://localhost:5081"],
     credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "Accept"],
   });
 
   // Global validation pipe
   app.useGlobalPipes(
     new ValidationPipe({
-      whitelist: true, // strip unknown properties
+      whitelist: true,
       forbidNonWhitelisted: true,
-      transform: true, // auto-transform payloads to DTO types
-      transformOptions: {
-        enableImplicitConversion: true,
-      },
+      transform: true,
+      transformOptions: { enableImplicitConversion: true },
     }),
   );
 
-  // Global response interceptor — wraps all success responses in { success, data }
+  // Global response interceptor
   app.useGlobalInterceptors(new ResponseInterceptor());
 
-  // Global exception filter — formats all errors in { success, statusCode, message }
+  // Global exception filter
   app.useGlobalFilters(new AllExceptionsFilter());
 
-  // Swagger API docs (development only)
-  if (config.get("NODE_ENV") !== "production") {
+  // Swagger — dev only
+  if (!isProduction) {
     const swaggerConfig = new DocumentBuilder()
       .setTitle("CampusCore API")
       .setDescription("CampusCore academic platform REST API")
@@ -51,9 +59,11 @@ async function bootstrap() {
   }
 
   const port = config.get<number>("PORT") || 3000;
-  await app.listen(port);
-  console.log(`CampusCore API running on http://localhost:${port}/api/v1`);
-  console.log(`Swagger docs at http://localhost:${port}/api/docs`);
+  await app.listen(port, "0.0.0.0"); // bind to all interfaces for Docker/Railway
+  console.log(`CampusCore API running on port ${port}`);
+  if (!isProduction) {
+    console.log(`Swagger docs at http://localhost:${port}/api/docs`);
+  }
 }
 
 bootstrap();

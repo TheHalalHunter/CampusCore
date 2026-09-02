@@ -9,6 +9,9 @@ echo.
 echo Swagger docs at:
 echo   http://localhost:3000/api/docs
 echo.
+echo NOTE: Make sure .env file is configured.
+echo       See .env.example for required variables.
+echo.
 echo Press Ctrl+C to stop the server.
 echo.
 

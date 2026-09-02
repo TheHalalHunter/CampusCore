@@ -1,19 +1,31 @@
-FROM node:18-alpine
+# ─── Build stage ─────────────────────────────────────────────────────────────
+FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
-
 # Install dependencies
-RUN npm ci
+COPY package*.json ./
+RUN npm ci --ignore-scripts
 
-# Copy source code
+# Copy source and build
 COPY . .
-
-# Build the app
 RUN npm run build
 
+# ─── Production stage ─────────────────────────────────────────────────────────
+FROM node:20-alpine AS production
+
+WORKDIR /app
+
+ENV NODE_ENV=production
+
+# Only install production dependencies
+COPY package*.json ./
+RUN npm ci --omit=dev --ignore-scripts
+
+# Copy compiled output from builder
+COPY --from=builder /app/dist ./dist
+
+# Expose port (Railway sets PORT env var)
 EXPOSE 3000
 
 CMD ["node", "dist/main.js"]
