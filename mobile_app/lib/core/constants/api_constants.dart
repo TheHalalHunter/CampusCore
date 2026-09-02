@@ -32,6 +32,7 @@ class ApiConstants {
 
   // Progress
   static const String progress = '/progress';
+  static const String progressStreak = '/progress/streak';
 
   // Notifications
   static const String notifications = '/notifications';

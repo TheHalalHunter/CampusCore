@@ -26,15 +26,15 @@ class ErrorView extends StatelessWidget {
               width: 72,
               height: 72,
               decoration: BoxDecoration(
-                color: AppColors.error.withOpacity(0.08),
+                color: AppColors.error.withValues(alpha: 0.08),
                 shape: BoxShape.circle,
               ),
               child: Icon(icon, size: 36, color: AppColors.error),
             ),
             const SizedBox(height: 20),
-            Text(
+            const Text(
               'Oops!',
-              style: const TextStyle(
+              style: TextStyle(
                   fontWeight: FontWeight.w700,
                   fontSize: 18,
                   color: AppColors.textPrimary),
@@ -74,17 +74,16 @@ class ErrorBanner extends StatelessWidget {
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.error.withOpacity(0.06),
+        color: AppColors.error.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.error.withOpacity(0.2)),
+        border: Border.all(color: AppColors.error.withValues(alpha: 0.2)),
       ),
       child: Row(children: [
         const Icon(Icons.error_outline, color: AppColors.error, size: 20),
         const SizedBox(width: 10),
         Expanded(
             child: Text(message,
-                style: const TextStyle(
-                    color: AppColors.error, fontSize: 13))),
+                style: const TextStyle(color: AppColors.error, fontSize: 13))),
         if (onRetry != null)
           TextButton(
             onPressed: onRetry,

@@ -34,38 +34,49 @@ class ProfileScreen extends ConsumerWidget {
                   CircleAvatar(
                     radius: 48,
                     backgroundColor: AppColors.primary,
-                    backgroundImage: user?.avatar != null ? NetworkImage(user!.avatar!) : null,
+                    backgroundImage: user?.avatar != null
+                        ? NetworkImage(user!.avatar!)
+                        : null,
                     child: user?.avatar == null
                         ? Text(
-                            user?.firstName.substring(0, 1).toUpperCase() ?? 'S',
-                            style: const TextStyle(color: Colors.white, fontSize: 36,
+                            user?.firstName.substring(0, 1).toUpperCase() ??
+                                'S',
+                            style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 36,
                                 fontWeight: FontWeight.w700))
                         : null,
                   ),
                   const SizedBox(height: 12),
                   Text(user?.fullName ?? 'Student',
-                      style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 20,
+                      style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 20,
                           color: AppColors.textPrimary)),
                   const SizedBox(height: 4),
                   Text('${user?.displayLevel ?? ''} • Fisheries & Aquaculture',
-                      style: const TextStyle(color: AppColors.textSecondary, fontSize: 14)),
+                      style: const TextStyle(
+                          color: AppColors.textSecondary, fontSize: 14)),
                   const SizedBox(height: 8),
                   Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                     const Icon(Icons.star, color: AppColors.accent, size: 18),
                     const SizedBox(width: 4),
                     Text('${user?.reputationPoints ?? 0} reputation points',
-                        style: const TextStyle(fontWeight: FontWeight.w600,
+                        style: const TextStyle(
+                            fontWeight: FontWeight.w600,
                             color: AppColors.textPrimary)),
                   ]),
                 ],
               ),
               loading: () => Column(children: [
-                const CircleAvatar(radius: 48, backgroundColor: AppColors.grey200),
+                const CircleAvatar(
+                    radius: 48, backgroundColor: AppColors.grey200),
                 const SizedBox(height: 12),
                 Container(width: 120, height: 20, color: AppColors.grey200),
               ]),
               error: (_, __) => const CircleAvatar(
-                radius: 48, backgroundColor: AppColors.primary,
+                radius: 48,
+                backgroundColor: AppColors.primary,
                 child: Icon(Icons.person, size: 48, color: Colors.white),
               ),
             ),
@@ -100,11 +111,13 @@ class ProfileScreen extends ConsumerWidget {
             OutlinedButton.icon(
               onPressed: () => ref.read(authProvider.notifier).signOut(),
               icon: const Icon(Icons.logout, color: AppColors.error),
-              label: const Text('Sign Out', style: TextStyle(color: AppColors.error)),
+              label: const Text('Sign Out',
+                  style: TextStyle(color: AppColors.error)),
               style: OutlinedButton.styleFrom(
                 minimumSize: const Size(double.infinity, 48),
                 side: const BorderSide(color: AppColors.error),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
               ),
             ),
           ],
@@ -134,9 +147,9 @@ class _Badge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: AppColors.accent.withOpacity(0.12),
+        color: AppColors.accent.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.accent.withOpacity(0.3)),
+        border: Border.all(color: AppColors.accent.withValues(alpha: 0.3)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -145,7 +158,9 @@ class _Badge extends StatelessWidget {
           const SizedBox(width: 6),
           Text(label,
               style: const TextStyle(
-                  fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.grey900)),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.grey900)),
         ],
       ),
     );
@@ -212,7 +227,8 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
       await api.patch(ApiConstants.me, data: {
         'fullName': _nameCtrl.text.trim(),
         if (_phoneCtrl.text.trim().isNotEmpty) 'phone': _phoneCtrl.text.trim(),
-        if (_matricCtrl.text.trim().isNotEmpty) 'matricNumber': _matricCtrl.text.trim(),
+        if (_matricCtrl.text.trim().isNotEmpty)
+          'matricNumber': _matricCtrl.text.trim(),
         if (_selectedLevel != null) 'academicLevel': _selectedLevel,
       });
       widget.ref.invalidate(currentUserProvider);
@@ -240,42 +256,50 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
     return Padding(
       padding: EdgeInsets.fromLTRB(
           20, 20, 20, MediaQuery.of(context).viewInsets.bottom + 24),
-      child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-        const Text('Edit Profile',
-            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 18)),
-        const SizedBox(height: 20),
-        TextFormField(
-          controller: _nameCtrl,
-          decoration: const InputDecoration(labelText: 'Full Name'),
-        ),
-        const SizedBox(height: 12),
-        TextFormField(
-          controller: _phoneCtrl,
-          keyboardType: TextInputType.phone,
-          decoration: const InputDecoration(labelText: 'Phone (optional)'),
-        ),
-        const SizedBox(height: 12),
-        TextFormField(
-          controller: _matricCtrl,
-          decoration: const InputDecoration(labelText: 'Matric Number (optional)'),
-        ),
-        const SizedBox(height: 12),
-        DropdownButtonFormField<String>(
-          value: _selectedLevel,
-          decoration: const InputDecoration(labelText: 'Academic Level'),
-          items: ['100L', '200L', '300L', '400L', '500L']
-              .map((l) => DropdownMenuItem(value: l, child: Text(l))).toList(),
-          onChanged: (v) => setState(() => _selectedLevel = v),
-        ),
-        const SizedBox(height: 20),
-        ElevatedButton(
-          onPressed: _saving ? null : _save,
-          child: _saving
-              ? const SizedBox(width: 20, height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-              : const Text('Save Changes'),
-        ),
-      ]),
+      child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Edit Profile',
+                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 18)),
+            const SizedBox(height: 20),
+            TextFormField(
+              controller: _nameCtrl,
+              decoration: const InputDecoration(labelText: 'Full Name'),
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: _phoneCtrl,
+              keyboardType: TextInputType.phone,
+              decoration: const InputDecoration(labelText: 'Phone (optional)'),
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: _matricCtrl,
+              decoration:
+                  const InputDecoration(labelText: 'Matric Number (optional)'),
+            ),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<String>(
+              initialValue: _selectedLevel,
+              decoration: const InputDecoration(labelText: 'Academic Level'),
+              items: ['100L', '200L', '300L', '400L', '500L']
+                  .map((l) => DropdownMenuItem(value: l, child: Text(l)))
+                  .toList(),
+              onChanged: (v) => setState(() => _selectedLevel = v),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: _saving ? null : _save,
+              child: _saving
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2, color: Colors.white))
+                  : const Text('Save Changes'),
+            ),
+          ]),
     );
   }
 }

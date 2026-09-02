@@ -12,7 +12,8 @@ class ResourceViewerScreen extends ConsumerStatefulWidget {
   const ResourceViewerScreen({super.key, required this.resourceId});
 
   @override
-  ConsumerState<ResourceViewerScreen> createState() => _ResourceViewerScreenState();
+  ConsumerState<ResourceViewerScreen> createState() =>
+      _ResourceViewerScreenState();
 }
 
 class _ResourceViewerScreenState extends ConsumerState<ResourceViewerScreen> {
@@ -53,7 +54,8 @@ class _ResourceViewerScreenState extends ConsumerState<ResourceViewerScreen> {
   Widget build(BuildContext context) {
     final resourceAsync = ref.watch(resourcesByCourseProvider('').select(
       (list) => list.whenData(
-        (resources) => resources.where((r) => r.id == widget.resourceId).firstOrNull,
+        (resources) =>
+            resources.where((r) => r.id == widget.resourceId).firstOrNull,
       ),
     ));
 
@@ -102,7 +104,7 @@ class _ResourceViewerScreenState extends ConsumerState<ResourceViewerScreen> {
                           width: 56,
                           height: 56,
                           decoration: BoxDecoration(
-                            color: AppColors.primary.withOpacity(0.1),
+                            color: AppColors.primary.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Icon(_typeIcon(resource.fileType),
@@ -115,16 +117,19 @@ class _ResourceViewerScreenState extends ConsumerState<ResourceViewerScreen> {
                             children: [
                               Text(resource.title,
                                   style: const TextStyle(
-                                      fontWeight: FontWeight.w700, fontSize: 16)),
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 16)),
                               const SizedBox(height: 4),
                               Text(resource.typeLabel,
                                   style: const TextStyle(
-                                      color: AppColors.textSecondary, fontSize: 13)),
+                                      color: AppColors.textSecondary,
+                                      fontSize: 13)),
                               if (resource.academicYear != null) ...[
                                 const SizedBox(height: 2),
                                 Text(resource.academicYear!,
                                     style: const TextStyle(
-                                        color: AppColors.textHint, fontSize: 12)),
+                                        color: AppColors.textHint,
+                                        fontSize: 12)),
                               ],
                             ],
                           ),
@@ -142,18 +147,24 @@ class _ResourceViewerScreenState extends ConsumerState<ResourceViewerScreen> {
                       label: '${resource.downloadCount} downloads'),
                   const SizedBox(width: 8),
                   if (resource.isOfficial)
-                    _StatChip(icon: Icons.verified_outlined, label: 'Official',
+                    const _StatChip(
+                        icon: Icons.verified_outlined,
+                        label: 'Official',
                         color: AppColors.success),
                   if (resource.fileSizeLabel.isNotEmpty) ...[
                     const SizedBox(width: 8),
-                    _StatChip(icon: Icons.storage_outlined, label: resource.fileSizeLabel),
+                    _StatChip(
+                        icon: Icons.storage_outlined,
+                        label: resource.fileSizeLabel),
                   ],
                 ]),
                 const SizedBox(height: 24),
 
-                if (resource.description != null && resource.description!.isNotEmpty) ...[
+                if (resource.description != null &&
+                    resource.description!.isNotEmpty) ...[
                   const Text('Description',
-                      style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+                      style:
+                          TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
                   const SizedBox(height: 8),
                   Text(resource.description!,
                       style: const TextStyle(
@@ -180,12 +191,16 @@ class _ResourceViewerScreenState extends ConsumerState<ResourceViewerScreen> {
 
   IconData _typeIcon(String? type) {
     switch (type?.toLowerCase()) {
-      case 'pdf': return Icons.picture_as_pdf_outlined;
+      case 'pdf':
+        return Icons.picture_as_pdf_outlined;
       case 'pptx':
-      case 'ppt': return Icons.slideshow_outlined;
+      case 'ppt':
+        return Icons.slideshow_outlined;
       case 'docx':
-      case 'doc': return Icons.description_outlined;
-      default: return Icons.insert_drive_file_outlined;
+      case 'doc':
+        return Icons.description_outlined;
+      default:
+        return Icons.insert_drive_file_outlined;
     }
   }
 }
@@ -208,20 +223,24 @@ class _StatChip extends StatelessWidget {
   final String label;
   final Color color;
   const _StatChip(
-      {required this.icon, required this.label, this.color = AppColors.textSecondary});
+      {required this.icon,
+      required this.label,
+      this.color = AppColors.textSecondary});
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.08),
+        color: color.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(mainAxisSize: MainAxisSize.min, children: [
         Icon(icon, size: 14, color: color),
         const SizedBox(width: 4),
-        Text(label, style: TextStyle(fontSize: 12, color: color, fontWeight: FontWeight.w500)),
+        Text(label,
+            style: TextStyle(
+                fontSize: 12, color: color, fontWeight: FontWeight.w500)),
       ]),
     );
   }

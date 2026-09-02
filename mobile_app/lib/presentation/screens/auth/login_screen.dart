@@ -32,9 +32,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     setState(() => _isLoading = true);
     try {
       await ref.read(authProvider.notifier).signInWithEmail(
-        _emailCtrl.text.trim(),
-        _passwordCtrl.text,
-      );
+            _emailCtrl.text.trim(),
+            _passwordCtrl.text,
+          );
       if (mounted) context.go(AppRoutes.home);
     } on FirebaseAuthException catch (e) {
       if (mounted) {
@@ -80,13 +80,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   String _friendlyError(String code) {
     switch (code) {
-      case 'user-not-found': return 'No account found with this email.';
-      case 'wrong-password': return 'Incorrect password. Please try again.';
-      case 'invalid-credential': return 'Invalid email or password.';
-      case 'user-disabled': return 'This account has been disabled.';
-      case 'too-many-requests': return 'Too many attempts. Try again later.';
-      case 'network-request-failed': return 'Network error. Check your connection.';
-      default: return 'Sign in failed. Please try again.';
+      case 'user-not-found':
+        return 'No account found with this email.';
+      case 'wrong-password':
+        return 'Incorrect password. Please try again.';
+      case 'invalid-credential':
+        return 'Invalid email or password.';
+      case 'user-disabled':
+        return 'This account has been disabled.';
+      case 'too-many-requests':
+        return 'Too many attempts. Try again later.';
+      case 'network-request-failed':
+        return 'Network error. Check your connection.';
+      default:
+        return 'Sign in failed. Please try again.';
     }
   }
 
@@ -112,7 +119,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         color: AppColors.primary,
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Icon(Icons.school, color: Colors.white, size: 28),
+                      child: const Icon(Icons.school,
+                          color: Colors.white, size: 28),
                     ),
                     const SizedBox(width: 12),
                     const Text(
@@ -129,13 +137,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 Text(
                   'Welcome back',
                   style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
+                        fontWeight: FontWeight.w700,
+                      ),
                 ),
                 const SizedBox(height: 8),
-                Text(
+                const Text(
                   'Sign in to continue learning',
-                  style: TextStyle(color: AppColors.grey600, fontSize: 16),
+                  style:
+                      const TextStyle(color: AppColors.grey600, fontSize: 16),
                 ),
                 const SizedBox(height: 36),
 
@@ -163,13 +172,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     labelText: 'Password',
                     prefixIcon: const Icon(Icons.lock_outline),
                     suffixIcon: IconButton(
-                      icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility),
-                      onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                      icon: Icon(_obscurePassword
+                          ? Icons.visibility_off
+                          : Icons.visibility),
+                      onPressed: () =>
+                          setState(() => _obscurePassword = !_obscurePassword),
                     ),
                   ),
                   validator: (v) {
                     if (v == null || v.isEmpty) return 'Password is required';
-                    if (v.length < 6) return 'Password must be at least 6 characters';
+                    if (v.length < 6)
+                      return 'Password must be at least 6 characters';
                     return null;
                   },
                 ),
@@ -179,7 +192,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
-                    onPressed: () {},
+                    onPressed: () => context.push(AppRoutes.forgotPassword),
                     child: const Text('Forgot password?'),
                   ),
                 ),
@@ -202,14 +215,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 const SizedBox(height: 16),
 
                 // Divider
-                Row(
+                const Row(
                   children: [
-                    const Expanded(child: Divider()),
+                    Expanded(child: Divider()),
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      child: Text('or', style: const TextStyle(color: AppColors.textSecondary)),
+                      padding: EdgeInsets.symmetric(horizontal: 12),
+                      child: Text('or',
+                          style: TextStyle(color: AppColors.textSecondary)),
                     ),
-                    const Expanded(child: Divider()),
+                    Expanded(child: Divider()),
                   ],
                 ),
                 const SizedBox(height: 16),
@@ -221,7 +235,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   label: const Text('Continue with Google'),
                   style: OutlinedButton.styleFrom(
                     minimumSize: const Size(double.infinity, 52),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
                   ),
                 ),
                 const SizedBox(height: 32),

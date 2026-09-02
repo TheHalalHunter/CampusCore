@@ -31,7 +31,8 @@ class _ResourcesScreenState extends ConsumerState<ResourcesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final resourcesAsync = ref.watch(resourcesByCourseProvider(widget.courseId));
+    final resourcesAsync =
+        ref.watch(resourcesByCourseProvider(widget.courseId));
 
     return Scaffold(
       appBar: AppBar(
@@ -64,15 +65,22 @@ class _ResourcesScreenState extends ConsumerState<ResourcesScreen> {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 14, vertical: 7),
                         decoration: BoxDecoration(
-                          color: selected ? AppColors.primary : AppColors.surfaceAlt,
+                          color: selected
+                              ? AppColors.primary
+                              : AppColors.surfaceAlt,
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
-                              color: selected ? AppColors.primary : AppColors.border),
+                              color: selected
+                                  ? AppColors.primary
+                                  : AppColors.border),
                         ),
                         child: Text(f.$2,
                             style: TextStyle(
-                              color: selected ? Colors.white : AppColors.textSecondary,
-                              fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                              color: selected
+                                  ? Colors.white
+                                  : AppColors.textSecondary,
+                              fontWeight:
+                                  selected ? FontWeight.w700 : FontWeight.w500,
                               fontSize: 13,
                             )),
                       ),
@@ -89,53 +97,56 @@ class _ResourcesScreenState extends ConsumerState<ResourcesScreen> {
             child: OfflineBanner(
               cacheKey: 'resources_course_${widget.courseId}',
               child: resourcesAsync.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, _) => ErrorView(
-                message: 'Could not load resources. Check your connection.',
-                onRetry: () => ref.invalidate(resourcesByCourseProvider(widget.courseId)),
-              ),
-              data: (resources) {
-                final filtered = _typeFilter == 'all'
-                    ? resources
-                    : resources.where((r) => r.type == _typeFilter).toList();
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (e, _) => ErrorView(
+                  message: 'Could not load resources. Check your connection.',
+                  onRetry: () => ref
+                      .invalidate(resourcesByCourseProvider(widget.courseId)),
+                ),
+                data: (resources) {
+                  final filtered = _typeFilter == 'all'
+                      ? resources
+                      : resources.where((r) => r.type == _typeFilter).toList();
 
-                if (filtered.isEmpty) {
-                  return Center(
-                    child: Column(mainAxisSize: MainAxisSize.min, children: [
-                      const Icon(Icons.folder_open_outlined,
-                          size: 56, color: AppColors.grey400),
-                      const SizedBox(height: 16),
-                      const Text('No resources yet',
-                          style: TextStyle(
-                              fontWeight: FontWeight.w700, fontSize: 16)),
-                      const SizedBox(height: 8),
-                      const Text('Be the first to upload for this course.',
-                          style: TextStyle(color: AppColors.textSecondary)),
-                      const SizedBox(height: 20),
-                      ElevatedButton.icon(
-                        onPressed: () => context.push(AppRoutes.uploadResource),
-                        icon: const Icon(Icons.upload_file, size: 18),
-                        label: const Text('Upload Resource'),
-                      ),
-                    ]),
+                  if (filtered.isEmpty) {
+                    return Center(
+                      child: Column(mainAxisSize: MainAxisSize.min, children: [
+                        const Icon(Icons.folder_open_outlined,
+                            size: 56, color: AppColors.grey400),
+                        const SizedBox(height: 16),
+                        const Text('No resources yet',
+                            style: TextStyle(
+                                fontWeight: FontWeight.w700, fontSize: 16)),
+                        const SizedBox(height: 8),
+                        const Text('Be the first to upload for this course.',
+                            style: TextStyle(color: AppColors.textSecondary)),
+                        const SizedBox(height: 20),
+                        ElevatedButton.icon(
+                          onPressed: () =>
+                              context.push(AppRoutes.uploadResource),
+                          icon: const Icon(Icons.upload_file, size: 18),
+                          label: const Text('Upload Resource'),
+                        ),
+                      ]),
+                    );
+                  }
+
+                  return RefreshIndicator(
+                    onRefresh: () async => ref
+                        .invalidate(resourcesByCourseProvider(widget.courseId)),
+                    color: AppColors.primary,
+                    child: ListView.separated(
+                      padding: const EdgeInsets.all(16),
+                      itemCount: filtered.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 8),
+                      itemBuilder: (_, i) =>
+                          _ResourceCard(resource: filtered[i]),
+                    ),
                   );
-                }
-
-                return RefreshIndicator(
-                  onRefresh: () async =>
-                      ref.invalidate(resourcesByCourseProvider(widget.courseId)),
-                  color: AppColors.primary,
-                  child: ListView.separated(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: filtered.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 8),
-                    itemBuilder: (_, i) => _ResourceCard(resource: filtered[i]),
-                  ),
-                );
-              },
-            ),   // closes OfflineBanner child: resourcesAsync.when(
+                },
+              ), // closes OfflineBanner child: resourcesAsync.when(
             ), // closes OfflineBanner(
-          ),   // closes Expanded(
+          ), // closes Expanded(
         ],
       ),
     );
@@ -150,8 +161,8 @@ class _ResourceCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isBookmarked = ref.watch(
-        bookmarkProvider.select((s) => s.contains(resource.id)));
+    final isBookmarked =
+        ref.watch(bookmarkProvider.select((s) => s.contains(resource.id)));
 
     return Card(
       child: InkWell(
@@ -161,9 +172,10 @@ class _ResourceCard extends ConsumerWidget {
           padding: const EdgeInsets.all(14),
           child: Row(children: [
             Container(
-              width: 46, height: 46,
+              width: 46,
+              height: 46,
               decoration: BoxDecoration(
-                color: _typeColor(resource.type).withOpacity(0.1),
+                color: _typeColor(resource.type).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Icon(_typeIcon(resource.type),
@@ -186,14 +198,16 @@ class _ResourceCard extends ConsumerWidget {
                             color: AppColors.textSecondary, fontSize: 12)),
                     if (resource.academicYear != null) ...[
                       const Text(' • ',
-                          style: TextStyle(color: AppColors.textHint, fontSize: 12)),
+                          style: TextStyle(
+                              color: AppColors.textHint, fontSize: 12)),
                       Text(resource.academicYear!,
                           style: const TextStyle(
                               color: AppColors.textSecondary, fontSize: 12)),
                     ],
                     if (resource.fileSizeLabel.isNotEmpty) ...[
                       const Text(' • ',
-                          style: TextStyle(color: AppColors.textHint, fontSize: 12)),
+                          style: TextStyle(
+                              color: AppColors.textHint, fontSize: 12)),
                       Text(resource.fileSizeLabel,
                           style: const TextStyle(
                               color: AppColors.textHint, fontSize: 12)),
@@ -201,7 +215,7 @@ class _ResourceCard extends ConsumerWidget {
                   ]),
                   const SizedBox(height: 4),
                   Row(children: [
-                    Icon(Icons.download_outlined,
+                    const Icon(Icons.download_outlined,
                         size: 13, color: AppColors.textHint),
                     const SizedBox(width: 3),
                     Text('${resource.downloadCount}',
@@ -214,7 +228,8 @@ class _ResourceCard extends ConsumerWidget {
                       const SizedBox(width: 3),
                       const Text('Official',
                           style: TextStyle(
-                              color: AppColors.success, fontSize: 12,
+                              color: AppColors.success,
+                              fontSize: 12,
                               fontWeight: FontWeight.w600)),
                     ],
                   ]),
@@ -238,22 +253,33 @@ class _ResourceCard extends ConsumerWidget {
 
   IconData _typeIcon(String type) {
     switch (type) {
-      case 'lecture_note': return Icons.description_outlined;
-      case 'past_question': return Icons.quiz_outlined;
-      case 'slide': return Icons.slideshow_outlined;
-      case 'practical_manual': return Icons.science_outlined;
-      case 'assignment': return Icons.assignment_outlined;
-      default: return Icons.insert_drive_file_outlined;
+      case 'lecture_note':
+        return Icons.description_outlined;
+      case 'past_question':
+        return Icons.quiz_outlined;
+      case 'slide':
+        return Icons.slideshow_outlined;
+      case 'practical_manual':
+        return Icons.science_outlined;
+      case 'assignment':
+        return Icons.assignment_outlined;
+      default:
+        return Icons.insert_drive_file_outlined;
     }
   }
 
   Color _typeColor(String type) {
     switch (type) {
-      case 'lecture_note': return AppColors.info;
-      case 'past_question': return AppColors.accent;
-      case 'slide': return AppColors.success;
-      case 'practical_manual': return AppColors.primary;
-      default: return AppColors.textSecondary;
+      case 'lecture_note':
+        return AppColors.info;
+      case 'past_question':
+        return AppColors.accent;
+      case 'slide':
+        return AppColors.success;
+      case 'practical_manual':
+        return AppColors.primary;
+      default:
+        return AppColors.textSecondary;
     }
   }
 }

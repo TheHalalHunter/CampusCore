@@ -29,8 +29,12 @@ export class ResourcesController {
   @Public()
   @Get()
   @ApiOperation({ summary: "Get approved resources for a course" })
-  findByCourse(@Query("courseId") courseId: string) {
-    return this.service.findByCourse(courseId);
+  findByCourse(
+    @Query("courseId") courseId: string,
+    @Query("page") page = 1,
+    @Query("limit") limit = 20,
+  ) {
+    return this.service.findByCourse(courseId, +page, +limit);
   }
 
   @Post()

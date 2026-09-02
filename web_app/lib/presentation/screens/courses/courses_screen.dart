@@ -76,7 +76,7 @@ class _CourseCard extends StatelessWidget {
               width: double.infinity,
               height: isMobile ? 80 : 120,
               decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.1),
+                color: AppColors.primary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(
@@ -134,7 +134,7 @@ class _CourseCard extends StatelessWidget {
                     minHeight: isMobile ? 3 : 4,
                     backgroundColor: AppColors.grey200,
                     valueColor:
-                        AlwaysStoppedAnimation<Color>(AppColors.primary),
+                        const AlwaysStoppedAnimation<Color>(AppColors.primary),
                   ),
                 ),
               ],

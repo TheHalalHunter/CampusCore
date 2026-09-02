@@ -1,80 +1,79 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../app/router/app_router.dart';
 import '../network/api_client.dart';
 import '../constants/api_constants.dart';
 
-/// Handles Firebase Cloud Messaging registration and message handling.
-///
-/// Call [FcmService.init] once after the user logs in.
 class FcmService {
   static final _messaging = FirebaseMessaging.instance;
 
-  /// Request permission, get the FCM token, upload it to the backend,
-  /// and set up foreground message handlers.
   static Future<void> init(Ref ref) async {
-    // Web uses a different flow — skip for now on web
     if (kIsWeb) return;
 
-    // Request permission (iOS + Android 13+)
     final settings = await _messaging.requestPermission(
       alert: true,
       badge: true,
       sound: true,
     );
-
     if (settings.authorizationStatus == AuthorizationStatus.denied) return;
 
-    // Get token and send to backend
     final token = await _messaging.getToken();
-    if (token != null) {
-      await _uploadToken(ref, token);
-    }
+    if (token != null) await _uploadToken(ref, token);
+    _messaging.onTokenRefresh.listen((t) => _uploadToken(ref, t));
 
-    // Handle token refresh
-    _messaging.onTokenRefresh.listen((newToken) {
-      _uploadToken(ref, newToken);
+    // Foreground messages
+    FirebaseMessaging.onMessage.listen((msg) {
+      debugPrint('FCM foreground: ${msg.notification?.title}');
     });
 
-    // Foreground messages — show a local snackbar or banner
-    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      _handleForegroundMessage(message);
-    });
+    // Background tap — navigate using router
+    FirebaseMessaging.onMessageOpenedApp.listen((msg) => _navigate(ref, msg));
 
-    // Background / terminated app messages
-    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-      _handleMessageTap(message);
-    });
+    // Terminated app tap
+    final initial = await _messaging.getInitialMessage();
+    if (initial != null) _navigate(ref, initial);
   }
 
-  /// Upload the FCM token to the backend via PATCH /users/me
   static Future<void> _uploadToken(Ref ref, String token) async {
     try {
       final api = ref.read(apiClientProvider);
       await api.patch(ApiConstants.updateFcmToken, data: {'fcmToken': token});
-    } catch (_) {
-      // Non-critical — token upload can fail silently
-    }
+    } catch (_) {}
   }
 
-  static void _handleForegroundMessage(RemoteMessage message) {
-    // The notification will show automatically on Android via the system tray.
-    // For foreground, the app can show an in-app banner if needed.
-    debugPrint(
-      'FCM foreground: ${message.notification?.title} — ${message.notification?.body}',
-    );
-  }
+  static void _navigate(Ref ref, RemoteMessage message) {
+    try {
+      final router = ref.read(appRouterProvider);
+      final type = message.data['type'] ?? '';
+      final relatedId = message.data['relatedId'] ?? '';
 
-  static void _handleMessageTap(RemoteMessage message) {
-    // Navigate to the relevant screen based on data payload
-    final type = message.data['type'] ?? '';
-    final relatedId = message.data['relatedId'] ?? '';
-    debugPrint('FCM tapped: type=$type relatedId=$relatedId');
-    // Navigation will be handled by the router when context is available
+      switch (type) {
+        case 'question_answered':
+        case 'answer_verified':
+          if (relatedId.isNotEmpty) {
+            router.push('/community/questions/$relatedId');
+          }
+          break;
+        case 'upload_approved':
+        case 'upload_rejected':
+          if (relatedId.isNotEmpty) {
+            router.push('/resources/$relatedId/view');
+          }
+          break;
+        case 'badge_earned':
+          router.push('/profile');
+          break;
+        case 'new_resource':
+          router.push('/courses');
+          break;
+        default:
+          router.push('/notifications');
+      }
+    } catch (_) {}
   }
 }
 
-/// Background message handler — must be a top-level function
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   debugPrint('FCM background: ${message.notification?.title}');

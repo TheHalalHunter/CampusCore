@@ -34,11 +34,16 @@ class ExamLockModel {
     return ExamLockModel(
       id: json['id'] as String,
       name: json['name'] as String,
-      startsAt: DateTime.parse(json['startsAt'] as String? ?? json['starts_at'] as String),
-      endsAt: DateTime.parse(json['endsAt'] as String? ?? json['ends_at'] as String),
+      startsAt: DateTime.parse(
+          json['startsAt'] as String? ?? json['starts_at'] as String),
+      endsAt: DateTime.parse(
+          json['endsAt'] as String? ?? json['ends_at'] as String),
       lockAI: json['lockAI'] as bool? ?? json['lock_ai'] as bool? ?? true,
-      lockDiscussions: json['lockDiscussions'] as bool? ?? json['lock_discussions'] as bool? ?? true,
-      academicLevel: json['academicLevel'] as String? ?? json['academic_level'] as String?,
+      lockDiscussions: json['lockDiscussions'] as bool? ??
+          json['lock_discussions'] as bool? ??
+          true,
+      academicLevel:
+          json['academicLevel'] as String? ?? json['academic_level'] as String?,
       reason: json['reason'] as String?,
       active: json['active'] as bool? ?? false,
     );
@@ -56,7 +61,9 @@ final examLocksProvider = FutureProvider<List<ExamLockModel>>((ref) async {
   try {
     final response = await adminApi.get('/exam-lock');
     final data = (response.data['data'] ?? response.data) as List;
-    return data.map((e) => ExamLockModel.fromJson(e as Map<String, dynamic>)).toList();
+    return data
+        .map((e) => ExamLockModel.fromJson(e as Map<String, dynamic>))
+        .toList();
   } catch (_) {
     return [];
   }
@@ -95,8 +102,8 @@ class _ExamLockScreenState extends ConsumerState<ExamLockScreen> {
                         style: TextStyle(
                             fontSize: isMobile ? 20 : 24,
                             fontWeight: FontWeight.w700)),
-                    Text('Control AI and discussion access during exams',
-                        style: const TextStyle(color: AdminColors.grey600)),
+                    const Text('Control AI and discussion access during exams',
+                        style: TextStyle(color: AdminColors.grey600)),
                   ],
                 ),
               ),
@@ -107,30 +114,35 @@ class _ExamLockScreenState extends ConsumerState<ExamLockScreen> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AdminColors.primary,
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8)),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 24),
-
           locksAsync.when(
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (_, __) => const Center(child: Text('Could not load exam locks.')),
+            error: (_, __) =>
+                const Center(child: Text('Could not load exam locks.')),
             data: (locks) {
               if (locks.isEmpty) {
-                return Expanded(
+                return const Expanded(
                   child: Center(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
-                      children: const [
-                        Icon(Icons.lock_clock_outlined, size: 56, color: AdminColors.grey600),
+                      children: [
+                        Icon(Icons.lock_clock_outlined,
+                            size: 56, color: AdminColors.grey600),
                         SizedBox(height: 16),
                         Text('No exam locks configured',
-                            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+                            style: TextStyle(
+                                fontWeight: FontWeight.w700, fontSize: 16)),
                         SizedBox(height: 8),
-                        Text('Create a lock to restrict AI and discussions during exams.',
+                        Text(
+                            'Create a lock to restrict AI and discussions during exams.',
                             style: TextStyle(color: AdminColors.grey600)),
                       ],
                     ),
@@ -143,13 +155,15 @@ class _ExamLockScreenState extends ConsumerState<ExamLockScreen> {
                     ? ListView.separated(
                         itemCount: locks.length,
                         separatorBuilder: (_, __) => const SizedBox(height: 8),
-                        itemBuilder: (_, i) => _LockCard(lock: locks[i], fmt: _fmt, onDelete: _delete),
+                        itemBuilder: (_, i) => _LockCard(
+                            lock: locks[i], fmt: _fmt, onDelete: _delete),
                       )
                     : Card(
                         child: SingleChildScrollView(
                           scrollDirection: Axis.horizontal,
                           child: DataTable(
-                            headingRowColor: WidgetStateProperty.all(const Color(0xFFF9FAFB)),
+                            headingRowColor: WidgetStateProperty.all(
+                                const Color(0xFFF9FAFB)),
                             columns: const [
                               DataColumn(label: Text('Name')),
                               DataColumn(label: Text('Level')),
@@ -162,21 +176,28 @@ class _ExamLockScreenState extends ConsumerState<ExamLockScreen> {
                             rows: locks.map((lock) {
                               return DataRow(cells: [
                                 DataCell(Text(lock.name,
-                                    style: const TextStyle(fontWeight: FontWeight.w600))),
-                                DataCell(Text(lock.academicLevel ?? 'All Levels')),
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.w600))),
+                                DataCell(
+                                    Text(lock.academicLevel ?? 'All Levels')),
                                 DataCell(Text(_fmt.format(lock.startsAt))),
                                 DataCell(Text(_fmt.format(lock.endsAt))),
                                 DataCell(Row(
                                   children: [
                                     if (lock.lockAI)
-                                      _FeatureChip(label: 'AI', color: AdminColors.error),
+                                      const _FeatureChip(
+                                          label: 'AI',
+                                          color: AdminColors.error),
                                     if (lock.lockAI && lock.lockDiscussions)
                                       const SizedBox(width: 4),
                                     if (lock.lockDiscussions)
-                                      _FeatureChip(label: 'Discussions', color: AdminColors.warning),
+                                      const _FeatureChip(
+                                          label: 'Discussions',
+                                          color: AdminColors.warning),
                                   ],
                                 )),
-                                DataCell(_StatusBadge(active: lock.isCurrentlyActive)),
+                                DataCell(_StatusBadge(
+                                    active: lock.isCurrentlyActive)),
                                 DataCell(IconButton(
                                   icon: const Icon(Icons.delete_outline,
                                       size: 18, color: AdminColors.error),
@@ -201,12 +222,16 @@ class _ExamLockScreenState extends ConsumerState<ExamLockScreen> {
       context: context,
       builder: (_) => AlertDialog(
         title: const Text('Delete Exam Lock'),
-        content: const Text('This will remove the lock. Active restrictions will lift immediately.'),
+        content: const Text(
+            'This will remove the lock. Active restrictions will lift immediately.'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+          TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel')),
           TextButton(
               onPressed: () => Navigator.pop(context, true),
-              child: const Text('Delete', style: TextStyle(color: AdminColors.error))),
+              child: const Text('Delete',
+                  style: TextStyle(color: AdminColors.error))),
         ],
       ),
     );
@@ -217,7 +242,8 @@ class _ExamLockScreenState extends ConsumerState<ExamLockScreen> {
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text('Could not delete.'), backgroundColor: AdminColors.error));
+            content: Text('Could not delete.'),
+            backgroundColor: AdminColors.error));
       }
     }
   }
@@ -225,7 +251,8 @@ class _ExamLockScreenState extends ConsumerState<ExamLockScreen> {
   void _showCreateDialog(BuildContext context) {
     showDialog(
       context: context,
-      builder: (_) => _CreateLockDialog(onCreated: () => ref.invalidate(examLocksProvider)),
+      builder: (_) =>
+          _CreateLockDialog(onCreated: () => ref.invalidate(examLocksProvider)),
     );
   }
 }
@@ -260,16 +287,21 @@ class _CreateLockDialogState extends State<_CreateLockDialog> {
   }
 
   Future<void> _pickDate(bool isStart) async {
-    final picked = await showDateTimePicker(context, isStart ? _startsAt : _endsAt);
+    final picked =
+        await showDateTimePicker(context, isStart ? _startsAt : _endsAt);
     if (picked != null) {
       setState(() {
-        if (isStart) _startsAt = picked;
-        else _endsAt = picked;
+        if (isStart) {
+          _startsAt = picked;
+        } else {
+          _endsAt = picked;
+        }
       });
     }
   }
 
-  Future<DateTime?> showDateTimePicker(BuildContext ctx, DateTime initial) async {
+  Future<DateTime?> showDateTimePicker(
+      BuildContext ctx, DateTime initial) async {
     final date = await showDatePicker(
         context: ctx,
         initialDate: initial,
@@ -299,7 +331,8 @@ class _CreateLockDialogState extends State<_CreateLockDialog> {
         'lockAI': _lockAI,
         'lockDiscussions': _lockDiscussions,
         if (_level != null) 'academicLevel': _level,
-        if (_reasonCtrl.text.trim().isNotEmpty) 'reason': _reasonCtrl.text.trim(),
+        if (_reasonCtrl.text.trim().isNotEmpty)
+          'reason': _reasonCtrl.text.trim(),
       });
       widget.onCreated();
       if (mounted) Navigator.pop(context);
@@ -333,10 +366,12 @@ class _CreateLockDialogState extends State<_CreateLockDialog> {
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String?>(
-                  value: _level,
-                  decoration: const InputDecoration(labelText: 'Academic Level (optional)'),
+                  initialValue: _level,
+                  decoration: const InputDecoration(
+                      labelText: 'Academic Level (optional)'),
                   items: [null, '100L', '200L', '300L', '400L', '500L']
-                      .map((l) => DropdownMenuItem(value: l, child: Text(l ?? 'All Levels')))
+                      .map((l) => DropdownMenuItem(
+                          value: l, child: Text(l ?? 'All Levels')))
                       .toList(),
                   onChanged: (v) => setState(() => _level = v),
                 ),
@@ -347,8 +382,10 @@ class _CreateLockDialogState extends State<_CreateLockDialog> {
                       child: InkWell(
                         onTap: () => _pickDate(true),
                         child: InputDecorator(
-                          decoration: const InputDecoration(labelText: 'Starts At'),
-                          child: Text(_fmt.format(_startsAt), style: const TextStyle(fontSize: 13)),
+                          decoration:
+                              const InputDecoration(labelText: 'Starts At'),
+                          child: Text(_fmt.format(_startsAt),
+                              style: const TextStyle(fontSize: 13)),
                         ),
                       ),
                     ),
@@ -357,35 +394,42 @@ class _CreateLockDialogState extends State<_CreateLockDialog> {
                       child: InkWell(
                         onTap: () => _pickDate(false),
                         child: InputDecorator(
-                          decoration: const InputDecoration(labelText: 'Ends At'),
-                          child: Text(_fmt.format(_endsAt), style: const TextStyle(fontSize: 13)),
+                          decoration:
+                              const InputDecoration(labelText: 'Ends At'),
+                          child: Text(_fmt.format(_endsAt),
+                              style: const TextStyle(fontSize: 13)),
                         ),
                       ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 12),
-                const Text('Restrictions', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                const Text('Restrictions',
+                    style:
+                        TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
                 SwitchListTile(
                   dense: true,
-                  title: const Text('Lock AI Assistant', style: TextStyle(fontSize: 13)),
+                  title: const Text('Lock AI Assistant',
+                      style: TextStyle(fontSize: 13)),
                   value: _lockAI,
                   onChanged: (v) => setState(() => _lockAI = v),
-                  activeColor: AdminColors.primary,
+                  activeThumbColor: AdminColors.primary,
                   contentPadding: EdgeInsets.zero,
                 ),
                 SwitchListTile(
                   dense: true,
-                  title: const Text('Lock Discussions & Q&A', style: TextStyle(fontSize: 13)),
+                  title: const Text('Lock Discussions & Q&A',
+                      style: TextStyle(fontSize: 13)),
                   value: _lockDiscussions,
                   onChanged: (v) => setState(() => _lockDiscussions = v),
-                  activeColor: AdminColors.primary,
+                  activeThumbColor: AdminColors.primary,
                   contentPadding: EdgeInsets.zero,
                 ),
                 const SizedBox(height: 8),
                 TextFormField(
                   controller: _reasonCtrl,
-                  decoration: const InputDecoration(labelText: 'Reason (optional)'),
+                  decoration:
+                      const InputDecoration(labelText: 'Reason (optional)'),
                   maxLines: 2,
                 ),
               ],
@@ -394,14 +438,20 @@ class _CreateLockDialogState extends State<_CreateLockDialog> {
         ),
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+        TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel')),
         ElevatedButton(
           onPressed: _submitting ? null : _submit,
           style: ElevatedButton.styleFrom(
-              backgroundColor: AdminColors.primary, foregroundColor: Colors.white),
+              backgroundColor: AdminColors.primary,
+              foregroundColor: Colors.white),
           child: _submitting
-              ? const SizedBox(width: 16, height: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                      strokeWidth: 2, color: Colors.white))
               : const Text('Create'),
         ),
       ],
@@ -415,7 +465,8 @@ class _LockCard extends StatelessWidget {
   final ExamLockModel lock;
   final DateFormat fmt;
   final void Function(String) onDelete;
-  const _LockCard({required this.lock, required this.fmt, required this.onDelete});
+  const _LockCard(
+      {required this.lock, required this.fmt, required this.onDelete});
 
   @override
   Widget build(BuildContext context) {
@@ -429,31 +480,40 @@ class _LockCard extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(lock.name,
-                      style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+                      style: const TextStyle(
+                          fontWeight: FontWeight.w700, fontSize: 15)),
                 ),
                 _StatusBadge(active: lock.isCurrentlyActive),
                 const SizedBox(width: 8),
                 IconButton(
-                  icon: const Icon(Icons.delete_outline, color: AdminColors.error, size: 18),
+                  icon: const Icon(Icons.delete_outline,
+                      color: AdminColors.error, size: 18),
                   onPressed: () => onDelete(lock.id),
                   padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                  constraints:
+                      const BoxConstraints(minWidth: 32, minHeight: 32),
                 ),
               ],
             ),
             const SizedBox(height: 8),
             Text('${fmt.format(lock.startsAt)} → ${fmt.format(lock.endsAt)}',
-                style: const TextStyle(color: AdminColors.grey600, fontSize: 12)),
+                style:
+                    const TextStyle(color: AdminColors.grey600, fontSize: 12)),
             const SizedBox(height: 8),
             Row(
               children: [
                 Text(lock.academicLevel ?? 'All Levels',
-                    style: const TextStyle(fontSize: 12, color: AdminColors.grey600)),
+                    style: const TextStyle(
+                        fontSize: 12, color: AdminColors.grey600)),
                 const Spacer(),
-                if (lock.lockAI) _FeatureChip(label: 'AI Locked', color: AdminColors.error),
-                if (lock.lockAI && lock.lockDiscussions) const SizedBox(width: 4),
+                if (lock.lockAI)
+                  const _FeatureChip(
+                      label: 'AI Locked', color: AdminColors.error),
+                if (lock.lockAI && lock.lockDiscussions)
+                  const SizedBox(width: 4),
                 if (lock.lockDiscussions)
-                  _FeatureChip(label: 'Discussions Locked', color: AdminColors.warning),
+                  const _FeatureChip(
+                      label: 'Discussions Locked', color: AdminColors.warning),
               ],
             ),
           ],
@@ -473,11 +533,12 @@ class _FeatureChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(6),
       ),
       child: Text(label,
-          style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w600)),
+          style: TextStyle(
+              color: color, fontSize: 11, fontWeight: FontWeight.w600)),
     );
   }
 }
@@ -491,7 +552,8 @@ class _StatusBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: (active ? AdminColors.error : AdminColors.grey600).withOpacity(0.1),
+        color: (active ? AdminColors.error : AdminColors.grey600)
+            .withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(6),
       ),
       child: Text(

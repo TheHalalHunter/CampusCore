@@ -48,8 +48,10 @@ export class CommunityController {
     @Query("departmentId") departmentId?: string,
     @Query("courseId") courseId?: string,
     @Query("level") level?: string,
+    @Query("page") page = 1,
+    @Query("limit") limit = 20,
   ) {
-    return this.service.findQuestions({ departmentId, courseId, level });
+    return this.service.findQuestions({ departmentId, courseId, level, page: +page, limit: +limit });
   }
 
   @Get("questions/:id")

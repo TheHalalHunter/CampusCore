@@ -17,18 +17,31 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final _pages = const [
     _OnboardingPage(
       icon: Icons.menu_book_rounded,
+      color: Color(0xFF006B5E),
       title: 'All Your Notes in One Place',
-      description: 'Access lecture notes, past questions, and study materials for all your courses — anytime, anywhere.',
+      description:
+          'Access lecture notes, past questions, and study materials for all your courses — anytime, anywhere.',
     ),
     _OnboardingPage(
       icon: Icons.people_alt_rounded,
+      color: Color(0xFF2563EB),
       title: 'Learn Together',
-      description: 'Ask questions, share answers, and connect with fellow students in your department.',
+      description:
+          'Ask questions, share answers, and connect with fellow students in your department.',
     ),
     _OnboardingPage(
       icon: Icons.auto_awesome_rounded,
+      color: Color(0xFF7C3AED),
       title: 'AI-Powered Study',
-      description: 'Get concept explanations, practice quizzes, and flashcards powered by AI — study smarter, not harder.',
+      description:
+          'Get concept explanations, practice quizzes, and flashcards powered by AI — study smarter, not harder.',
+    ),
+    _OnboardingPage(
+      icon: Icons.emoji_events_rounded,
+      color: Color(0xFFF59E0B),
+      title: 'Earn as You Learn',
+      description:
+          'Earn reputation points and badges for contributing resources, answering questions, and staying consistent.',
     ),
   ];
 
@@ -62,7 +75,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         width: _currentPage == i ? 20 : 8,
                         height: 8,
                         decoration: BoxDecoration(
-                          color: _currentPage == i ? AppColors.primary : AppColors.grey200,
+                          color: _currentPage == i
+                              ? AppColors.primary
+                              : AppColors.grey200,
                           borderRadius: BorderRadius.circular(4),
                         ),
                       ),
@@ -80,13 +95,22 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         context.go(AppRoutes.login);
                       }
                     },
-                    child: Text(_currentPage < _pages.length - 1 ? 'Next' : 'Get Started'),
+                    child: Text(
+                        _currentPage < _pages.length - 1 ? 'Next' : 'Sign In'),
                   ),
-                  const SizedBox(height: 12),
-                  TextButton(
-                    onPressed: () => context.go(AppRoutes.login),
-                    child: const Text('Skip'),
-                  ),
+                  if (_currentPage == _pages.length - 1) ...[
+                    const SizedBox(height: 12),
+                    OutlinedButton(
+                      onPressed: () => context.go(AppRoutes.register),
+                      child: const Text('Create Account'),
+                    ),
+                  ] else ...[
+                    const SizedBox(height: 12),
+                    TextButton(
+                      onPressed: () => context.go(AppRoutes.login),
+                      child: const Text('Skip'),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -99,11 +123,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
 class _OnboardingPage extends StatelessWidget {
   final IconData icon;
+  final Color color;
   final String title;
   final String description;
 
   const _OnboardingPage({
     required this.icon,
+    required this.color,
     required this.title,
     required this.description,
   });
@@ -119,28 +145,28 @@ class _OnboardingPage extends StatelessWidget {
             width: 120,
             height: 120,
             decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.1),
+              color: color.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
-            child: Icon(icon, size: 60, color: AppColors.primary),
+            child: Icon(icon, size: 60, color: color),
           ),
           const SizedBox(height: 40),
           Text(
             title,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.w700,
-              color: AppColors.grey900,
-            ),
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.grey900,
+                ),
           ),
           const SizedBox(height: 16),
           Text(
             description,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-              color: AppColors.textSecondary,
-              height: 1.6,
-            ),
+                  color: AppColors.textSecondary,
+                  height: 1.6,
+                ),
           ),
         ],
       ),

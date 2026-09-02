@@ -131,8 +131,8 @@ class ProgressScreen extends StatelessWidget {
                           height: isMobile ? 40 : 50,
                           child: Container(
                             decoration: BoxDecoration(
-                              color:
-                                  gradeColors[grades[index]]?.withOpacity(0.1),
+                              color: gradeColors[grades[index]]
+                                  ?.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Center(

@@ -37,8 +37,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     setState(() => _isLoading = true);
     try {
       // 1. Create Firebase account
-      final credential = await FirebaseAuth.instance
-          .createUserWithEmailAndPassword(
+      final credential =
+          await FirebaseAuth.instance.createUserWithEmailAndPassword(
         email: _emailCtrl.text.trim(),
         password: _passwordCtrl.text,
       );
@@ -50,11 +50,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       // Pass fullName + level + department so backend creates the user record
       final dept = await ref.read(primaryDepartmentProvider.future);
       await ref.read(authProvider.notifier).registerWithFirebase(
-        firebaseUser: credential.user!,
-        fullName: _nameCtrl.text.trim(),
-        departmentId: dept?.id,
-        academicLevel: _selectedLevel,
-      );
+            firebaseUser: credential.user!,
+            fullName: _nameCtrl.text.trim(),
+            departmentId: dept?.id,
+            academicLevel: _selectedLevel,
+          );
 
       // 4. Router will redirect to integrity policy screen automatically
       if (mounted) context.go(AppRoutes.integrityPolicy);
@@ -147,8 +147,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   labelText: 'Password',
                   prefixIcon: const Icon(Icons.lock_outline),
                   suffixIcon: IconButton(
-                    icon:
-                        Icon(_obscure ? Icons.visibility_off : Icons.visibility),
+                    icon: Icon(
+                        _obscure ? Icons.visibility_off : Icons.visibility),
                     onPressed: () => setState(() => _obscure = !_obscure),
                   ),
                 ),
@@ -160,18 +160,16 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
               // Academic level
               DropdownButtonFormField<String>(
-                value: _selectedLevel,
+                initialValue: _selectedLevel,
                 decoration: const InputDecoration(
                   labelText: 'Academic Level',
                   prefixIcon: Icon(Icons.school_outlined),
                 ),
                 items: ['100L', '200L', '300L', '400L', '500L']
-                    .map((l) =>
-                        DropdownMenuItem(value: l, child: Text(l)))
+                    .map((l) => DropdownMenuItem(value: l, child: Text(l)))
                     .toList(),
                 onChanged: (v) => setState(() => _selectedLevel = v),
-                validator: (v) =>
-                    v == null ? 'Please select your level' : null,
+                validator: (v) => v == null ? 'Please select your level' : null,
               ),
               const SizedBox(height: 28),
 

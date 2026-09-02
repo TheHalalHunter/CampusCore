@@ -1,0 +1,18 @@
+# flutter_launcher_icons configuration
+# Run: flutter pub run flutter_launcher_icons
+# Place your 1024x1024 PNG icon at assets/icons/app_icon.png
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/icons/app_icon.png"
+  min_sdk_android: 21
+  web:
+    generate: true
+    image_path: "assets/icons/app_icon.png"
+    background_color: "#006B5E"
+    theme_color: "#006B5E"
+  windows:
+    generate: false
+  remove_alpha_ios: true
+  background_color_ios: "#FFFFFF"

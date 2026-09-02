@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../app/theme/app_theme.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/constants/api_constants.dart';
@@ -39,9 +38,8 @@ class PublicProfileScreen extends ConsumerWidget {
                 CircleAvatar(
                   radius: 52,
                   backgroundColor: AppColors.primary,
-                  backgroundImage: user.avatar != null
-                      ? NetworkImage(user.avatar!)
-                      : null,
+                  backgroundImage:
+                      user.avatar != null ? NetworkImage(user.avatar!) : null,
                   child: user.avatar == null
                       ? Text(
                           user.firstName.substring(0, 1).toUpperCase(),
@@ -102,7 +100,8 @@ class PublicProfileScreen extends ConsumerWidget {
                       _InfoTile(
                           icon: Icons.badge_outlined,
                           label: 'Role',
-                          value: '${user.role[0].toUpperCase()}${user.role.substring(1)}'),
+                          value:
+                              '${user.role[0].toUpperCase()}${user.role.substring(1)}'),
                     ],
                   ),
                 ),
@@ -120,7 +119,8 @@ final _publicProfileProvider =
     FutureProvider.family<UserModel?, String>((ref, userId) async {
   try {
     final api = ref.read(apiClientProvider);
-    final response = await api.get('${ApiConstants.me.replaceAll('/me', '')}/$userId/profile');
+    final response = await api
+        .get('${ApiConstants.me.replaceAll('/me', '')}/$userId/profile');
     final data = response.data['data'] ?? response.data;
     return UserModel.fromJson(data as Map<String, dynamic>);
   } catch (_) {
@@ -140,8 +140,7 @@ class _InfoTile extends StatelessWidget {
     return ListTile(
       leading: Icon(icon, color: AppColors.primary),
       title: Text(label,
-          style: const TextStyle(
-              fontSize: 13, color: AppColors.textSecondary)),
+          style: const TextStyle(fontSize: 13, color: AppColors.textSecondary)),
       trailing: Text(value,
           style: const TextStyle(
               fontWeight: FontWeight.w600, color: AppColors.textPrimary)),

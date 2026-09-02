@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../app/theme/app_theme.dart';
+import '../../../core/network/api_client.dart';
+import '../../../core/constants/api_constants.dart';
+import '../../../core/utils/error_helper.dart';
 import '../../providers/ai_provider.dart';
 
 class AiAssistantScreen extends ConsumerStatefulWidget {
@@ -17,7 +20,7 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 5, vsync: this);
   }
 
   @override
@@ -45,7 +48,12 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen>
             Tab(icon: Icon(Icons.lightbulb_outline, size: 18), text: 'Explain'),
             Tab(icon: Icon(Icons.quiz_outlined, size: 18), text: 'Quiz'),
             Tab(icon: Icon(Icons.style_outlined, size: 18), text: 'Flashcards'),
-            Tab(icon: Icon(Icons.summarize_outlined, size: 18), text: 'Summarize'),
+            Tab(
+                icon: Icon(Icons.summarize_outlined, size: 18),
+                text: 'Summarize'),
+            Tab(
+                icon: Icon(Icons.trending_up_outlined, size: 18),
+                text: 'Predict'),
           ],
         ),
       ),
@@ -56,6 +64,7 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen>
           _QuizTab(),
           _FlashcardsTab(),
           _SummarizeTab(),
+          _PredictTab(),
         ],
       ),
     );
@@ -101,7 +110,8 @@ class _AiInputCard extends StatelessWidget {
             style: const TextStyle(fontSize: 14, color: AppColors.textPrimary),
             decoration: InputDecoration(
               hintText: hint,
-              hintStyle: const TextStyle(color: AppColors.textHint, fontSize: 13),
+              hintStyle:
+                  const TextStyle(color: AppColors.textHint, fontSize: 13),
               filled: true,
               fillColor: AppColors.surfaceAlt,
               border: OutlineInputBorder(
@@ -146,9 +156,9 @@ class _AiResultCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.primary.withOpacity(0.04),
+        color: AppColors.primary.withValues(alpha: 0.04),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.primary.withOpacity(0.2)),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -205,9 +215,9 @@ class _AiErrorCard extends StatelessWidget {
       return Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: AppColors.warning.withOpacity(0.08),
+          color: AppColors.warning.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.warning.withOpacity(0.4)),
+          border: Border.all(color: AppColors.warning.withValues(alpha: 0.4)),
         ),
         child: Column(
           children: [
@@ -235,9 +245,9 @@ class _AiErrorCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.error.withOpacity(0.06),
+        color: AppColors.error.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.error.withOpacity(0.3)),
+        border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
       ),
       child: Row(
         children: [
@@ -340,11 +350,11 @@ class _ExplainTabState extends ConsumerState<_ExplainTab> {
               final concept = _conceptCtrl.text.trim();
               if (concept.isEmpty) return;
               ref.read(explainProvider.notifier).explain(
-                concept,
-                courseContext: _contextCtrl.text.trim().isEmpty
-                    ? null
-                    : _contextCtrl.text.trim(),
-              );
+                    concept,
+                    courseContext: _contextCtrl.text.trim().isEmpty
+                        ? null
+                        : _contextCtrl.text.trim(),
+                  );
             },
           ),
           const SizedBox(height: 12),
@@ -487,7 +497,8 @@ class _QuizTabState extends ConsumerState<_QuizTab> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 20, vertical: 10),
                       decoration: BoxDecoration(
-                        color: selected ? AppColors.accent : AppColors.surfaceAlt,
+                        color:
+                            selected ? AppColors.accent : AppColors.surfaceAlt,
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(
                           color: selected ? AppColors.accent : AppColors.border,
@@ -496,7 +507,8 @@ class _QuizTabState extends ConsumerState<_QuizTab> {
                       child: Text(
                         '$n',
                         style: TextStyle(
-                          color: selected ? Colors.white : AppColors.textSecondary,
+                          color:
+                              selected ? Colors.white : AppColors.textSecondary,
                           fontWeight: FontWeight.w700,
                           fontSize: 15,
                         ),
@@ -516,9 +528,9 @@ class _QuizTabState extends ConsumerState<_QuizTab> {
                 final topic = _topicCtrl.text.trim();
                 if (topic.isEmpty) return;
                 ref.read(quizProvider.notifier).generate(
-                  topic,
-                  count: _questionCount,
-                );
+                      topic,
+                      count: _questionCount,
+                    );
               },
               icon: const Icon(Icons.play_arrow, size: 20),
               label: const Text('Generate Quiz'),
@@ -595,20 +607,21 @@ class _QuizPlayer extends ConsumerWidget {
 
                   return GestureDetector(
                     onTap: () => ref.read(quizProvider.notifier).selectAnswer(
-                      state.currentIndex,
-                      idx,
-                    ),
+                          state.currentIndex,
+                          idx,
+                        ),
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 200),
                       margin: const EdgeInsets.only(bottom: 10),
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
                         color: isSelected
-                            ? AppColors.accent.withOpacity(0.1)
+                            ? AppColors.accent.withValues(alpha: 0.1)
                             : AppColors.surface,
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: isSelected ? AppColors.accent : AppColors.border,
+                          color:
+                              isSelected ? AppColors.accent : AppColors.border,
                           width: isSelected ? 2 : 0.8,
                         ),
                       ),
@@ -677,8 +690,7 @@ class _QuizPlayer extends ConsumerWidget {
             children: [
               if (state.currentIndex > 0)
                 OutlinedButton(
-                  onPressed: () =>
-                      ref.read(quizProvider.notifier).previous(),
+                  onPressed: () => ref.read(quizProvider.notifier).previous(),
                   style: OutlinedButton.styleFrom(
                     minimumSize: const Size(80, 44),
                   ),
@@ -698,10 +710,10 @@ class _QuizPlayer extends ConsumerWidget {
                 )
               else
                 ElevatedButton(
-                  onPressed: state.selectedAnswers.length ==
-                          state.questions.length
-                      ? () => ref.read(quizProvider.notifier).submit()
-                      : null,
+                  onPressed:
+                      state.selectedAnswers.length == state.questions.length
+                          ? () => ref.read(quizProvider.notifier).submit()
+                          : null,
                   style: ElevatedButton.styleFrom(
                     minimumSize: const Size(120, 44),
                     backgroundColor: AppColors.success,
@@ -751,9 +763,9 @@ class _QuizResults extends ConsumerWidget {
             width: double.infinity,
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: resultColor.withOpacity(0.08),
+              color: resultColor.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: resultColor.withOpacity(0.3)),
+              border: Border.all(color: resultColor.withValues(alpha: 0.3)),
             ),
             child: Column(
               children: [
@@ -812,13 +824,13 @@ class _QuizResults extends ConsumerWidget {
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
                 color: isCorrect
-                    ? AppColors.success.withOpacity(0.05)
-                    : AppColors.error.withOpacity(0.05),
+                    ? AppColors.success.withValues(alpha: 0.05)
+                    : AppColors.error.withValues(alpha: 0.05),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   color: isCorrect
-                      ? AppColors.success.withOpacity(0.3)
-                      : AppColors.error.withOpacity(0.3),
+                      ? AppColors.success.withValues(alpha: 0.3)
+                      : AppColors.error.withValues(alpha: 0.3),
                 ),
               ),
               child: Column(
@@ -836,7 +848,8 @@ class _QuizResults extends ConsumerWidget {
                         'Q${idx + 1}',
                         style: TextStyle(
                           fontWeight: FontWeight.w700,
-                          color: isCorrect ? AppColors.success : AppColors.error,
+                          color:
+                              isCorrect ? AppColors.success : AppColors.error,
                         ),
                       ),
                     ],
@@ -1018,25 +1031,22 @@ class _FlashcardsTabState extends ConsumerState<_FlashcardsTab> {
           child: Padding(
             padding: const EdgeInsets.all(20),
             child: GestureDetector(
-              onTap: () =>
-                  ref.read(flashcardsProvider.notifier).flip(state.currentIndex),
+              onTap: () => ref
+                  .read(flashcardsProvider.notifier)
+                  .flip(state.currentIndex),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 300),
                 width: double.infinity,
                 decoration: BoxDecoration(
-                  color: card.flipped
-                      ? AppColors.primary
-                      : AppColors.surface,
+                  color: card.flipped ? AppColors.primary : AppColors.surface,
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: card.flipped
-                        ? AppColors.primary
-                        : AppColors.border,
+                    color: card.flipped ? AppColors.primary : AppColors.border,
                     width: 1.5,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.08),
+                      color: Colors.black.withValues(alpha: 0.08),
                       blurRadius: 12,
                       offset: const Offset(0, 4),
                     ),
@@ -1107,8 +1117,7 @@ class _FlashcardsTabState extends ConsumerState<_FlashcardsTab> {
               Expanded(
                 child: OutlinedButton(
                   onPressed: state.currentIndex > 0
-                      ? () =>
-                          ref.read(flashcardsProvider.notifier).previous()
+                      ? () => ref.read(flashcardsProvider.notifier).previous()
                       : null,
                   child: const Text('Previous'),
                 ),
@@ -1194,7 +1203,6 @@ class _SummarizeTabState extends ConsumerState<_SummarizeTab> {
             ),
           ),
           const SizedBox(height: 20),
-
           const Text('Paste your text here',
               style: TextStyle(
                 fontWeight: FontWeight.w700,
@@ -1215,17 +1223,207 @@ class _SummarizeTabState extends ConsumerState<_SummarizeTab> {
             },
           ),
           const SizedBox(height: 16),
-
           if (state.error != null) ...[
             _AiErrorCard(error: state.error!),
             const SizedBox(height: 16),
           ],
-
           if (state.content.isNotEmpty)
             _AiResultCard(
               content: state.content,
               onClear: () => ref.read(summarizeProvider.notifier).clear(),
             ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Predict Topics Tab ───────────────────────────────────────────────────────
+
+class _PredictTab extends ConsumerStatefulWidget {
+  const _PredictTab();
+
+  @override
+  ConsumerState<_PredictTab> createState() => _PredictTabState();
+}
+
+class _PredictTabState extends ConsumerState<_PredictTab> {
+  final _courseTitleCtrl = TextEditingController();
+  final _topicsCtrl = TextEditingController();
+  bool _loading = false;
+  List<String> _results = [];
+  String? _error;
+
+  @override
+  void dispose() {
+    _courseTitleCtrl.dispose();
+    _topicsCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _predict() async {
+    final title = _courseTitleCtrl.text.trim();
+    final topics = _topicsCtrl.text
+        .split(',')
+        .map((t) => t.trim())
+        .where((t) => t.isNotEmpty)
+        .toList();
+
+    if (title.isEmpty) return;
+
+    setState(() {
+      _loading = true;
+      _error = null;
+      _results = [];
+    });
+
+    try {
+      final api = ref.read(apiClientProvider);
+      final response = await api.post(
+        ApiConstants.aiPredictTopics,
+        data: {'courseTitle': title, 'recentTopics': topics},
+      );
+      final data = response.data['data'] ?? response.data;
+      setState(() {
+        _results = List<String>.from(data as List? ?? []);
+      });
+    } catch (e) {
+      setState(() => _error = extractErrorMessage(e));
+    } finally {
+      setState(() => _loading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFFF59E0B), Color(0xFFEF4444)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: const Row(children: [
+              Icon(Icons.trending_up, color: Colors.white, size: 32),
+              SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Predict Exam Topics',
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 16)),
+                    SizedBox(height: 4),
+                    Text('Get likely exam topics based on what you\'ve covered.',
+                        style: TextStyle(color: Colors.white70, fontSize: 12)),
+                  ],
+                ),
+              ),
+            ]),
+          ),
+          const SizedBox(height: 20),
+
+          // Course title input
+          TextField(
+            controller: _courseTitleCtrl,
+            decoration: const InputDecoration(
+              labelText: 'Course Title',
+              hintText: 'e.g. Fish Nutrition and Feeding',
+              prefixIcon: Icon(Icons.menu_book_outlined),
+            ),
+          ),
+          const SizedBox(height: 14),
+
+          // Recent topics input
+          TextField(
+            controller: _topicsCtrl,
+            maxLines: 3,
+            decoration: const InputDecoration(
+              labelText: 'Recent Topics Covered (comma-separated)',
+              hintText: 'e.g. Protein metabolism, Feed formulation, Vitamins',
+              alignLabelWithHint: true,
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          ElevatedButton.icon(
+            onPressed: _loading ? null : _predict,
+            icon: _loading
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(
+                        strokeWidth: 2, color: Colors.white))
+                : const Icon(Icons.search, size: 18),
+            label: Text(_loading ? 'Predicting…' : 'Predict Topics'),
+          ),
+
+          // Error
+          if (_error != null) ...[
+            const SizedBox(height: 16),
+            _AiErrorCard(error: _error!),
+          ],
+
+          // Results
+          if (_results.isNotEmpty) ...[
+            const SizedBox(height: 24),
+            Row(children: [
+              const Icon(Icons.lightbulb, color: AppColors.accent, size: 18),
+              const SizedBox(width: 8),
+              Text('${_results.length} Likely Exam Topics',
+                  style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 15,
+                      color: AppColors.textPrimary)),
+            ]),
+            const SizedBox(height: 12),
+            ..._results.asMap().entries.map((e) => Container(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.border),
+                  ),
+                  child: Row(children: [
+                    Container(
+                      width: 28,
+                      height: 28,
+                      decoration: BoxDecoration(
+                        color: AppColors.accent.withOpacity(0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Center(
+                        child: Text('${e.key + 1}',
+                            style: const TextStyle(
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.accent,
+                                fontSize: 13)),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(e.value,
+                          style: const TextStyle(
+                              fontSize: 14,
+                              color: AppColors.textPrimary,
+                              fontWeight: FontWeight.w500)),
+                    ),
+                  ]),
+                )),
+          ],
         ],
       ),
     );

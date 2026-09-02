@@ -9,8 +9,7 @@ class PostQuestionScreen extends ConsumerStatefulWidget {
   const PostQuestionScreen({super.key});
 
   @override
-  ConsumerState<PostQuestionScreen> createState() =>
-      _PostQuestionScreenState();
+  ConsumerState<PostQuestionScreen> createState() => _PostQuestionScreenState();
 }
 
 class _PostQuestionScreenState extends ConsumerState<PostQuestionScreen> {
@@ -49,10 +48,10 @@ class _PostQuestionScreenState extends ConsumerState<PostQuestionScreen> {
               Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: AppColors.accent.withOpacity(0.08),
+                  color: AppColors.accent.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                      color: AppColors.accent.withOpacity(0.25)),
+                      color: AppColors.accent.withValues(alpha: 0.25)),
                 ),
                 child: const Row(
                   children: [
@@ -142,32 +141,27 @@ class _PostQuestionScreenState extends ConsumerState<PostQuestionScreen> {
                 children: _levels.map((level) {
                   final selected = _selectedLevel == level;
                   return GestureDetector(
-                    onTap: () =>
-                        setState(() => _selectedLevel = level),
+                    onTap: () => setState(() => _selectedLevel = level),
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 200),
                       padding: const EdgeInsets.symmetric(
                           horizontal: 16, vertical: 8),
                       decoration: BoxDecoration(
-                        color: selected
-                            ? AppColors.primary
-                            : AppColors.surfaceAlt,
+                        color:
+                            selected ? AppColors.primary : AppColors.surfaceAlt,
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
-                          color: selected
-                              ? AppColors.primary
-                              : AppColors.border,
+                          color:
+                              selected ? AppColors.primary : AppColors.border,
                         ),
                       ),
                       child: Text(
                         level,
                         style: TextStyle(
-                          color: selected
-                              ? Colors.white
-                              : AppColors.textSecondary,
-                          fontWeight: selected
-                              ? FontWeight.w700
-                              : FontWeight.w500,
+                          color:
+                              selected ? Colors.white : AppColors.textSecondary,
+                          fontWeight:
+                              selected ? FontWeight.w700 : FontWeight.w500,
                           fontSize: 13,
                         ),
                       ),
@@ -188,20 +182,18 @@ class _PostQuestionScreenState extends ConsumerState<PostQuestionScreen> {
               const SizedBox(height: 8),
               coursesAsync.when(
                 data: (courses) => DropdownButtonFormField<String>(
-                  value: _selectedCourseId,
+                  initialValue: _selectedCourseId,
                   hint: const Text('Select a course (optional)'),
                   decoration: InputDecoration(
                     filled: true,
                     fillColor: AppColors.surfaceAlt,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide:
-                          const BorderSide(color: AppColors.border),
+                      borderSide: const BorderSide(color: AppColors.border),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide:
-                          const BorderSide(color: AppColors.border),
+                      borderSide: const BorderSide(color: AppColors.border),
                     ),
                   ),
                   items: [
@@ -217,8 +209,7 @@ class _PostQuestionScreenState extends ConsumerState<PostQuestionScreen> {
                           ),
                         )),
                   ],
-                  onChanged: (val) =>
-                      setState(() => _selectedCourseId = val),
+                  onChanged: (val) => setState(() => _selectedCourseId = val),
                 ),
                 loading: () => const LinearProgressIndicator(),
                 error: (_, __) => const SizedBox(),
@@ -263,8 +254,7 @@ class _PostQuestionScreenState extends ConsumerState<PostQuestionScreen> {
                         ),
                       )
                     : const Icon(Icons.send, size: 18),
-                label:
-                    Text(_submitting ? 'Posting...' : 'Post Question'),
+                label: Text(_submitting ? 'Posting...' : 'Post Question'),
               ),
             ],
           ),
@@ -285,12 +275,12 @@ class _PostQuestionScreenState extends ConsumerState<PostQuestionScreen> {
     setState(() => _submitting = true);
 
     final success = await ref.read(postQuestionProvider.notifier).post(
-      title: _titleCtrl.text.trim(),
-      body: _bodyCtrl.text.trim(),
-      courseId: _selectedCourseId,
-      academicLevel: _selectedLevel,
-      tags: tags,
-    );
+          title: _titleCtrl.text.trim(),
+          body: _bodyCtrl.text.trim(),
+          courseId: _selectedCourseId,
+          academicLevel: _selectedLevel,
+          tags: tags,
+        );
 
     setState(() => _submitting = false);
 

@@ -23,7 +23,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _focusNode.requestFocus());
+    WidgetsBinding.instance
+        .addPostFrameCallback((_) => _focusNode.requestFocus());
   }
 
   @override
@@ -94,7 +95,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
 
   Widget _buildBody(SearchState search) {
     if (!search.hasQuery) {
-      return _EmptyState(
+      return const _EmptyState(
         icon: Icons.search,
         title: 'Search CampusCore',
         subtitle: 'Find courses, resources and community questions.',
@@ -127,24 +128,21 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       children: [
         // Courses section
         if (results.courses.isNotEmpty) ...[
-          _SectionHeader(
-              label: 'Courses', count: results.courses.length),
+          _SectionHeader(label: 'Courses', count: results.courses.length),
           ...results.courses.map((c) => _CourseResultTile(course: c)),
           const SizedBox(height: 8),
         ],
 
         // Resources section
         if (results.resources.isNotEmpty) ...[
-          _SectionHeader(
-              label: 'Resources', count: results.resources.length),
+          _SectionHeader(label: 'Resources', count: results.resources.length),
           ...results.resources.map((r) => _ResourceResultTile(resource: r)),
           const SizedBox(height: 8),
         ],
 
         // Questions section
         if (results.questions.isNotEmpty) ...[
-          _SectionHeader(
-              label: 'Questions', count: results.questions.length),
+          _SectionHeader(label: 'Questions', count: results.questions.length),
           ...results.questions.map((q) => _QuestionResultTile(question: q)),
         ],
       ],
@@ -174,7 +172,7 @@ class _SectionHeader extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
             decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.1),
+              color: AppColors.primary.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Text('$count',
@@ -204,7 +202,7 @@ class _CourseResultTile extends StatelessWidget {
           width: 40,
           height: 40,
           decoration: BoxDecoration(
-            color: AppColors.primary.withOpacity(0.1),
+            color: AppColors.primary.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(8),
           ),
           child: const Icon(Icons.menu_book_outlined,
@@ -236,7 +234,7 @@ class _ResourceResultTile extends StatelessWidget {
           width: 40,
           height: 40,
           decoration: BoxDecoration(
-            color: AppColors.accent.withOpacity(0.1),
+            color: AppColors.accent.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(8),
           ),
           child: const Icon(Icons.description_outlined,
@@ -244,13 +242,11 @@ class _ResourceResultTile extends StatelessWidget {
         ),
         title: Text(resource.title,
             style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-        subtitle: Text(
-            '${resource.typeLabel} • ${resource.fileSizeLabel}',
+        subtitle: Text('${resource.typeLabel} • ${resource.fileSizeLabel}',
             style: const TextStyle(fontSize: 12)),
         trailing: const Icon(Icons.arrow_forward_ios,
             size: 14, color: AppColors.textHint),
-        onTap: () =>
-            context.push('${AppRoutes.resources}/${resource.id}/view'),
+        onTap: () => context.push('${AppRoutes.resources}/${resource.id}/view'),
       ),
     );
   }
@@ -271,25 +267,23 @@ class _QuestionResultTile extends StatelessWidget {
           width: 40,
           height: 40,
           decoration: BoxDecoration(
-            color: AppColors.info.withOpacity(0.1),
+            color: AppColors.info.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(8),
           ),
-          child: const Icon(Icons.help_outline,
-              color: AppColors.info, size: 20),
+          child:
+              const Icon(Icons.help_outline, color: AppColors.info, size: 20),
         ),
         title: Text(question.title,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-        subtitle: Text(
-            '${question.answerCount} answers • ${question.timeAgo}',
+        subtitle: Text('${question.answerCount} answers • ${question.timeAgo}',
             style: const TextStyle(fontSize: 12)),
         trailing: question.isResolved
-            ? const Icon(Icons.check_circle,
-                size: 16, color: AppColors.success)
+            ? const Icon(Icons.check_circle, size: 16, color: AppColors.success)
             : null,
-        onTap: () => context.push(
-            '${AppRoutes.community}/questions/${question.id}'),
+        onTap: () =>
+            context.push('${AppRoutes.community}/questions/${question.id}'),
       ),
     );
   }

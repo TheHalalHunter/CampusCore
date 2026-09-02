@@ -15,7 +15,7 @@ class CampusCoreApp extends ConsumerWidget {
       title: 'CampusCore',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light(),
-      darkTheme: AppTheme.light(), // force light mode until dark theme is designed
+      darkTheme: AppTheme.light(),
       themeMode: ThemeMode.light,
       routerConfig: router,
     );

@@ -28,15 +28,18 @@ class NotificationsScreen extends ConsumerWidget {
       ),
       body: notificationsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (_, __) => const Center(child: Text('Could not load notifications.')),
+        error: (_, __) =>
+            const Center(child: Text('Could not load notifications.')),
         data: (notifications) {
           if (notifications.isEmpty) {
-            return Center(
-              child: Column(mainAxisSize: MainAxisSize.min, children: const [
-                Icon(Icons.notifications_none, size: 56, color: AppColors.grey400),
+            return const Center(
+              child: Column(mainAxisSize: MainAxisSize.min, children: [
+                Icon(Icons.notifications_none,
+                    size: 56, color: AppColors.grey400),
                 SizedBox(height: 16),
                 Text('No notifications yet',
-                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+                    style:
+                        TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
                 SizedBox(height: 8),
                 Text('You\'ll be notified about uploads, answers and more.',
                     textAlign: TextAlign.center,
@@ -85,12 +88,14 @@ class _NotificationTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final info = _typeInfo(notification.type);
     return ListTile(
-      tileColor: notification.isRead ? null : AppColors.primary.withOpacity(0.04),
+      tileColor: notification.isRead
+          ? null
+          : AppColors.primary.withValues(alpha: 0.04),
       onTap: onTap,
       leading: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: info.color.withOpacity(0.12),
+          color: info.color.withValues(alpha: 0.12),
           shape: BoxShape.circle,
         ),
         child: Icon(info.icon, color: info.color, size: 20),
@@ -101,7 +106,8 @@ class _NotificationTile extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(notification.body,
-              style: const TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+              style: const TextStyle(
+                  fontSize: 13, color: AppColors.textSecondary)),
           const SizedBox(height: 2),
           Text(_timeAgo(notification.createdAt),
               style: const TextStyle(fontSize: 11, color: AppColors.textHint)),
@@ -110,7 +116,8 @@ class _NotificationTile extends StatelessWidget {
       trailing: notification.isRead
           ? null
           : Container(
-              width: 8, height: 8,
+              width: 8,
+              height: 8,
               decoration: const BoxDecoration(
                   color: AppColors.primary, shape: BoxShape.circle)),
       isThreeLine: true,
@@ -120,21 +127,21 @@ class _NotificationTile extends StatelessWidget {
   _TypeInfo _typeInfo(String type) {
     switch (type) {
       case 'upload_approved':
-        return _TypeInfo(Icons.check_circle_outline, AppColors.success);
+        return const _TypeInfo(Icons.check_circle_outline, AppColors.success);
       case 'upload_rejected':
-        return _TypeInfo(Icons.cancel_outlined, AppColors.error);
+        return const _TypeInfo(Icons.cancel_outlined, AppColors.error);
       case 'question_answered':
-        return _TypeInfo(Icons.question_answer_outlined, AppColors.info);
+        return const _TypeInfo(Icons.question_answer_outlined, AppColors.info);
       case 'answer_verified':
-        return _TypeInfo(Icons.verified_outlined, AppColors.success);
+        return const _TypeInfo(Icons.verified_outlined, AppColors.success);
       case 'new_resource':
-        return _TypeInfo(Icons.upload_file_outlined, AppColors.accent);
+        return const _TypeInfo(Icons.upload_file_outlined, AppColors.accent);
       case 'badge_earned':
-        return _TypeInfo(Icons.military_tech_outlined, AppColors.accent);
+        return const _TypeInfo(Icons.military_tech_outlined, AppColors.accent);
       case 'announcement':
-        return _TypeInfo(Icons.campaign_outlined, AppColors.warning);
+        return const _TypeInfo(Icons.campaign_outlined, AppColors.warning);
       default:
-        return _TypeInfo(Icons.notifications_outlined, AppColors.primary);
+        return const _TypeInfo(Icons.notifications_outlined, AppColors.primary);
     }
   }
 

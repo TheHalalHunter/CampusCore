@@ -15,14 +15,20 @@ class _UsersScreenState extends State<UsersScreen> {
 
   final _roleOptions = ['All', 'Student', 'Moderator', 'Lecturer', 'Admin'];
 
-  static final _users = List.generate(12, (i) => {
-    'name': 'Student ${i + 1}',
-    'email': 'student${i + 1}@lautech.edu.ng',
-    'role': i == 0 ? 'Admin' : i < 3 ? 'Moderator' : 'Student',
-    'level': '${(i % 4 + 1) * 100}L',
-    'status': i == 5 ? 'Suspended' : 'Active',
-    'joined': '${i + 1} Jan 2026',
-  });
+  static final _users = List.generate(
+      12,
+      (i) => {
+            'name': 'Student ${i + 1}',
+            'email': 'student${i + 1}@lautech.edu.ng',
+            'role': i == 0
+                ? 'Admin'
+                : i < 3
+                    ? 'Moderator'
+                    : 'Student',
+            'level': '${(i % 4 + 1) * 100}L',
+            'status': i == 5 ? 'Suspended' : 'Active',
+            'joined': '${i + 1} Jan 2026',
+          });
 
   @override
   Widget build(BuildContext context) {
@@ -60,7 +66,8 @@ class _UsersScreenState extends State<UsersScreen> {
                     prefixIcon: const Icon(Icons.search, size: 18),
                     filled: true,
                     fillColor: Colors.white,
-                    contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                    contentPadding: const EdgeInsets.symmetric(
+                        vertical: 10, horizontal: 12),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
                       borderSide: BorderSide.none,
@@ -74,11 +81,14 @@ class _UsersScreenState extends State<UsersScreen> {
                   value: _roleFilter,
                   isExpanded: true,
                   items: _roleOptions
-                      .map((r) => DropdownMenuItem(value: r, child: Text(r, style: const TextStyle(fontSize: 12))))
+                      .map((r) => DropdownMenuItem(
+                          value: r,
+                          child: Text(r, style: const TextStyle(fontSize: 12))))
                       .toList(),
                   onChanged: (v) => setState(() => _roleFilter = v ?? 'All'),
                   underline: Container(),
-                  style: const TextStyle(fontSize: 12, color: AdminColors.grey800),
+                  style:
+                      const TextStyle(fontSize: 12, color: AdminColors.grey800),
                 ),
               ],
             )
@@ -94,7 +104,8 @@ class _UsersScreenState extends State<UsersScreen> {
                       prefixIcon: const Icon(Icons.search, size: 20),
                       filled: true,
                       fillColor: Colors.white,
-                      contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 14),
+                      contentPadding: const EdgeInsets.symmetric(
+                          vertical: 10, horizontal: 14),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
                         borderSide: BorderSide.none,
@@ -129,11 +140,13 @@ class _UsersScreenState extends State<UsersScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   Expanded(
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         Text(
                                           u['name']!,
@@ -145,7 +158,9 @@ class _UsersScreenState extends State<UsersScreen> {
                                         ),
                                         Text(
                                           u['email']!,
-                                          style: const TextStyle(fontSize: 11, color: AdminColors.grey600),
+                                          style: const TextStyle(
+                                              fontSize: 11,
+                                              color: AdminColors.grey600),
                                           overflow: TextOverflow.ellipsis,
                                         ),
                                       ],
@@ -156,15 +171,19 @@ class _UsersScreenState extends State<UsersScreen> {
                               ),
                               const SizedBox(height: 8),
                               Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   Wrap(
                                     spacing: 4,
                                     children: [
-                                      _StatusChip(status: u['status']!, isMobile: true),
+                                      _StatusChip(
+                                          status: u['status']!, isMobile: true),
                                       Text(
                                         u['level']!,
-                                        style: const TextStyle(fontSize: 11, color: AdminColors.grey600),
+                                        style: const TextStyle(
+                                            fontSize: 11,
+                                            color: AdminColors.grey600),
                                       ),
                                     ],
                                   ),
@@ -172,10 +191,13 @@ class _UsersScreenState extends State<UsersScreen> {
                                     children: [
                                       IconButton(
                                         icon: Icon(
-                                          isSuspended ? Icons.check_circle_outline : Icons.block,
+                                          isSuspended
+                                              ? Icons.check_circle_outline
+                                              : Icons.block,
                                           size: 16,
-                                          color:
-                                              isSuspended ? AdminColors.success : AdminColors.warning,
+                                          color: isSuspended
+                                              ? AdminColors.success
+                                              : AdminColors.warning,
                                         ),
                                         onPressed: () {},
                                         padding: EdgeInsets.zero,
@@ -185,9 +207,10 @@ class _UsersScreenState extends State<UsersScreen> {
                                         ),
                                       ),
                                       IconButton(
-                                        icon: const Icon(Icons.more_vert, size: 16),
-                                        onPressed: () =>
-                                            _showChangeRoleDialog(context, u['name']!),
+                                        icon: const Icon(Icons.more_vert,
+                                            size: 16),
+                                        onPressed: () => _showChangeRoleDialog(
+                                            context, u['name']!),
                                         padding: EdgeInsets.zero,
                                         constraints: const BoxConstraints(
                                           minWidth: 32,
@@ -206,7 +229,8 @@ class _UsersScreenState extends State<UsersScreen> {
                   : SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
                       child: DataTable(
-                        headingRowColor: WidgetStateProperty.all(const Color(0xFFF9FAFB)),
+                        headingRowColor:
+                            WidgetStateProperty.all(const Color(0xFFF9FAFB)),
                         columns: const [
                           DataColumn(label: Text('Name')),
                           DataColumn(label: Text('Email')),
@@ -220,7 +244,8 @@ class _UsersScreenState extends State<UsersScreen> {
                           return DataRow(cells: [
                             DataCell(Text(
                               u['name']!,
-                              style: const TextStyle(fontWeight: FontWeight.w600),
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.w600),
                             )),
                             DataCell(Text(u['email']!)),
                             DataCell(_RoleChip(role: u['role']!)),
@@ -230,18 +255,24 @@ class _UsersScreenState extends State<UsersScreen> {
                               children: [
                                 IconButton(
                                   icon: Icon(
-                                    isSuspended ? Icons.check_circle_outline : Icons.block,
+                                    isSuspended
+                                        ? Icons.check_circle_outline
+                                        : Icons.block,
                                     size: 18,
-                                    color: isSuspended ? AdminColors.success : AdminColors.warning,
+                                    color: isSuspended
+                                        ? AdminColors.success
+                                        : AdminColors.warning,
                                   ),
                                   tooltip: isSuspended ? 'Activate' : 'Suspend',
                                   onPressed: () {},
                                 ),
                                 IconButton(
-                                  icon: const Icon(Icons.manage_accounts_outlined, size: 18),
+                                  icon: const Icon(
+                                      Icons.manage_accounts_outlined,
+                                      size: 18),
                                   tooltip: 'Change role',
-                                  onPressed: () =>
-                                      _showChangeRoleDialog(context, u['name']!),
+                                  onPressed: () => _showChangeRoleDialog(
+                                      context, u['name']!),
                                 ),
                               ],
                             )),
@@ -265,9 +296,9 @@ class _UsersScreenState extends State<UsersScreen> {
           mainAxisSize: MainAxisSize.min,
           children: ['Student', 'Moderator', 'Lecturer', 'Admin']
               .map((r) => ListTile(
-                title: Text(r),
-                onTap: () => Navigator.pop(context),
-              ))
+                    title: Text(r),
+                    onTap: () => Navigator.pop(context),
+                  ))
               .toList(),
         ),
       ),
@@ -297,7 +328,7 @@ class _RoleChip extends StatelessWidget {
         vertical: isMobile ? 2 : 3,
       ),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(6),
       ),
       child: Text(
@@ -327,7 +358,8 @@ class _StatusChip extends StatelessWidget {
         vertical: isMobile ? 2 : 3,
       ),
       decoration: BoxDecoration(
-        color: (isActive ? AdminColors.success : AdminColors.error).withOpacity(0.1),
+        color: (isActive ? AdminColors.success : AdminColors.error)
+            .withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(6),
       ),
       child: Text(
@@ -355,22 +387,22 @@ class _PageHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Text(
-        title,
-        style: TextStyle(
-          fontSize: isMobile ? 20 : 24,
-          fontWeight: FontWeight.w700,
-        ),
-      ),
-      Text(
-        subtitle,
-        style: TextStyle(
-          color: AdminColors.grey600,
-          fontSize: isMobile ? 12 : 14,
-        ),
-      ),
-    ],
-  );
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: isMobile ? 20 : 24,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          Text(
+            subtitle,
+            style: TextStyle(
+              color: AdminColors.grey600,
+              fontSize: isMobile ? 12 : 14,
+            ),
+          ),
+        ],
+      );
 }

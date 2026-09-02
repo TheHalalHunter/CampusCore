@@ -28,15 +28,20 @@ export class CommunityService {
     departmentId?: string;
     courseId?: string;
     level?: string;
-  }): Promise<Question[]> {
+    page?: number;
+    limit?: number;
+  }): Promise<[Question[], number]> {
     const where: any = { isFlagged: false };
     if (filters.departmentId) where.departmentId = filters.departmentId;
     if (filters.courseId) where.courseId = filters.courseId;
     if (filters.level) where.academicLevel = filters.level;
-    return this.questionsRepo.find({
+    const page = filters.page ?? 1;
+    const limit = Math.min(filters.limit ?? 20, 50);
+    return this.questionsRepo.findAndCount({
       where,
       order: { createdAt: "DESC" },
-      take: 50,
+      skip: (page - 1) * limit,
+      take: limit,
     });
   }
 

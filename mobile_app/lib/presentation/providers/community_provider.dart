@@ -5,20 +5,24 @@ import '../../core/constants/api_constants.dart';
 import '../../core/utils/error_helper.dart';
 import 'department_provider.dart';
 
-// ─── Questions ────────────────────────────────────────────────────────────────
+// ─── Questions (paginated) ────────────────────────────────────────────────────
 
 final questionsProvider = FutureProvider.family<List<QuestionModel>,
     ({String? courseId, String? level})>((ref, filters) async {
   try {
     final dept = await ref.watch(primaryDepartmentProvider.future);
     final api = ref.read(apiClientProvider);
-    final params = <String, dynamic>{};
+    final params = <String, dynamic>{'page': 1, 'limit': 20};
     if (dept != null) params['departmentId'] = dept.id;
     if (filters.courseId != null) params['courseId'] = filters.courseId;
     if (filters.level != null) params['level'] = filters.level;
     final response = await api.get(ApiConstants.questions, queryParams: params);
-    final data = response.data['data'] ?? response.data;
-    return (data as List).map((q) => QuestionModel.fromJson(q)).toList();
+    final raw = response.data['data'] ?? response.data;
+    // Handle both array and [items, count] tuple from backend
+    final List items = raw is List
+        ? (raw.length == 2 && raw[1] is int ? raw[0] as List : raw)
+        : [];
+    return items.map((q) => QuestionModel.fromJson(q)).toList();
   } catch (_) {
     return [];
   }

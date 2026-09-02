@@ -45,7 +45,7 @@ class HomeScreen extends StatelessWidget {
               mainAxisSpacing: spacing,
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              children: [
+              children: const [
                 _StatCard(
                   title: 'Courses',
                   value: '8',
@@ -94,7 +94,8 @@ class HomeScreen extends StatelessWidget {
                     children: [
                       CircleAvatar(
                         radius: isMobile ? 18 : 24,
-                        backgroundColor: AppColors.primary.withOpacity(0.1),
+                        backgroundColor:
+                            AppColors.primary.withValues(alpha: 0.1),
                         child: Icon(
                           Icons.file_download_outlined,
                           color: AppColors.primary,

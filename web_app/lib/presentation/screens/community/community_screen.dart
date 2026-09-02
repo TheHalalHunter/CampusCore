@@ -42,7 +42,8 @@ class CommunityScreen extends StatelessWidget {
                         children: [
                           CircleAvatar(
                             radius: isMobile ? 16 : 20,
-                            backgroundColor: AppColors.primary.withOpacity(0.1),
+                            backgroundColor:
+                                AppColors.primary.withValues(alpha: 0.1),
                             child: Text(
                               'S${index + 1}',
                               style: TextStyle(
@@ -139,7 +140,7 @@ class _BadgeChip extends StatelessWidget {
         vertical: isMobile ? 2 : 4,
       ),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(4),
       ),
       child: Text(

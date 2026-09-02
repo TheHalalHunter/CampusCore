@@ -20,8 +20,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Platform Settings', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700)),
-          const Text('Configure platform-wide behaviour', style: TextStyle(color: AdminColors.grey600)),
+          const Text('Platform Settings',
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700)),
+          const Text('Configure platform-wide behaviour',
+              style: TextStyle(color: AdminColors.grey600)),
           const SizedBox(height: 28),
           Card(
             child: Column(
@@ -30,7 +32,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   icon: Icons.lock_clock,
                   iconColor: AdminColors.error,
                   title: 'Examination Lock Mode',
-                  subtitle: 'Restricts AI assistant and discussions during exam periods',
+                  subtitle:
+                      'Restricts AI assistant and discussions during exam periods',
                   value: _examLockEnabled,
                   onChanged: (v) => setState(() => _examLockEnabled = v),
                 ),
@@ -62,7 +65,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Integrity Policy', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+                  const Text('Integrity Policy',
+                      style:
+                          TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
                   const SizedBox(height: 8),
                   const Text(
                     'All students must accept the Academic Integrity Policy on first login. '
@@ -110,16 +115,17 @@ class _SettingsTile extends StatelessWidget {
       secondary: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: iconColor.withOpacity(0.1),
+          color: iconColor.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(8),
         ),
         child: Icon(icon, color: iconColor, size: 20),
       ),
       title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
-      subtitle: Text(subtitle, style: const TextStyle(color: AdminColors.grey600, fontSize: 12)),
+      subtitle: Text(subtitle,
+          style: const TextStyle(color: AdminColors.grey600, fontSize: 12)),
       value: value,
       onChanged: onChanged,
-      activeColor: AdminColors.primary,
+      activeThumbColor: AdminColors.primary,
     );
   }
 }

@@ -126,7 +126,7 @@ class _LibraryResourceCard extends ConsumerWidget {
           width: 44,
           height: 44,
           decoration: BoxDecoration(
-            color: _typeColor(resource.type).withOpacity(0.1),
+            color: _typeColor(resource.type).withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Icon(_typeIcon(resource.type),
@@ -281,7 +281,7 @@ class _EmptyLibrary extends StatelessWidget {
               width: 80,
               height: 80,
               decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.08),
+                color: AppColors.primary.withValues(alpha: 0.08),
                 shape: BoxShape.circle,
               ),
               child: Icon(icon, size: 40, color: AppColors.primary),

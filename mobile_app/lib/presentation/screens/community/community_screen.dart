@@ -59,9 +59,8 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen>
       floatingActionButton: AnimatedBuilder(
         animation: _tabCtrl,
         builder: (_, __) => FloatingActionButton.extended(
-          onPressed: () => _tabCtrl.index == 0
-              ? context.push(AppRoutes.postQuestion)
-              : null,
+          onPressed: () =>
+              _tabCtrl.index == 0 ? context.push(AppRoutes.postQuestion) : null,
           icon: const Icon(Icons.add),
           label: Text(_tabCtrl.index == 0 ? 'Ask Question' : 'New Thread'),
           backgroundColor: AppColors.primary,
@@ -111,16 +110,24 @@ class _QATab extends ConsumerWidget {
                     onTap: () => onLevelChanged(level),
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 200),
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 7),
                       decoration: BoxDecoration(
-                        color: selected ? AppColors.primary : AppColors.surfaceAlt,
+                        color:
+                            selected ? AppColors.primary : AppColors.surfaceAlt,
                         borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: selected ? AppColors.primary : AppColors.border),
+                        border: Border.all(
+                            color: selected
+                                ? AppColors.primary
+                                : AppColors.border),
                       ),
                       child: Text(level,
                           style: TextStyle(
-                            color: selected ? Colors.white : AppColors.textSecondary,
-                            fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                            color: selected
+                                ? Colors.white
+                                : AppColors.textSecondary,
+                            fontWeight:
+                                selected ? FontWeight.w700 : FontWeight.w500,
                             fontSize: 13,
                           )),
                     ),
@@ -141,14 +148,19 @@ class _QATab extends ConsumerWidget {
                     padding: const EdgeInsets.all(32),
                     child: Column(mainAxisSize: MainAxisSize.min, children: [
                       Container(
-                        width: 80, height: 80,
+                        width: 80,
+                        height: 80,
                         decoration: BoxDecoration(
-                          color: AppColors.primary.withOpacity(0.08), shape: BoxShape.circle),
-                        child: const Icon(Icons.forum_outlined, size: 40, color: AppColors.primary),
+                            color: AppColors.primary.withValues(alpha: 0.08),
+                            shape: BoxShape.circle),
+                        child: const Icon(Icons.forum_outlined,
+                            size: 40, color: AppColors.primary),
                       ),
                       const SizedBox(height: 20),
                       const Text('No questions yet',
-                          style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700,
+                          style: TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.w700,
                               color: AppColors.textPrimary)),
                       const SizedBox(height: 8),
                       const Text('Be the first to ask a question.',
@@ -181,7 +193,8 @@ class _QATab extends ConsumerWidget {
               separatorBuilder: (_, __) => const SizedBox(height: 8),
               itemBuilder: (_, __) => Container(
                 height: 100,
-                decoration: BoxDecoration(color: AppColors.grey200,
+                decoration: BoxDecoration(
+                    color: AppColors.grey200,
                     borderRadius: BorderRadius.circular(16)),
               ),
             ),
@@ -227,7 +240,7 @@ class _QuestionCard extends StatelessWidget {
                 children: [
                   CircleAvatar(
                     radius: 16,
-                    backgroundColor: AppColors.primary.withOpacity(0.15),
+                    backgroundColor: AppColors.primary.withValues(alpha: 0.15),
                     child: Text(
                       question.authorId.substring(0, 1).toUpperCase(),
                       style: const TextStyle(
@@ -243,7 +256,7 @@ class _QuestionCard extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 8, vertical: 2),
                       decoration: BoxDecoration(
-                        color: AppColors.primary.withOpacity(0.08),
+                        color: AppColors.primary.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
@@ -303,23 +316,26 @@ class _QuestionCard extends StatelessWidget {
                 const SizedBox(height: 10),
                 Wrap(
                   spacing: 6,
-                  children: question.tags.take(3).map((tag) => Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: AppColors.surfaceAlt,
-                      borderRadius: BorderRadius.circular(6),
-                      border: Border.all(color: AppColors.border),
-                    ),
-                    child: Text(
-                      tag,
-                      style: const TextStyle(
-                        color: AppColors.textSecondary,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  )).toList(),
+                  children: question.tags
+                      .take(3)
+                      .map((tag) => Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: AppColors.surfaceAlt,
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(color: AppColors.border),
+                            ),
+                            child: Text(
+                              tag,
+                              style: const TextStyle(
+                                color: AppColors.textSecondary,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ))
+                      .toList(),
                 ),
               ],
 

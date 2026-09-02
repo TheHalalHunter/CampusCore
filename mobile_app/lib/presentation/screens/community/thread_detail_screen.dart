@@ -74,7 +74,8 @@ class _ThreadDetailScreenState extends ConsumerState<ThreadDetailScreen> {
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 8, vertical: 2),
                                 decoration: BoxDecoration(
-                                  color: AppColors.primary.withOpacity(0.1),
+                                  color:
+                                      AppColors.primary.withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Text(detail.thread.academicLevel!,
@@ -124,10 +125,11 @@ class _ThreadDetailScreenState extends ConsumerState<ThreadDetailScreen> {
               Container(
                 padding: EdgeInsets.fromLTRB(
                     16, 8, 16, MediaQuery.of(context).viewInsets.bottom + 12),
-                decoration: BoxDecoration(
+                decoration: const BoxDecoration(
                   color: AppColors.surface,
-                  border: Border(
-                      top: BorderSide(color: AppColors.border, width: 0.8)),
+                  border: const Border(
+                      top: const BorderSide(
+                          color: AppColors.border, width: 0.8)),
                 ),
                 child: Row(
                   children: [
@@ -184,7 +186,7 @@ class _ReplyCard extends StatelessWidget {
         children: [
           CircleAvatar(
             radius: 16,
-            backgroundColor: AppColors.primary.withOpacity(0.15),
+            backgroundColor: AppColors.primary.withValues(alpha: 0.15),
             child: const Icon(Icons.person_outline,
                 size: 16, color: AppColors.primary),
           ),

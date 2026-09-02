@@ -21,7 +21,7 @@ class _UploadResourceScreenState extends ConsumerState<UploadResourceScreen> {
   String? _selectedCourseId;
   String? _selectedCourseName;
   String? _academicYear;
-  bool _isUploading = false;
+  final bool _isUploading = false;
 
   final _resourceTypes = [
     {
@@ -81,9 +81,10 @@ class _UploadResourceScreenState extends ConsumerState<UploadResourceScreen> {
               Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: AppColors.info.withOpacity(0.08),
+                  color: AppColors.info.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.info.withOpacity(0.3)),
+                  border:
+                      Border.all(color: AppColors.info.withValues(alpha: 0.3)),
                 ),
                 child: const Row(
                   children: [
@@ -196,7 +197,7 @@ class _UploadResourceScreenState extends ConsumerState<UploadResourceScreen> {
               const SizedBox(height: 8),
               coursesAsync.when(
                 data: (courses) => DropdownButtonFormField<String>(
-                  value: _selectedCourseId,
+                  initialValue: _selectedCourseId,
                   hint: const Text('Select course'),
                   decoration: InputDecoration(
                     filled: true,
@@ -238,7 +239,7 @@ class _UploadResourceScreenState extends ConsumerState<UploadResourceScreen> {
                       color: AppColors.textPrimary)),
               const SizedBox(height: 8),
               DropdownButtonFormField<String>(
-                value: _academicYear,
+                initialValue: _academicYear,
                 hint: const Text('Select year'),
                 decoration: InputDecoration(
                   filled: true,
@@ -301,9 +302,10 @@ class _UploadResourceScreenState extends ConsumerState<UploadResourceScreen> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: AppColors.error.withOpacity(0.08),
+                    color: AppColors.error.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: AppColors.error.withOpacity(0.3)),
+                    border: Border.all(
+                        color: AppColors.error.withValues(alpha: 0.3)),
                   ),
                   child: Text(
                     uploadState.error!,
@@ -378,7 +380,7 @@ class _FilePicker extends ConsumerWidget {
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           color: uploadState.filePath != null
-              ? AppColors.success.withOpacity(0.05)
+              ? AppColors.success.withValues(alpha: 0.05)
               : AppColors.surfaceAlt,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(

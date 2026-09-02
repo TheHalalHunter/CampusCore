@@ -16,8 +16,7 @@ class QuestionDetailScreen extends ConsumerStatefulWidget {
       _QuestionDetailScreenState();
 }
 
-class _QuestionDetailScreenState
-    extends ConsumerState<QuestionDetailScreen> {
+class _QuestionDetailScreenState extends ConsumerState<QuestionDetailScreen> {
   final _answerCtrl = TextEditingController();
   bool _submitting = false;
 
@@ -95,7 +94,8 @@ class _QuestionDetailScreenState
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 8, vertical: 3),
                                 decoration: BoxDecoration(
-                                  color: AppColors.success.withOpacity(0.1),
+                                  color:
+                                      AppColors.success.withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(6),
                                 ),
                                 child: const Row(
@@ -147,8 +147,8 @@ class _QuestionDetailScreenState
                           ..._buildSortedAnswers(answers, widget.questionId),
                       ],
                     ),
-                    loading: () => const Center(
-                        child: CircularProgressIndicator()),
+                    loading: () =>
+                        const Center(child: CircularProgressIndicator()),
                     error: (_, __) => const Text(
                       'Could not load answers.',
                       style: TextStyle(color: AppColors.textSecondary),
@@ -168,7 +168,7 @@ class _QuestionDetailScreenState
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  color: Colors.black.withValues(alpha: 0.05),
                   blurRadius: 8,
                   offset: const Offset(0, -2),
                 ),
@@ -237,9 +237,9 @@ class _QuestionDetailScreenState
     if (text.isEmpty) return;
     setState(() => _submitting = true);
     final success = await ref.read(postAnswerProvider.notifier).post(
-      questionId: widget.questionId,
-      body: text,
-    );
+          questionId: widget.questionId,
+          body: text,
+        );
     setState(() => _submitting = false);
     if (success) {
       _answerCtrl.clear();
@@ -329,10 +329,10 @@ class _QuestionCard extends ConsumerWidget {
             children: [
               if (question.academicLevel != null)
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 10, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.1),
+                    color: AppColors.primary.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
@@ -347,10 +347,10 @@ class _QuestionCard extends ConsumerWidget {
               if (question.isResolved) ...[
                 const SizedBox(width: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 10, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    color: AppColors.success.withOpacity(0.1),
+                    color: AppColors.success.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: const Row(
@@ -411,22 +411,24 @@ class _QuestionCard extends ConsumerWidget {
             Wrap(
               spacing: 6,
               runSpacing: 6,
-              children: question.tags.map((tag) => Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppColors.surfaceAlt,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: AppColors.border),
-                ),
-                child: Text(
-                  tag,
-                  style: const TextStyle(
-                    color: AppColors.textSecondary,
-                    fontSize: 12,
-                  ),
-                ),
-              )).toList(),
+              children: question.tags
+                  .map((tag) => Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: AppColors.surfaceAlt,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: AppColors.border),
+                        ),
+                        child: Text(
+                          tag,
+                          style: const TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ))
+                  .toList(),
             ),
           ],
 
@@ -438,18 +440,21 @@ class _QuestionCard extends ConsumerWidget {
           Row(
             children: [
               GestureDetector(
-                onTap: () => ref.read(upvoteProvider.notifier)
+                onTap: () => ref
+                    .read(upvoteProvider.notifier)
                     .upvoteQuestion(question.id, question.upvoteCount),
                 child: Row(children: [
                   Icon(Icons.thumb_up_outlined,
                       size: 16,
-                      color: ref.watch(upvoteProvider)['q_${question.id}'] != null
-                          ? AppColors.primary
-                          : AppColors.textSecondary),
+                      color:
+                          ref.watch(upvoteProvider)['q_${question.id}'] != null
+                              ? AppColors.primary
+                              : AppColors.textSecondary),
                   const SizedBox(width: 4),
                   Text(
                     '${ref.watch(upvoteProvider.select((s) => s['q_${question.id}'] ?? question.upvoteCount))} upvotes',
-                    style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                    style: const TextStyle(
+                        color: AppColors.textSecondary, fontSize: 13),
                   ),
                 ]),
               ),
@@ -458,7 +463,8 @@ class _QuestionCard extends ConsumerWidget {
                   size: 16, color: AppColors.textSecondary),
               const SizedBox(width: 4),
               Text('${question.answerCount} answers',
-                  style: const TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+                  style: const TextStyle(
+                      color: AppColors.textSecondary, fontSize: 13)),
             ],
           ),
         ],
@@ -481,12 +487,12 @@ class _AnswerCard extends ConsumerWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: answer.isVerified
-            ? AppColors.success.withOpacity(0.04)
+            ? AppColors.success.withValues(alpha: 0.04)
             : AppColors.surface,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: answer.isVerified
-              ? AppColors.success.withOpacity(0.4)
+              ? AppColors.success.withValues(alpha: 0.4)
               : AppColors.border,
           width: answer.isVerified ? 1.5 : 0.8,
         ),
@@ -498,10 +504,9 @@ class _AnswerCard extends ConsumerWidget {
           if (answer.isVerified)
             Container(
               margin: const EdgeInsets.only(bottom: 10),
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 10, vertical: 5),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
               decoration: BoxDecoration(
-                color: AppColors.success.withOpacity(0.1),
+                color: AppColors.success.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: const Row(
@@ -545,23 +550,29 @@ class _AnswerCard extends ConsumerWidget {
               const Spacer(),
               // Upvote button
               Consumer(builder: (context, ref, _) {
-                final count = ref.watch(upvoteProvider.select(
-                    (s) => s['a_${answer.id}'] ?? answer.upvoteCount));
+                final count = ref.watch(upvoteProvider
+                    .select((s) => s['a_${answer.id}'] ?? answer.upvoteCount));
                 return InkWell(
-                  onTap: () => ref.read(upvoteProvider.notifier)
+                  onTap: () => ref
+                      .read(upvoteProvider.notifier)
                       .upvoteAnswer(answer.id, answer.upvoteCount),
                   borderRadius: BorderRadius.circular(8),
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     child: Row(children: [
-                      Icon(Icons.thumb_up_outlined, size: 16,
-                          color: ref.watch(upvoteProvider)['a_${answer.id}'] != null
+                      Icon(Icons.thumb_up_outlined,
+                          size: 16,
+                          color: ref.watch(upvoteProvider)['a_${answer.id}'] !=
+                                  null
                               ? AppColors.primary
                               : AppColors.textSecondary),
                       const SizedBox(width: 4),
                       Text('$count helpful',
-                          style: const TextStyle(color: AppColors.textSecondary,
-                              fontSize: 12, fontWeight: FontWeight.w500)),
+                          style: const TextStyle(
+                              color: AppColors.textSecondary,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500)),
                     ]),
                   ),
                 );

@@ -38,8 +38,9 @@ class _CourseDetailScreenState extends ConsumerState<CourseDetailScreen>
   Widget build(BuildContext context) {
     final courseAsync = ref.watch(
       coursesProvider.select((value) => value.whenData(
-        (courses) => courses.where((c) => c.id == widget.courseId).firstOrNull,
-      )),
+            (courses) =>
+                courses.where((c) => c.id == widget.courseId).firstOrNull,
+          )),
     );
 
     return Scaffold(
@@ -248,7 +249,7 @@ class _InfoChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.2),
+        color: Colors.white.withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
@@ -287,16 +288,19 @@ class _StudyMaterialLink extends StatelessWidget {
         leading: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
+            color: color.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Icon(icon, color: color, size: 20),
         ),
         title: Text(label,
-            style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+            style: const TextStyle(
+                fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
         subtitle: Text(subtitle,
-            style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
-        trailing: const Icon(Icons.arrow_forward_ios, size: 14, color: AppColors.textSecondary),
+            style:
+                const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+        trailing: const Icon(Icons.arrow_forward_ios,
+            size: 14, color: AppColors.textSecondary),
       ),
     );
   }
@@ -325,7 +329,7 @@ class _ResourcesTab extends ConsumerWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(
+                  const Icon(
                     Icons.folder_open,
                     size: 56,
                     color: AppColors.textHint,
@@ -392,10 +396,11 @@ class _ResourceCard extends ConsumerWidget {
           width: 44,
           height: 44,
           decoration: BoxDecoration(
-            color: AppColors.error.withOpacity(0.1),
+            color: AppColors.error.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(10),
           ),
-          child: const Icon(Icons.picture_as_pdf, color: AppColors.error, size: 22),
+          child: const Icon(Icons.picture_as_pdf,
+              color: AppColors.error, size: 22),
         ),
         title: Text(
           resource.title,
@@ -408,16 +413,21 @@ class _ResourceCard extends ConsumerWidget {
         subtitle: Row(
           children: [
             Text(resource.typeLabel,
-                style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                style: const TextStyle(
+                    color: AppColors.textSecondary, fontSize: 12)),
             if (resource.academicYear != null) ...[
-              const Text(' • ', style: TextStyle(color: AppColors.textHint, fontSize: 12)),
+              const Text(' • ',
+                  style: TextStyle(color: AppColors.textHint, fontSize: 12)),
               Text(resource.academicYear!,
-                  style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                  style: const TextStyle(
+                      color: AppColors.textSecondary, fontSize: 12)),
             ],
             if (resource.fileSizeLabel.isNotEmpty) ...[
-              const Text(' • ', style: TextStyle(color: AppColors.textHint, fontSize: 12)),
+              const Text(' • ',
+                  style: TextStyle(color: AppColors.textHint, fontSize: 12)),
               Text(resource.fileSizeLabel,
-                  style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                  style: const TextStyle(
+                      color: AppColors.textSecondary, fontSize: 12)),
             ],
           ],
         ),
@@ -429,13 +439,16 @@ class _ResourceCard extends ConsumerWidget {
             IconButton(
               icon: Icon(
                 isBookmarked ? Icons.bookmark : Icons.bookmark_outline,
-                color: isBookmarked ? AppColors.primary : AppColors.textSecondary,
+                color:
+                    isBookmarked ? AppColors.primary : AppColors.textSecondary,
                 size: 20,
               ),
-              onPressed: () => ref.read(bookmarkProvider.notifier).toggle(resource.id),
+              onPressed: () =>
+                  ref.read(bookmarkProvider.notifier).toggle(resource.id),
             ),
             IconButton(
-              icon: const Icon(Icons.download_outlined, color: AppColors.primary, size: 20),
+              icon: const Icon(Icons.download_outlined,
+                  color: AppColors.primary, size: 20),
               onPressed: () => _download(context, resource),
               tooltip: 'Download',
             ),
@@ -474,14 +487,16 @@ class _ProgressTab extends ConsumerWidget {
               style: TextStyle(color: AppColors.textSecondary))),
       data: (data) {
         if (data.topics.isEmpty) {
-          return Center(
+          return const Center(
             child: Padding(
-              padding: const EdgeInsets.all(32),
-              child: Column(mainAxisSize: MainAxisSize.min, children: const [
-                Icon(Icons.track_changes_outlined, size: 56, color: AppColors.grey400),
+              padding: EdgeInsets.all(32),
+              child: Column(mainAxisSize: MainAxisSize.min, children: [
+                Icon(Icons.track_changes_outlined,
+                    size: 56, color: AppColors.grey400),
                 SizedBox(height: 16),
                 Text('No topics tracked yet',
-                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+                    style:
+                        TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
                 SizedBox(height: 8),
                 Text('Go to Progress screen to mark topics as complete.',
                     textAlign: TextAlign.center,
@@ -511,8 +526,10 @@ class _ProgressTab extends ConsumerWidget {
                 child: Column(children: [
                   Text('${data.percentage}%',
                       style: const TextStyle(
-                          color: Colors.white, fontSize: 48,
-                          fontWeight: FontWeight.w700, height: 1)),
+                          color: Colors.white,
+                          fontSize: 48,
+                          fontWeight: FontWeight.w700,
+                          height: 1)),
                   const SizedBox(height: 6),
                   const Text('Course Completion',
                       style: TextStyle(color: Colors.white70, fontSize: 14)),
@@ -522,13 +539,15 @@ class _ProgressTab extends ConsumerWidget {
                     child: LinearProgressIndicator(
                       value: data.percentage / 100,
                       minHeight: 8,
-                      backgroundColor: Colors.white.withOpacity(0.3),
+                      backgroundColor: Colors.white.withValues(alpha: 0.3),
                       valueColor: const AlwaysStoppedAnimation(Colors.white),
                     ),
                   ),
                   const SizedBox(height: 8),
-                  Text('${data.completedCount} of ${data.totalCount} topics done',
-                      style: const TextStyle(color: Colors.white70, fontSize: 12)),
+                  Text(
+                      '${data.completedCount} of ${data.totalCount} topics done',
+                      style:
+                          const TextStyle(color: Colors.white70, fontSize: 12)),
                 ]),
               ),
               const SizedBox(height: 20),
@@ -538,19 +557,27 @@ class _ProgressTab extends ConsumerWidget {
               const SizedBox(height: 12),
 
               ...data.topics.map((t) => Card(
-                margin: const EdgeInsets.only(bottom: 8),
-                child: ListTile(
-                  leading: Icon(
-                    t.isCompleted ? Icons.check_circle : Icons.radio_button_unchecked,
-                    color: t.isCompleted ? AppColors.success : AppColors.grey400,
-                  ),
-                  title: Text(t.topicTitle,
-                      style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          decoration: t.isCompleted ? TextDecoration.lineThrough : null,
-                          color: t.isCompleted ? AppColors.textSecondary : AppColors.textPrimary)),
-                ),
-              )),
+                    margin: const EdgeInsets.only(bottom: 8),
+                    child: ListTile(
+                      leading: Icon(
+                        t.isCompleted
+                            ? Icons.check_circle
+                            : Icons.radio_button_unchecked,
+                        color: t.isCompleted
+                            ? AppColors.success
+                            : AppColors.grey400,
+                      ),
+                      title: Text(t.topicTitle,
+                          style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              decoration: t.isCompleted
+                                  ? TextDecoration.lineThrough
+                                  : null,
+                              color: t.isCompleted
+                                  ? AppColors.textSecondary
+                                  : AppColors.textPrimary)),
+                    ),
+                  )),
             ],
           ),
         );
@@ -578,10 +605,11 @@ class _AiTutorTab extends StatelessWidget {
               width: 80,
               height: 80,
               decoration: BoxDecoration(
-                color: AppColors.accent.withOpacity(0.12),
+                color: AppColors.accent.withValues(alpha: 0.12),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.auto_awesome, size: 40, color: AppColors.accent),
+              child: const Icon(Icons.auto_awesome,
+                  size: 40, color: AppColors.accent),
             ),
             const SizedBox(height: 20),
             Text(

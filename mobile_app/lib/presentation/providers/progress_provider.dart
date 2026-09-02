@@ -118,3 +118,38 @@ final semesterProgressProvider = FutureProvider<Map<String, dynamic>>((ref) asyn
     return {};
   }
 });
+
+// ─── Study streak (private) ───────────────────────────────────────────────────
+
+class StreakData {
+  final int currentStreak;
+  final int longestStreak;
+  final int totalStudyDays;
+  final bool studiedToday;
+
+  const StreakData({
+    required this.currentStreak,
+    required this.longestStreak,
+    required this.totalStudyDays,
+    required this.studiedToday,
+  });
+
+  factory StreakData.fromJson(Map<String, dynamic> json) => StreakData(
+        currentStreak: (json['currentStreak'] as num?)?.toInt() ?? 0,
+        longestStreak: (json['longestStreak'] as num?)?.toInt() ?? 0,
+        totalStudyDays: (json['totalStudyDays'] as num?)?.toInt() ?? 0,
+        studiedToday: json['studiedToday'] as bool? ?? false,
+      );
+}
+
+final streakProvider = FutureProvider<StreakData>((ref) async {
+  try {
+    final api = ref.read(apiClientProvider);
+    final response = await api.get(ApiConstants.progressStreak);
+    final data = response.data['data'] ?? response.data;
+    return StreakData.fromJson(data as Map<String, dynamic>);
+  } catch (_) {
+    return const StreakData(
+        currentStreak: 0, longestStreak: 0, totalStudyDays: 0, studiedToday: false);
+  }
+});

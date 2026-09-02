@@ -21,11 +21,13 @@ export class ResourcesService {
     private readonly notifications: NotificationsService,
   ) {}
 
-  /** Public: approved resources for a course */
-  findByCourse(courseId: string): Promise<Resource[]> {
-    return this.repo.find({
+  /** Public: approved resources for a course with pagination */
+  findByCourse(courseId: string, page = 1, limit = 20): Promise<[Resource[], number]> {
+    return this.repo.findAndCount({
       where: { courseId, status: ResourceStatus.APPROVED },
       order: { createdAt: "DESC" },
+      skip: (page - 1) * limit,
+      take: Math.min(limit, 50),
     });
   }
 

@@ -3,35 +3,35 @@ import 'package:flutter/material.dart';
 /// CampusCore brand colors
 abstract final class AppColors {
   // Primary — deep teal
-  static const Color primary      = Color(0xFF006B5E);
+  static const Color primary = Color(0xFF006B5E);
   static const Color primaryLight = Color(0xFF4CAF93);
-  static const Color primaryDark  = Color(0xFF004D43);
+  static const Color primaryDark = Color(0xFF004D43);
 
   // Accent — warm amber
-  static const Color accent      = Color(0xFFF59E0B);
+  static const Color accent = Color(0xFFF59E0B);
   static const Color accentLight = Color(0xFFFBBF24);
 
   // Semantic
   static const Color success = Color(0xFF16A34A);
-  static const Color error   = Color(0xFFDC2626);
+  static const Color error = Color(0xFFDC2626);
   static const Color warning = Color(0xFFD97706);
-  static const Color info    = Color(0xFF2563EB);
+  static const Color info = Color(0xFF2563EB);
 
   // Text — high contrast
-  static const Color textPrimary   = Color(0xFF0F172A); // near black
+  static const Color textPrimary = Color(0xFF0F172A); // near black
   static const Color textSecondary = Color(0xFF334155); // dark slate
-  static const Color textHint      = Color(0xFF64748B); // medium slate
+  static const Color textHint = Color(0xFF64748B); // medium slate
 
   // Backgrounds
   static const Color background = Color(0xFFF1F5F9);
-  static const Color surface    = Color(0xFFFFFFFF);
+  static const Color surface = Color(0xFFFFFFFF);
   static const Color surfaceAlt = Color(0xFFE2E8F0);
 
   // Borders / dividers
   static const Color border = Color(0xFFCBD5E1);
 
   // Neutrals (kept for backward compat)
-  static const Color grey50  = Color(0xFFF8FAFC);
+  static const Color grey50 = Color(0xFFF8FAFC);
   static const Color grey100 = Color(0xFFF1F5F9);
   static const Color grey200 = Color(0xFFE2E8F0);
   static const Color grey400 = Color(0xFF94A3B8);
@@ -57,21 +57,33 @@ class AppTheme {
 
       // Text theme — all text dark enough to read
       textTheme: const TextTheme(
-        displayLarge:  TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700),
-        displayMedium: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700),
-        displaySmall:  TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700),
-        headlineLarge: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700),
-        headlineMedium:TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700),
-        headlineSmall: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700),
-        titleLarge:    TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600),
-        titleMedium:   TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600),
-        titleSmall:    TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600),
-        bodyLarge:     TextStyle(color: AppColors.textPrimary, fontSize: 16, height: 1.6),
-        bodyMedium:    TextStyle(color: AppColors.textSecondary, fontSize: 14, height: 1.5),
-        bodySmall:     TextStyle(color: AppColors.textSecondary, fontSize: 12),
-        labelLarge:    TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600),
-        labelMedium:   TextStyle(color: AppColors.textSecondary),
-        labelSmall:    TextStyle(color: AppColors.textSecondary),
+        displayLarge: TextStyle(
+            color: AppColors.textPrimary, fontWeight: FontWeight.w700),
+        displayMedium: TextStyle(
+            color: AppColors.textPrimary, fontWeight: FontWeight.w700),
+        displaySmall: TextStyle(
+            color: AppColors.textPrimary, fontWeight: FontWeight.w700),
+        headlineLarge: TextStyle(
+            color: AppColors.textPrimary, fontWeight: FontWeight.w700),
+        headlineMedium: TextStyle(
+            color: AppColors.textPrimary, fontWeight: FontWeight.w700),
+        headlineSmall: TextStyle(
+            color: AppColors.textPrimary, fontWeight: FontWeight.w700),
+        titleLarge: TextStyle(
+            color: AppColors.textPrimary, fontWeight: FontWeight.w600),
+        titleMedium: TextStyle(
+            color: AppColors.textPrimary, fontWeight: FontWeight.w600),
+        titleSmall: TextStyle(
+            color: AppColors.textPrimary, fontWeight: FontWeight.w600),
+        bodyLarge:
+            TextStyle(color: AppColors.textPrimary, fontSize: 16, height: 1.6),
+        bodyMedium: TextStyle(
+            color: AppColors.textSecondary, fontSize: 14, height: 1.5),
+        bodySmall: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+        labelLarge: TextStyle(
+            color: AppColors.textPrimary, fontWeight: FontWeight.w600),
+        labelMedium: TextStyle(color: AppColors.textSecondary),
+        labelSmall: TextStyle(color: AppColors.textSecondary),
       ),
 
       // AppBar
@@ -95,7 +107,8 @@ class AppTheme {
           backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
           minimumSize: const Size(double.infinity, 52),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           textStyle: const TextStyle(
             fontFamily: 'Nunito',
             fontSize: 16,
@@ -111,7 +124,8 @@ class AppTheme {
           foregroundColor: AppColors.primary,
           minimumSize: const Size(double.infinity, 52),
           side: const BorderSide(color: AppColors.primary, width: 1.5),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           textStyle: const TextStyle(
             fontFamily: 'Nunito',
             fontSize: 15,
@@ -151,8 +165,10 @@ class AppTheme {
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: AppColors.error),
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        labelStyle: const TextStyle(color: AppColors.textSecondary, fontWeight: FontWeight.w500),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        labelStyle: const TextStyle(
+            color: AppColors.textSecondary, fontWeight: FontWeight.w500),
         hintStyle: const TextStyle(color: AppColors.textHint),
         prefixIconColor: AppColors.textSecondary,
         suffixIconColor: AppColors.textSecondary,
@@ -172,7 +188,7 @@ class AppTheme {
       // Bottom navigation
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: AppColors.surface,
-        indicatorColor: AppColors.primary.withOpacity(0.12),
+        indicatorColor: AppColors.primary.withValues(alpha: 0.12),
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
             return const TextStyle(
@@ -201,8 +217,10 @@ class AppTheme {
       tabBarTheme: const TabBarThemeData(
         labelColor: AppColors.primary,
         unselectedLabelColor: AppColors.textSecondary,
-        labelStyle: TextStyle(fontWeight: FontWeight.w700, fontFamily: 'Nunito'),
-        unselectedLabelStyle: TextStyle(fontWeight: FontWeight.w500, fontFamily: 'Nunito'),
+        labelStyle:
+            TextStyle(fontWeight: FontWeight.w700, fontFamily: 'Nunito'),
+        unselectedLabelStyle:
+            TextStyle(fontWeight: FontWeight.w500, fontFamily: 'Nunito'),
         indicatorColor: AppColors.primary,
         dividerColor: AppColors.border,
       ),

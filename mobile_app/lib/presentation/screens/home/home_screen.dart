@@ -49,7 +49,8 @@ class HomeScreen extends ConsumerWidget {
               Stack(
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.notifications_outlined, color: AppColors.textPrimary),
+                    icon: const Icon(Icons.notifications_outlined,
+                        color: AppColors.textPrimary),
                     onPressed: () => context.push(AppRoutes.notifications),
                   ),
                   unreadAsync.when(
@@ -96,10 +97,11 @@ class HomeScreen extends ConsumerWidget {
                       children: [
                         Text(
                           'Good day, ${user?.firstName ?? 'Scholar'} 👋',
-                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.textPrimary,
-                          ),
+                          style:
+                              Theme.of(context).textTheme.titleLarge?.copyWith(
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.textPrimary,
+                                  ),
                         ),
                         const SizedBox(height: 4),
                         Text(
@@ -113,12 +115,12 @@ class HomeScreen extends ConsumerWidget {
                         ),
                       ],
                     ),
-                    loading: () => Column(
+                    loading: () => const Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _ShimmerBox(width: 200, height: 24),
-                        const SizedBox(height: 6),
-                        _ShimmerBox(width: 160, height: 16),
+                        const _ShimmerBox(width: 200, height: 24),
+                        SizedBox(height: 6),
+                        const _ShimmerBox(width: 160, height: 16),
                       ],
                     ),
                     error: (_, __) => const Text(
@@ -221,42 +223,52 @@ class _RealCoursesList extends StatelessWidget {
         // Show first 3 courses
         final preview = courses.take(3).toList();
         return Column(
-          children: preview.map((course) => Card(
-            margin: const EdgeInsets.only(bottom: 10),
-            child: ListTile(
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-              leading: Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(Icons.menu_book, color: AppColors.primary, size: 22),
-              ),
-              title: Text(
-                course.title,
-                style: const TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 14,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-              subtitle: Text(
-                '${course.courseCode} • ${course.academicLevel} • ${course.creditUnits} units',
-                style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
-              ),
-              trailing: const Icon(Icons.arrow_forward_ios, size: 14, color: AppColors.textSecondary),
-              onTap: () => context.push('${AppRoutes.courses}/${course.id}'),
-            ),
-          )).toList(),
+          children: preview
+              .map((course) => Card(
+                    margin: const EdgeInsets.only(bottom: 10),
+                    child: ListTile(
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 6),
+                      leading: Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(Icons.menu_book,
+                            color: AppColors.primary, size: 22),
+                      ),
+                      title: Text(
+                        course.title,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      subtitle: Text(
+                        '${course.courseCode} • ${course.academicLevel} • ${course.creditUnits} units',
+                        style: const TextStyle(
+                            color: AppColors.textSecondary, fontSize: 12),
+                      ),
+                      trailing: const Icon(Icons.arrow_forward_ios,
+                          size: 14, color: AppColors.textSecondary),
+                      onTap: () =>
+                          context.push('${AppRoutes.courses}/${course.id}'),
+                    ),
+                  ))
+              .toList(),
         );
       },
       loading: () => Column(
-        children: List.generate(3, (_) => Padding(
-          padding: const EdgeInsets.only(bottom: 10),
-          child: _ShimmerBox(width: double.infinity, height: 72, radius: 16),
-        )),
+        children: List.generate(
+            3,
+            (_) => const Padding(
+                  padding: EdgeInsets.only(bottom: 10),
+                  child: const _ShimmerBox(
+                      width: double.infinity, height: 72, radius: 16),
+                )),
       ),
       error: (_, __) => const _EmptyState(
         icon: Icons.wifi_off,
@@ -311,7 +323,8 @@ class _DepartmentCard extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       dept.universityName,
-                      style: const TextStyle(color: Colors.white70, fontSize: 13),
+                      style:
+                          const TextStyle(color: Colors.white70, fontSize: 13),
                     ),
                     const SizedBox(height: 8),
                     Text(
@@ -329,7 +342,8 @@ class _DepartmentCard extends StatelessWidget {
           ),
         );
       },
-      loading: () => _ShimmerBox(width: double.infinity, height: 100, radius: 16),
+      loading: () =>
+          const _ShimmerBox(width: double.infinity, height: 100, radius: 16),
       error: (_, __) => const SizedBox(),
     );
   }
@@ -362,7 +376,8 @@ class _SectionHeader extends StatelessWidget {
             onPressed: onAction,
             child: Text(
               actionLabel!,
-              style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.w600),
+              style: const TextStyle(
+                  color: AppColors.primary, fontWeight: FontWeight.w600),
             ),
           ),
       ],
@@ -394,9 +409,9 @@ class _QuickAction extends StatelessWidget {
             width: 52,
             height: 52,
             decoration: BoxDecoration(
-              color: color.withOpacity(0.12),
+              color: color.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: color.withOpacity(0.2)),
+              border: Border.all(color: color.withValues(alpha: 0.2)),
             ),
             child: Icon(icon, color: color, size: 24),
           ),
@@ -422,34 +437,44 @@ class _DiscussionPreviewList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final items = [
-      {'q': 'What is the optimal protein level for catfish juveniles?', 'answers': '4'},
-      {'q': 'Can someone explain the nitrogen cycle in aquaculture?', 'answers': '7'},
+      {
+        'q': 'What is the optimal protein level for catfish juveniles?',
+        'answers': '4'
+      },
+      {
+        'q': 'Can someone explain the nitrogen cycle in aquaculture?',
+        'answers': '7'
+      },
     ];
     return Column(
-      children: items.map((item) => Card(
-        margin: const EdgeInsets.only(bottom: 8),
-        child: ListTile(
-          leading: const CircleAvatar(
-            backgroundColor: AppColors.accent,
-            child: Icon(Icons.question_answer, color: Colors.white, size: 18),
-          ),
-          title: Text(
-            item['q']!,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
-            ),
-          ),
-          subtitle: Text(
-            '${item['answers']} answers',
-            style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
-          ),
-          onTap: () => context.go(AppRoutes.community),
-        ),
-      )).toList(),
+      children: items
+          .map((item) => Card(
+                margin: const EdgeInsets.only(bottom: 8),
+                child: ListTile(
+                  leading: const CircleAvatar(
+                    backgroundColor: AppColors.accent,
+                    child: Icon(Icons.question_answer,
+                        color: Colors.white, size: 18),
+                  ),
+                  title: Text(
+                    item['q']!,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  subtitle: Text(
+                    '${item['answers']} answers',
+                    style: const TextStyle(
+                        color: AppColors.textSecondary, fontSize: 12),
+                  ),
+                  onTap: () => context.go(AppRoutes.community),
+                ),
+              ))
+          .toList(),
     );
   }
 }
@@ -475,7 +500,8 @@ class _EmptyState extends StatelessWidget {
           Text(
             message,
             textAlign: TextAlign.center,
-            style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+            style:
+                const TextStyle(color: AppColors.textSecondary, fontSize: 13),
           ),
         ],
       ),
@@ -487,7 +513,8 @@ class _ShimmerBox extends StatelessWidget {
   final double width;
   final double height;
   final double radius;
-  const _ShimmerBox({required this.width, required this.height, this.radius = 8});
+  const _ShimmerBox(
+      {required this.width, required this.height, this.radius = 8});
 
   @override
   Widget build(BuildContext context) {

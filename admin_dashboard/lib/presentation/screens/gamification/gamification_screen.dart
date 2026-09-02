@@ -31,10 +31,12 @@ class TopUserModel {
   factory TopUserModel.fromJson(Map<String, dynamic> json) {
     return TopUserModel(
       id: json['id'] as String,
-      fullName: json['fullName'] as String? ?? json['full_name'] as String? ?? '',
+      fullName:
+          json['fullName'] as String? ?? json['full_name'] as String? ?? '',
       email: json['email'] as String? ?? '',
       reputationPoints: (json['reputationPoints'] as num?)?.toInt() ??
-          (json['reputation_points'] as num?)?.toInt() ?? 0,
+          (json['reputation_points'] as num?)?.toInt() ??
+          0,
       role: json['role'] as String? ?? 'student',
     );
   }
@@ -116,17 +118,16 @@ class GamificationScreen extends ConsumerWidget {
         children: [
           Text('Gamification',
               style: TextStyle(
-                  fontSize: isMobile ? 20 : 24,
-                  fontWeight: FontWeight.w700)),
+                  fontSize: isMobile ? 20 : 24, fontWeight: FontWeight.w700)),
           const Text('Reputation points and badge distribution',
               style: TextStyle(color: AdminColors.grey600)),
           const SizedBox(height: 24),
-
           overviewAsync.when(
             loading: () => const Expanded(
                 child: Center(child: CircularProgressIndicator())),
             error: (_, __) => const Expanded(
-                child: Center(child: Text('Could not load gamification data.'))),
+                child:
+                    Center(child: Text('Could not load gamification data.'))),
             data: (overview) => Expanded(
               child: SingleChildScrollView(
                 child: Column(
@@ -224,8 +225,7 @@ class GamificationScreen extends ConsumerWidget {
                                       child: LinearProgressIndicator(
                                         value: pct,
                                         minHeight: 6,
-                                        backgroundColor:
-                                            AdminColors.grey300,
+                                        backgroundColor: AdminColors.grey300,
                                         valueColor:
                                             AlwaysStoppedAnimation<Color>(
                                                 _badgeColor(e.key)),
@@ -254,10 +254,8 @@ class GamificationScreen extends ConsumerWidget {
                               itemCount: overview.topUsers.length,
                               separatorBuilder: (_, __) =>
                                   const Divider(height: 1),
-                              itemBuilder: (_, i) =>
-                                  _LeaderboardTile(
-                                      rank: i + 1,
-                                      user: overview.topUsers[i]),
+                              itemBuilder: (_, i) => _LeaderboardTile(
+                                  rank: i + 1, user: overview.topUsers[i]),
                             )
                           : DataTable(
                               headingRowColor: WidgetStateProperty.all(
@@ -268,8 +266,7 @@ class GamificationScreen extends ConsumerWidget {
                                 DataColumn(label: Text('Email')),
                                 DataColumn(label: Text('Role')),
                                 DataColumn(
-                                    label: Text('Reputation'),
-                                    numeric: true),
+                                    label: Text('Reputation'), numeric: true),
                               ],
                               rows: overview.topUsers
                                   .asMap()
@@ -278,13 +275,11 @@ class GamificationScreen extends ConsumerWidget {
                                         DataCell(_RankBadge(rank: e.key + 1)),
                                         DataCell(Text(e.value.fullName,
                                             style: const TextStyle(
-                                                fontWeight:
-                                                    FontWeight.w600))),
+                                                fontWeight: FontWeight.w600))),
                                         DataCell(Text(e.value.email,
-                                            style: const TextStyle(
-                                                fontSize: 13))),
-                                        DataCell(_RoleChip(
-                                            role: e.value.role)),
+                                            style:
+                                                const TextStyle(fontSize: 13))),
+                                        DataCell(_RoleChip(role: e.value.role)),
                                         DataCell(Text(
                                             '${e.value.reputationPoints}',
                                             style: const TextStyle(
@@ -306,23 +301,35 @@ class GamificationScreen extends ConsumerWidget {
 
   String _badgeLabel(String badge) {
     switch (badge) {
-      case 'fresh_scholar': return 'Fresh Scholar';
-      case 'bookworm': return 'Bookworm';
-      case 'top_contributor': return 'Top Contributor';
-      case 'community_helper': return 'Community Helper';
-      case 'ai_explorer': return 'AI Explorer';
-      default: return badge;
+      case 'fresh_scholar':
+        return 'Fresh Scholar';
+      case 'bookworm':
+        return 'Bookworm';
+      case 'top_contributor':
+        return 'Top Contributor';
+      case 'community_helper':
+        return 'Community Helper';
+      case 'ai_explorer':
+        return 'AI Explorer';
+      default:
+        return badge;
     }
   }
 
   Color _badgeColor(String badge) {
     switch (badge) {
-      case 'fresh_scholar': return AdminColors.success;
-      case 'bookworm': return AdminColors.primary;
-      case 'top_contributor': return AdminColors.accent;
-      case 'community_helper': return AdminColors.info;
-      case 'ai_explorer': return AdminColors.warning;
-      default: return AdminColors.grey600;
+      case 'fresh_scholar':
+        return AdminColors.success;
+      case 'bookworm':
+        return AdminColors.primary;
+      case 'top_contributor':
+        return AdminColors.accent;
+      case 'community_helper':
+        return AdminColors.info;
+      case 'ai_explorer':
+        return AdminColors.warning;
+      default:
+        return AdminColors.grey600;
     }
   }
 }
@@ -351,7 +358,7 @@ class _SummaryCard extends StatelessWidget {
               width: 48,
               height: 48,
               decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
+                color: color.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(icon, color: color, size: 24),
@@ -383,12 +390,23 @@ class _BadgeIcon extends StatelessWidget {
   Widget build(BuildContext context) {
     IconData icon;
     switch (badge) {
-      case 'fresh_scholar': icon = Icons.school_outlined; break;
-      case 'bookworm': icon = Icons.menu_book_outlined; break;
-      case 'top_contributor': icon = Icons.upload_outlined; break;
-      case 'community_helper': icon = Icons.people_outline; break;
-      case 'ai_explorer': icon = Icons.auto_awesome_outlined; break;
-      default: icon = Icons.military_tech_outlined;
+      case 'fresh_scholar':
+        icon = Icons.school_outlined;
+        break;
+      case 'bookworm':
+        icon = Icons.menu_book_outlined;
+        break;
+      case 'top_contributor':
+        icon = Icons.upload_outlined;
+        break;
+      case 'community_helper':
+        icon = Icons.people_outline;
+        break;
+      case 'ai_explorer':
+        icon = Icons.auto_awesome_outlined;
+        break;
+      default:
+        icon = Icons.military_tech_outlined;
     }
     return Icon(icon, size: 20, color: AdminColors.primary);
   }
@@ -401,16 +419,20 @@ class _RankBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     Color color;
-    if (rank == 1) color = const Color(0xFFFFD700);
-    else if (rank == 2) color = const Color(0xFFC0C0C0);
-    else if (rank == 3) color = const Color(0xFFCD7F32);
-    else color = AdminColors.grey600;
+    if (rank == 1) {
+      color = const Color(0xFFFFD700);
+    } else if (rank == 2)
+      color = const Color(0xFFC0C0C0);
+    else if (rank == 3)
+      color = const Color(0xFFCD7F32);
+    else
+      color = AdminColors.grey600;
 
     return Container(
       width: 28,
       height: 28,
       decoration: BoxDecoration(
-        color: color.withOpacity(0.15),
+        color: color.withValues(alpha: 0.15),
         shape: BoxShape.circle,
       ),
       child: Center(
@@ -438,12 +460,13 @@ class _RoleChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(6),
       ),
       child: Text(
         '${role[0].toUpperCase()}${role.substring(1)}',
-        style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w700),
+        style:
+            TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w700),
       ),
     );
   }

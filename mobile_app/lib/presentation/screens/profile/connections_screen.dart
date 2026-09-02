@@ -40,11 +40,12 @@ class _ConnectionsTab extends ConsumerWidget {
 
     return connectionsAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (_, __) => const Center(child: Text('Could not load connections.')),
+      error: (_, __) =>
+          const Center(child: Text('Could not load connections.')),
       data: (connections) {
         if (connections.isEmpty) {
-          return Center(
-            child: Column(mainAxisSize: MainAxisSize.min, children: const [
+          return const Center(
+            child: Column(mainAxisSize: MainAxisSize.min, children: [
               Icon(Icons.people_outline, size: 56, color: AppColors.grey400),
               SizedBox(height: 16),
               Text('No connections yet',
@@ -85,9 +86,10 @@ class _PendingTab extends ConsumerWidget {
       error: (_, __) => const Center(child: Text('Could not load requests.')),
       data: (pending) {
         if (pending.isEmpty) {
-          return Center(
-            child: Column(mainAxisSize: MainAxisSize.min, children: const [
-              Icon(Icons.mark_email_unread_outlined, size: 56, color: AppColors.grey400),
+          return const Center(
+            child: Column(mainAxisSize: MainAxisSize.min, children: [
+              Icon(Icons.mark_email_unread_outlined,
+                  size: 56, color: AppColors.grey400),
               SizedBox(height: 16),
               Text('No pending requests',
                   style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
@@ -128,16 +130,18 @@ class _ConnectionTile extends ConsumerWidget {
     return Card(
       child: ListTile(
         leading: CircleAvatar(
-          backgroundColor: AppColors.primary.withOpacity(0.15),
+          backgroundColor: AppColors.primary.withValues(alpha: 0.15),
           child: const Icon(Icons.person_outline, color: AppColors.primary),
         ),
-        title: Text('User',
-            style: const TextStyle(fontWeight: FontWeight.w600)),
+        title:
+            const Text('User', style: TextStyle(fontWeight: FontWeight.w600)),
         subtitle: Text('Connected • ${_timeAgo(connection.createdAt)}',
-            style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+            style:
+                const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
         trailing: Row(mainAxisSize: MainAxisSize.min, children: [
           TextButton(
-            onPressed: () => context.push('${AppRoutes.publicProfile}/$otherUserId'),
+            onPressed: () =>
+                context.push('${AppRoutes.publicProfile}/$otherUserId'),
             child: const Text('View'),
           ),
           IconButton(
@@ -151,22 +155,27 @@ class _ConnectionTile extends ConsumerWidget {
     );
   }
 
-  Future<void> _remove(BuildContext ctx, WidgetRef ref, ConnectionModel c) async {
+  Future<void> _remove(
+      BuildContext ctx, WidgetRef ref, ConnectionModel c) async {
     final confirm = await showDialog<bool>(
       context: ctx,
       builder: (_) => AlertDialog(
         title: const Text('Remove Connection'),
         content: const Text('Are you sure you want to remove this connection?'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancel')),
           TextButton(
               onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Remove', style: TextStyle(color: AppColors.error))),
+              child: const Text('Remove',
+                  style: TextStyle(color: AppColors.error))),
         ],
       ),
     );
     if (confirm != true) return;
-    await ref.read(connectionActionsProvider.notifier)
+    await ref
+        .read(connectionActionsProvider.notifier)
         .removeConnection(c.id, c.requesterId);
   }
 
@@ -191,25 +200,30 @@ class _PendingTile extends ConsumerWidget {
     return Card(
       child: ListTile(
         leading: CircleAvatar(
-          backgroundColor: AppColors.warning.withOpacity(0.15),
-          child: const Icon(Icons.person_add_outlined, color: AppColors.warning),
+          backgroundColor: AppColors.warning.withValues(alpha: 0.15),
+          child:
+              const Icon(Icons.person_add_outlined, color: AppColors.warning),
         ),
-        title: Text('Connection Request',
-            style: const TextStyle(fontWeight: FontWeight.w600)),
+        title: const Text('Connection Request',
+            style: TextStyle(fontWeight: FontWeight.w600)),
         subtitle: Text(_timeAgo(connection.createdAt),
-            style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+            style:
+                const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
         trailing: Row(mainAxisSize: MainAxisSize.min, children: [
           ElevatedButton(
-            onPressed: isLoading ? null : () async {
-              final ok = await ref.read(connectionActionsProvider.notifier)
-                  .acceptRequest(connection.id, connection.requesterId);
-              if (context.mounted && ok) {
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                  content: Text('Connection accepted!'),
-                  backgroundColor: AppColors.success,
-                ));
-              }
-            },
+            onPressed: isLoading
+                ? null
+                : () async {
+                    final ok = await ref
+                        .read(connectionActionsProvider.notifier)
+                        .acceptRequest(connection.id, connection.requesterId);
+                    if (context.mounted && ok) {
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                        content: Text('Connection accepted!'),
+                        backgroundColor: AppColors.success,
+                      ));
+                    }
+                  },
             style: ElevatedButton.styleFrom(
               minimumSize: const Size(0, 32),
               padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -218,10 +232,14 @@ class _PendingTile extends ConsumerWidget {
           ),
           const SizedBox(width: 6),
           OutlinedButton(
-            onPressed: isLoading ? null : () async {
-              await ref.read(connectionActionsProvider.notifier)
-                  .removeConnection(connection.id, connection.requesterId);
-            },
+            onPressed: isLoading
+                ? null
+                : () async {
+                    await ref
+                        .read(connectionActionsProvider.notifier)
+                        .removeConnection(
+                            connection.id, connection.requesterId);
+                  },
             style: OutlinedButton.styleFrom(
               minimumSize: const Size(0, 32),
               padding: const EdgeInsets.symmetric(horizontal: 12),

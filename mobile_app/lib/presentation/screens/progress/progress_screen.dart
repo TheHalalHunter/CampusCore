@@ -30,6 +30,9 @@ class ProgressScreen extends ConsumerWidget {
             child: ListView(
               padding: const EdgeInsets.all(20),
               children: [
+                // Study streak card (private)
+                _StreakCard(),
+                const SizedBox(height: 16),
                 // Semester overview
                 _SemesterOverview(courses: courses),
                 const SizedBox(height: 28),
@@ -116,12 +119,14 @@ class _SemesterOverview extends ConsumerWidget {
                     const SizedBox(height: 4),
                     Text(
                       '$totalCompleted of $totalTopics topics completed',
-                      style: const TextStyle(color: Colors.white70, fontSize: 13),
+                      style:
+                          const TextStyle(color: Colors.white70, fontSize: 13),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       '${courses.length} courses',
-                      style: const TextStyle(color: Colors.white70, fontSize: 13),
+                      style:
+                          const TextStyle(color: Colors.white70, fontSize: 13),
                     ),
                   ],
                 ),
@@ -138,6 +143,72 @@ class _SemesterOverview extends ConsumerWidget {
         ),
       ),
       error: (_, __) => const SizedBox(),
+    );
+  }
+}
+
+// ─── Streak Card ─────────────────────────────────────────────────────────────
+
+class _StreakCard extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final streakAsync = ref.watch(streakProvider);
+    return streakAsync.when(
+      loading: () => const SizedBox.shrink(),
+      error: (_, __) => const SizedBox.shrink(),
+      data: (streak) => Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: streak.studiedToday
+                ? [const Color(0xFF16A34A), const Color(0xFF22C55E)]
+                : [AppColors.primary, AppColors.primaryLight],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Row(children: [
+          Text(
+            streak.studiedToday ? '🔥' : '📚',
+            style: const TextStyle(fontSize: 36),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${streak.currentStreak} day streak',
+                  style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 18),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  streak.studiedToday
+                      ? 'You studied today! Keep it up.'
+                      : 'Study today to keep your streak!',
+                  style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.85),
+                      fontSize: 13),
+                ),
+              ],
+            ),
+          ),
+          Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+            Text('Best: ${streak.longestStreak}d',
+                style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.8),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600)),
+            Text('Total: ${streak.totalStudyDays}d',
+                style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.7), fontSize: 11)),
+          ]),
+        ]),
+      ),
     );
   }
 }
@@ -177,7 +248,7 @@ class _CourseProgressCard extends ConsumerWidget {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
-                      color: AppColors.primary.withOpacity(0.1),
+                      color: AppColors.primary.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(code,
@@ -247,8 +318,7 @@ class _CourseProgressCard extends ConsumerWidget {
                   minHeight: 8,
                 ),
                 error: (_, __) => const Text('Could not load progress',
-                    style: TextStyle(
-                        color: AppColors.textHint, fontSize: 12)),
+                    style: TextStyle(color: AppColors.textHint, fontSize: 12)),
               ),
             ],
           ),

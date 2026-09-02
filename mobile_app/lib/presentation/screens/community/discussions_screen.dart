@@ -39,10 +39,12 @@ class _DiscussionsScreenState extends ConsumerState<DiscussionsScreen> {
                     label: Text(label),
                     selected: selected,
                     onSelected: (_) => setState(() => _selectedLevel = level),
-                    selectedColor: AppColors.primary.withOpacity(0.15),
+                    selectedColor: AppColors.primary.withValues(alpha: 0.15),
                     checkmarkColor: AppColors.primary,
                     labelStyle: TextStyle(
-                      color: selected ? AppColors.primary : AppColors.textSecondary,
+                      color: selected
+                          ? AppColors.primary
+                          : AppColors.textSecondary,
                       fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
                     ),
                   ),
@@ -54,19 +56,22 @@ class _DiscussionsScreenState extends ConsumerState<DiscussionsScreen> {
       ),
       body: threadsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (_, __) => const Center(child: Text('Could not load discussions.')),
+        error: (_, __) =>
+            const Center(child: Text('Could not load discussions.')),
         data: (threads) {
           if (threads.isEmpty) {
-            return Center(
+            return const Center(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.forum_outlined, size: 56, color: AppColors.grey400),
-                  const SizedBox(height: 16),
-                  const Text('No discussions yet',
-                      style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
-                  const SizedBox(height: 8),
-                  const Text('Be the first to start a conversation.',
+                  Icon(Icons.forum_outlined,
+                      size: 56, color: AppColors.grey400),
+                  SizedBox(height: 16),
+                  Text('No discussions yet',
+                      style:
+                          TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+                  SizedBox(height: 8),
+                  Text('Be the first to start a conversation.',
                       style: TextStyle(color: AppColors.textSecondary)),
                 ],
               ),
@@ -123,13 +128,15 @@ class _ThreadCard extends StatelessWidget {
                   if (thread.isPinned)
                     const Padding(
                       padding: EdgeInsets.only(right: 6),
-                      child: Icon(Icons.push_pin, size: 14, color: AppColors.accent),
+                      child: Icon(Icons.push_pin,
+                          size: 14, color: AppColors.accent),
                     ),
                   if (thread.academicLevel != null)
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 2),
                       decoration: BoxDecoration(
-                        color: AppColors.primary.withOpacity(0.1),
+                        color: AppColors.primary.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(thread.academicLevel!,
@@ -229,8 +236,7 @@ class _CreateThreadSheetState extends ConsumerState<_CreateThreadSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final isLoading =
-        ref.watch(threadActionsProvider) is AsyncLoading;
+    final isLoading = ref.watch(threadActionsProvider) is AsyncLoading;
     return Padding(
       padding: EdgeInsets.fromLTRB(
           20, 20, 20, MediaQuery.of(context).viewInsets.bottom + 20),
@@ -244,7 +250,7 @@ class _CreateThreadSheetState extends ConsumerState<_CreateThreadSheet> {
                 style: TextStyle(fontWeight: FontWeight.w700, fontSize: 18)),
             const SizedBox(height: 16),
             DropdownButtonFormField<String?>(
-              value: _level,
+              initialValue: _level,
               decoration: const InputDecoration(labelText: 'Level (optional)'),
               items: [null, '100L', '200L', '300L', '400L', '500L']
                   .map((l) => DropdownMenuItem(

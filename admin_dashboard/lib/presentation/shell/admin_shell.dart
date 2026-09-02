@@ -29,7 +29,7 @@ class _AdminShellState extends State<AdminShell> {
           centerTitle: false,
         ),
         body: widget.child,
-        drawer: _AdminSidebar(isMobile: true),
+        drawer: const _AdminSidebar(isMobile: true),
       );
     }
 
@@ -42,7 +42,8 @@ class _AdminShellState extends State<AdminShell> {
             child: _AdminSidebar(
               isMobile: false,
               expanded: _sidebarExpanded,
-              onToggle: () => setState(() => _sidebarExpanded = !_sidebarExpanded),
+              onToggle: () =>
+                  setState(() => _sidebarExpanded = !_sidebarExpanded),
             ),
           ),
           Expanded(child: widget.child),
@@ -54,15 +55,40 @@ class _AdminShellState extends State<AdminShell> {
 
 class _AdminSidebar extends StatelessWidget {
   final _navItems = const [
-    _NavItem(icon: Icons.dashboard_outlined, label: 'Dashboard', route: AdminRoutes.dashboard),
-    _NavItem(icon: Icons.people_outlined, label: 'Users', route: AdminRoutes.users),
-    _NavItem(icon: Icons.fact_check_outlined, label: 'Moderation', route: AdminRoutes.moderation),
-    _NavItem(icon: Icons.school_outlined, label: 'Departments', route: AdminRoutes.departments),
-    _NavItem(icon: Icons.menu_book_outlined, label: 'Courses', route: AdminRoutes.courses),
-    _NavItem(icon: Icons.lock_clock_outlined, label: 'Exam Lock', route: AdminRoutes.examLock),
-    _NavItem(icon: Icons.military_tech_outlined, label: 'Gamification', route: AdminRoutes.gamification),
-    _NavItem(icon: Icons.flag_outlined, label: 'Reports', route: AdminRoutes.reports),
-    _NavItem(icon: Icons.settings_outlined, label: 'Settings', route: AdminRoutes.settings),
+    _NavItem(
+        icon: Icons.dashboard_outlined,
+        label: 'Dashboard',
+        route: AdminRoutes.dashboard),
+    _NavItem(
+        icon: Icons.people_outlined, label: 'Users', route: AdminRoutes.users),
+    _NavItem(
+        icon: Icons.fact_check_outlined,
+        label: 'Moderation',
+        route: AdminRoutes.moderation),
+    _NavItem(
+        icon: Icons.school_outlined,
+        label: 'Departments',
+        route: AdminRoutes.departments),
+    _NavItem(
+        icon: Icons.menu_book_outlined,
+        label: 'Courses',
+        route: AdminRoutes.courses),
+    _NavItem(
+        icon: Icons.lock_clock_outlined,
+        label: 'Exam Lock',
+        route: AdminRoutes.examLock),
+    _NavItem(
+        icon: Icons.military_tech_outlined,
+        label: 'Gamification',
+        route: AdminRoutes.gamification),
+    _NavItem(
+        icon: Icons.flag_outlined,
+        label: 'Reports',
+        route: AdminRoutes.reports),
+    _NavItem(
+        icon: Icons.settings_outlined,
+        label: 'Settings',
+        route: AdminRoutes.settings),
   ];
 
   final bool isMobile;
@@ -86,7 +112,8 @@ class _AdminSidebar extends StatelessWidget {
           child: Column(
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 28),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 28),
                 child: const Row(
                   children: [
                     Icon(Icons.school, color: Colors.white, size: 26),
@@ -113,7 +140,8 @@ class _AdminSidebar extends StatelessWidget {
               const Spacer(),
               const Divider(color: Colors.white12),
               ListTile(
-                leading: const Icon(Icons.logout, color: Colors.white54, size: 20),
+                leading:
+                    const Icon(Icons.logout, color: Colors.white54, size: 20),
                 title: const Text('Sign Out',
                     style: TextStyle(color: Colors.white54, fontSize: 14)),
                 onTap: () => context.go(AdminRoutes.login),
@@ -138,15 +166,15 @@ class _AdminSidebar extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 if (expanded)
-                  Expanded(
+                  const Expanded(
                     child: Row(
                       children: [
-                        const Icon(Icons.school, color: Colors.white, size: 26),
-                        const SizedBox(width: 10),
+                        Icon(Icons.school, color: Colors.white, size: 26),
+                        SizedBox(width: 10),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
-                            children: const [
+                            children: [
                               Text(
                                 'CampusCore',
                                 style: TextStyle(
@@ -179,7 +207,8 @@ class _AdminSidebar extends StatelessWidget {
                     ),
                     onPressed: onToggle,
                     padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+                    constraints:
+                        const BoxConstraints(minWidth: 40, minHeight: 40),
                   ),
               ],
             ),
@@ -210,13 +239,15 @@ class _AdminSidebar extends StatelessWidget {
               message: expanded ? '' : 'Sign Out',
               child: ListTile(
                 dense: true,
-                leading: const Icon(Icons.logout, color: Colors.white54, size: 20),
+                leading:
+                    const Icon(Icons.logout, color: Colors.white54, size: 20),
                 title: expanded
                     ? const Text('Sign Out',
                         style: TextStyle(color: Colors.white54, fontSize: 14))
                     : null,
                 onTap: () => context.go(AdminRoutes.login),
-                contentPadding: EdgeInsets.symmetric(horizontal: expanded ? 12 : 0),
+                contentPadding:
+                    EdgeInsets.symmetric(horizontal: expanded ? 12 : 0),
               ),
             ),
           ),
@@ -243,7 +274,9 @@ class _SidebarTile extends StatelessWidget {
     return Container(
       margin: EdgeInsets.symmetric(horizontal: expanded ? 10 : 6, vertical: 2),
       decoration: BoxDecoration(
-        color: isSelected ? AdminColors.sidebarSelected.withOpacity(0.25) : null,
+        color: isSelected
+            ? AdminColors.sidebarSelected.withValues(alpha: 0.25)
+            : null,
         borderRadius: BorderRadius.circular(8),
       ),
       child: ListTile(
@@ -276,5 +309,6 @@ class _NavItem {
   final String label;
   final String route;
 
-  const _NavItem({required this.icon, required this.label, required this.route});
+  const _NavItem(
+      {required this.icon, required this.label, required this.route});
 }

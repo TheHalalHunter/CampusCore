@@ -11,7 +11,7 @@ class AdminLoginScreen extends StatefulWidget {
 }
 
 class _AdminLoginScreenState extends State<AdminLoginScreen> {
-  final _emailCtrl    = TextEditingController();
+  final _emailCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
   bool _obscure = true;
 
@@ -31,10 +31,11 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                 const Icon(Icons.school, color: AdminColors.primary, size: 48),
                 const SizedBox(height: 12),
                 const Text('CampusCore Admin',
-                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700)),
+                    style:
+                        TextStyle(fontSize: 22, fontWeight: FontWeight.w700)),
                 const SizedBox(height: 4),
-                Text('Sign in to the admin dashboard',
-                    style: TextStyle(color: AdminColors.grey600)),
+                const Text('Sign in to the admin dashboard',
+                    style: const TextStyle(color: AdminColors.grey600)),
                 const SizedBox(height: 32),
                 TextFormField(
                   controller: _emailCtrl,
@@ -57,7 +58,8 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                     labelText: 'Password',
                     prefixIcon: const Icon(Icons.lock_outline),
                     suffixIcon: IconButton(
-                      icon: Icon(_obscure ? Icons.visibility_off : Icons.visibility),
+                      icon: Icon(
+                          _obscure ? Icons.visibility_off : Icons.visibility),
                       onPressed: () => setState(() => _obscure = !_obscure),
                     ),
                     filled: true,

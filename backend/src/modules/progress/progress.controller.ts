@@ -31,18 +31,16 @@ export class ProgressController {
 
   @Post("courses/:courseId/topics/:topicId/complete")
   @ApiOperation({ summary: "Mark a topic as completed" })
-  markComplete(
+  async markComplete(
     @CurrentUser("id") userId: string,
     @Param("courseId") courseId: string,
     @Param("topicId") topicId: string,
     @Body("topicTitle") topicTitle: string,
   ) {
-    return this.service.markTopicComplete(
-      userId,
-      courseId,
-      topicId,
-      topicTitle,
-    );
+    const result = await this.service.markTopicComplete(userId, courseId, topicId, topicTitle);
+    // Record study activity to maintain streak
+    await this.service.recordStudyActivity(userId);
+    return result;
   }
 
   @Delete("courses/:courseId/topics/:topicId/complete")
@@ -64,5 +62,11 @@ export class ProgressController {
     @Query("courseIds") courseIds: string,
   ) {
     return this.service.getSemesterProgress(userId, courseIds.split(","));
+  }
+
+  @Get("streak")
+  @ApiOperation({ summary: "Get study streak for current user (private)" })
+  getStreak(@CurrentUser("id") userId: string) {
+    return this.service.getStreak(userId);
   }
 }

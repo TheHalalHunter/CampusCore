@@ -15,8 +15,7 @@ class IntegrityPolicyScreen extends ConsumerStatefulWidget {
       _IntegrityPolicyScreenState();
 }
 
-class _IntegrityPolicyScreenState
-    extends ConsumerState<IntegrityPolicyScreen> {
+class _IntegrityPolicyScreenState extends ConsumerState<IntegrityPolicyScreen> {
   bool _scrolledToBottom = false;
   bool _isAccepting = false;
   final ScrollController _scrollCtrl = ScrollController();
@@ -49,8 +48,8 @@ class _IntegrityPolicyScreenState
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Could not save. Please try again.'),
+          const SnackBar(
+            content: Text('Could not save. Please try again.'),
             backgroundColor: AppColors.error,
           ),
         );
@@ -105,24 +104,24 @@ class _IntegrityPolicyScreenState
                           'Please read the full policy before accepting.',
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                              color: Colors.white.withOpacity(0.85),
+                              color: Colors.white.withValues(alpha: 0.85),
                               fontSize: 13),
                         ),
                       ],
                     ),
                   ),
                   const SizedBox(height: 24),
-                  _Section(
+                  const _Section(
                     title: '1. Purpose',
                     body:
                         'CampusCore is an academic platform built to support learning, collaboration, and academic excellence among Nigerian university students. This policy outlines the standards of conduct expected of every user to maintain the integrity of the platform and the academic community.',
                   ),
-                  _Section(
+                  const _Section(
                     title: '2. Honesty and Original Work',
                     body:
                         'You must only upload academic materials that you have the right to share. Do not upload copyrighted materials without permission. When sharing resources, credit the original author where applicable. All content you contribute should be accurate and helpful to fellow students.',
                   ),
-                  _Section(
+                  const _Section(
                     title: '3. Prohibited Conduct',
                     body:
                         'The following are strictly prohibited on CampusCore:\n\n'
@@ -133,31 +132,30 @@ class _IntegrityPolicyScreenState
                         '• Harassment, bullying, or discriminatory behaviour of any kind.\n'
                         '• Sharing personal data of other users without their consent.',
                   ),
-                  _Section(
+                  const _Section(
                     title: '4. AI Study Assistant',
                     body:
                         'The AI assistant is designed to help you learn and understand academic concepts. It must not be used to obtain answers to ongoing assessments, tests, or examinations. CampusCore employs automated detection for such requests. Violations will result in immediate suspension of AI access and may lead to account termination.',
                   ),
-                  _Section(
+                  const _Section(
                     title: '5. Resource Sharing',
                     body:
                         'Resources uploaded to CampusCore are for educational purposes only. By uploading, you grant CampusCore a non-exclusive licence to display and distribute the content within the platform. All uploads are reviewed by moderators before being made available to ensure quality and appropriateness.',
                   ),
-                  _Section(
+                  const _Section(
                     title: '6. Reporting Violations',
                     body:
                         'If you encounter content or behaviour that violates this policy, use the in-app report feature. Reports are reviewed by moderators within 48 hours. Good-faith reports are confidential and reporters are protected from retaliation.',
                   ),
-                  _Section(
+                  const _Section(
                     title: '7. Consequences of Violations',
-                    body:
-                        'Violations of this policy may result in:\n\n'
+                    body: 'Violations of this policy may result in:\n\n'
                         '• Content removal without notice.\n'
                         '• Temporary or permanent suspension of account features.\n'
                         '• Permanent account termination for serious breaches.\n\n'
                         'CampusCore reserves the right to take any of these actions at its discretion.',
                   ),
-                  _Section(
+                  const _Section(
                     title: '8. Acceptance',
                     body:
                         'By accepting this policy, you confirm that you have read, understood, and agree to abide by these terms. Your use of CampusCore is contingent on ongoing compliance with this policy.',
@@ -189,21 +187,21 @@ class _IntegrityPolicyScreenState
           // Accept footer
           Container(
             padding: const EdgeInsets.fromLTRB(24, 12, 24, 28),
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               color: AppColors.surface,
-              border: Border(
-                  top: BorderSide(color: AppColors.border, width: 0.8)),
+              border: const Border(
+                  top: const BorderSide(color: AppColors.border, width: 0.8)),
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 if (!_scrolledToBottom)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: Text(
+                  const Padding(
+                    padding: EdgeInsets.only(bottom: 12),
+                    child: const Text(
                       'Read the full policy to enable the accept button.',
                       textAlign: TextAlign.center,
-                      style: TextStyle(
+                      style: const TextStyle(
                           color: AppColors.textHint, fontSize: 13),
                     ),
                   ),
@@ -248,9 +246,7 @@ class _Section extends StatelessWidget {
           const SizedBox(height: 6),
           Text(body,
               style: const TextStyle(
-                  fontSize: 14,
-                  color: AppColors.textSecondary,
-                  height: 1.6)),
+                  fontSize: 14, color: AppColors.textSecondary, height: 1.6)),
         ],
       ),
     );

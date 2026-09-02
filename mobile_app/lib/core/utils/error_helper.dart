@@ -14,9 +14,11 @@ String extractErrorMessage(Object error) {
     // HTTP status fallbacks
     final status = error.response?.statusCode;
     if (status == 401) return 'Session expired. Please sign in again.';
-    if (status == 403) return data is Map
-        ? (data['message']?.toString() ?? 'Access denied.')
-        : 'Access denied.';
+    if (status == 403) {
+      return data is Map
+          ? (data['message']?.toString() ?? 'Access denied.')
+          : 'Access denied.';
+    }
     if (status == 404) return 'The requested resource was not found.';
     if (status == 429) return 'Too many requests. Please slow down.';
     if (status != null && status >= 500) {

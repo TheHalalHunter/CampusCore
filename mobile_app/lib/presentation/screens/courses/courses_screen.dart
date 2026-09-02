@@ -41,13 +41,13 @@ class _CoursesScreenState extends ConsumerState<CoursesScreen> {
                     ),
                     const SizedBox(width: 8),
                     ...levels.map((level) => Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: _LevelChip(
-                        label: level,
-                        selected: _selectedLevel == level,
-                        onTap: () => setState(() => _selectedLevel = level),
-                      ),
-                    )),
+                          padding: const EdgeInsets.only(right: 8),
+                          child: _LevelChip(
+                            label: level,
+                            selected: _selectedLevel == level,
+                            onTap: () => setState(() => _selectedLevel = level),
+                          ),
+                        )),
                   ],
                 ),
               ),
@@ -63,14 +63,17 @@ class _CoursesScreenState extends ConsumerState<CoursesScreen> {
               data: (courses) {
                 final filtered = _selectedLevel == 'All'
                     ? courses
-                    : courses.where((c) => c.academicLevel == _selectedLevel).toList();
+                    : courses
+                        .where((c) => c.academicLevel == _selectedLevel)
+                        .toList();
 
                 if (filtered.isEmpty) {
                   return const Center(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.search_off, size: 48, color: AppColors.textHint),
+                        Icon(Icons.search_off,
+                            size: 48, color: AppColors.textHint),
                         SizedBox(height: 12),
                         Text('No courses found for this level.',
                             style: TextStyle(color: AppColors.textSecondary)),
@@ -104,7 +107,8 @@ class _CoursesScreenState extends ConsumerState<CoursesScreen> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.wifi_off, size: 48, color: AppColors.textHint),
+                      const Icon(Icons.wifi_off,
+                          size: 48, color: AppColors.textHint),
                       const SizedBox(height: 12),
                       const Text(
                         'Could not load courses.\nMake sure the backend is running.',
@@ -148,7 +152,7 @@ class _CourseCard extends StatelessWidget {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.1),
+                  color: AppColors.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(Icons.menu_book, color: AppColors.primary),
@@ -161,9 +165,10 @@ class _CourseCard extends StatelessWidget {
                     Row(
                       children: [
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 2),
                           decoration: BoxDecoration(
-                            color: AppColors.primary.withOpacity(0.1),
+                            color: AppColors.primary.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
@@ -177,7 +182,8 @@ class _CourseCard extends StatelessWidget {
                         ),
                         const SizedBox(width: 8),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 2),
                           decoration: BoxDecoration(
                             color: AppColors.surfaceAlt,
                             borderRadius: BorderRadius.circular(6),
@@ -213,7 +219,8 @@ class _CourseCard extends StatelessWidget {
                   ],
                 ),
               ),
-              const Icon(Icons.arrow_forward_ios, size: 14, color: AppColors.textSecondary),
+              const Icon(Icons.arrow_forward_ios,
+                  size: 14, color: AppColors.textSecondary),
             ],
           ),
         ),
@@ -229,7 +236,8 @@ class _LevelChip extends StatelessWidget {
   final bool selected;
   final VoidCallback onTap;
 
-  const _LevelChip({required this.label, required this.selected, required this.onTap});
+  const _LevelChip(
+      {required this.label, required this.selected, required this.onTap});
 
   @override
   Widget build(BuildContext context) {

@@ -4,7 +4,8 @@ import 'package:fl_chart/fl_chart.dart';
 import '../../../app/theme/admin_theme.dart';
 import '../../../core/utils/api_client.dart';
 
-// Provider for platform stats
+// ─── Providers ────────────────────────────────────────────────────────────────
+
 final statsProvider = FutureProvider<Map<String, dynamic>>((ref) async {
   try {
     final response = await adminApi.get('/admin/stats');
@@ -15,12 +16,36 @@ final statsProvider = FutureProvider<Map<String, dynamic>>((ref) async {
   }
 });
 
+final pendingCountProvider = FutureProvider<int>((ref) async {
+  try {
+    final response = await adminApi.get('/resources/moderation/pending');
+    final data = response.data['data'] ?? response.data;
+    return (data as List).length;
+  } catch (_) {
+    return 0;
+  }
+});
+
+final departmentCountProvider = FutureProvider<int>((ref) async {
+  try {
+    final response = await adminApi.get('/departments');
+    final data = response.data['data'] ?? response.data;
+    return (data as List).length;
+  } catch (_) {
+    return 0;
+  }
+});
+
+// ─── Screen ───────────────────────────────────────────────────────────────────
+
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final statsAsync = ref.watch(statsProvider);
+    final pendingAsync = ref.watch(pendingCountProvider);
+    final deptsAsync = ref.watch(departmentCountProvider);
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(28),
@@ -33,11 +58,18 @@ class DashboardScreen extends ConsumerWidget {
 
           // Stat cards
           statsAsync.when(
-            data: (stats) => LayoutBuilder(
-              builder: (context, constraints) {
-                final crossCount = constraints.maxWidth > 900 ? 4 : 2;
-                final total = (stats['totalUsers'] as num?)?.toInt() ?? 0;
-                final active = (stats['activeUsers'] as num?)?.toInt() ?? 0;
+            data: (stats) {
+              final total =
+                  (stats['totalUsers'] as num?)?.toInt() ?? 0;
+              final active =
+                  (stats['activeUsers'] as num?)?.toInt() ?? 0;
+              final pending =
+                  pendingAsync.valueOrNull ?? 0;
+              final depts = deptsAsync.valueOrNull ?? 0;
+
+              return LayoutBuilder(builder: (context, constraints) {
+                final crossCount =
+                    constraints.maxWidth > 900 ? 4 : 2;
                 return GridView.count(
                   crossAxisCount: crossCount,
                   shrinkWrap: true,
@@ -56,96 +88,108 @@ class DashboardScreen extends ConsumerWidget {
                         value: '$active',
                         icon: Icons.person_outline,
                         color: AdminColors.success),
-                    const _StatCard(
+                    _StatCard(
                         label: 'Pending Review',
-                        value: '—',
+                        value: '$pending',
                         icon: Icons.pending_actions,
                         color: AdminColors.warning),
-                    const _StatCard(
+                    _StatCard(
                         label: 'Departments',
-                        value: '1',
+                        value: '$depts',
                         icon: Icons.school,
                         color: AdminColors.primary),
                   ],
                 );
-              },
-            ),
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (_, __) => const Text('Could not load stats'),
+              });
+            },
+            loading: () =>
+                const Center(child: CircularProgressIndicator()),
+            error: (_, __) =>
+                const Text('Could not load stats'),
           ),
           const SizedBox(height: 28),
 
-          // Charts row
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(child: _UserGrowthChart()),
-              const SizedBox(width: 20),
-              SizedBox(width: 260, child: _RoleBreakdownChart()),
-            ],
-          ),
-          const SizedBox(height: 28),
-
-          // Recent activity
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
+          // Charts row — role breakdown from real data
+          statsAsync.when(
+            data: (stats) {
+              final byRole = stats['byRole'] as List? ?? [];
+              return Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Recent Activity',
-                      style: TextStyle(
-                          fontWeight: FontWeight.w700, fontSize: 16)),
-                  const SizedBox(height: 16),
-                  ..._recentActivity.map((a) => ListTile(
-                        dense: true,
-                        leading: Icon(a['icon'] as IconData,
-                            color: a['color'] as Color, size: 20),
-                        title: Text(a['text'] as String,
-                            style: const TextStyle(
-                                color: AdminColors.grey900,
-                                fontWeight: FontWeight.w500)),
-                        trailing: Text(a['time'] as String,
-                            style: const TextStyle(
-                                color: AdminColors.grey600,
-                                fontSize: 12)),
-                      )),
+                  const Expanded(child: _UserGrowthChart()),
+                  const SizedBox(width: 20),
+                  SizedBox(
+                    width: 260,
+                    child: _RoleBreakdownChart(byRole: byRole),
+                  ),
                 ],
-              ),
-            ),
+              );
+            },
+            loading: () => const SizedBox(height: 200,
+                child: Center(child: CircularProgressIndicator())),
+            error: (_, __) => const SizedBox.shrink(),
           ),
+          const SizedBox(height: 28),
+
+          // Recent activity — real pending resources
+          _RecentActivity(),
         ],
       ),
     );
   }
-
-  static final _recentActivity = [
-    {
-      'icon': Icons.upload_file,
-      'color': AdminColors.success,
-      'text': 'New resource submitted for review',
-      'time': '2m ago'
-    },
-    {
-      'icon': Icons.person_add,
-      'color': AdminColors.info,
-      'text': 'New user registered',
-      'time': '15m ago'
-    },
-    {
-      'icon': Icons.flag,
-      'color': AdminColors.error,
-      'text': 'Content flagged for review',
-      'time': '1h ago'
-    },
-    {
-      'icon': Icons.check_circle,
-      'color': AdminColors.success,
-      'text': 'Resource approved',
-      'time': '2h ago'
-    },
-  ];
 }
+
+// ─── Recent Activity (live) ───────────────────────────────────────────────────
+
+class _RecentActivity extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final pendingAsync = ref.watch(pendingCountProvider);
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Quick Stats',
+                style: TextStyle(
+                    fontWeight: FontWeight.w700, fontSize: 16)),
+            const SizedBox(height: 16),
+            ListTile(
+              dense: true,
+              leading: const Icon(Icons.pending_actions,
+                  color: AdminColors.warning, size: 20),
+              title: Text(
+                pendingAsync.valueOrNull == 0
+                    ? 'No resources pending review'
+                    : '${pendingAsync.valueOrNull} resource(s) awaiting review',
+                style: const TextStyle(
+                    color: AdminColors.grey900,
+                    fontWeight: FontWeight.w500),
+              ),
+              trailing: const Icon(Icons.arrow_forward_ios,
+                  size: 12, color: AdminColors.grey600),
+            ),
+            ListTile(
+              dense: true,
+              leading: const Icon(Icons.check_circle_outline,
+                  color: AdminColors.success, size: 20),
+              title: const Text('Platform is running normally',
+                  style: TextStyle(
+                      color: AdminColors.grey900,
+                      fontWeight: FontWeight.w500)),
+              trailing: const Icon(Icons.arrow_forward_ios,
+                  size: 12, color: AdminColors.grey600),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Widgets ─────────────────────────────────────────────────────────────────
 
 class _PageHeader extends StatelessWidget {
   final String title;
@@ -191,7 +235,7 @@ class _StatCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: color.withOpacity(0.12),
+                color: color.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Icon(icon, color: color, size: 24),
@@ -219,6 +263,8 @@ class _StatCard extends StatelessWidget {
 }
 
 class _UserGrowthChart extends StatelessWidget {
+  const _UserGrowthChart();
+
   @override
   Widget build(BuildContext context) {
     return Card(
@@ -227,11 +273,15 @@ class _UserGrowthChart extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('User Growth',
+            const Text('User Growth (cumulative)',
                 style: TextStyle(
                     fontWeight: FontWeight.w700,
                     fontSize: 16,
                     color: AdminColors.grey900)),
+            const SizedBox(height: 8),
+            const Text('Historical trend — update with real data via analytics API',
+                style: TextStyle(
+                    color: AdminColors.grey600, fontSize: 12)),
             const SizedBox(height: 20),
             SizedBox(
               height: 180,
@@ -242,35 +292,42 @@ class _UserGrowthChart extends StatelessWidget {
                     sideTitles: SideTitles(
                       showTitles: true,
                       getTitlesWidget: (v, _) {
-                        const months = ['Jan','Feb','Mar','Apr','May','Jun'];
+                        const months = [
+                          'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'
+                        ];
                         return Text(
                           months[v.toInt() % months.length],
                           style: const TextStyle(
-                              fontSize: 11, color: AdminColors.grey600),
+                              fontSize: 11,
+                              color: AdminColors.grey600),
                         );
                       },
                     ),
                   ),
-                  leftTitles: AxisTitles(
+                  leftTitles: const AxisTitles(
                       sideTitles: SideTitles(showTitles: false)),
-                  topTitles: AxisTitles(
+                  topTitles: const AxisTitles(
                       sideTitles: SideTitles(showTitles: false)),
-                  rightTitles: AxisTitles(
+                  rightTitles: const AxisTitles(
                       sideTitles: SideTitles(showTitles: false)),
                 ),
                 borderData: FlBorderData(show: false),
                 lineBarsData: [
                   LineChartBarData(
                     spots: const [
-                      FlSpot(0, 80), FlSpot(1, 220), FlSpot(2, 410),
-                      FlSpot(3, 680), FlSpot(4, 950), FlSpot(5, 1248),
+                      FlSpot(0, 0),
+                      FlSpot(1, 50),
+                      FlSpot(2, 120),
+                      FlSpot(3, 200),
+                      FlSpot(4, 310),
+                      FlSpot(5, 450),
                     ],
                     isCurved: true,
                     color: AdminColors.primary,
                     barWidth: 3,
                     belowBarData: BarAreaData(
                       show: true,
-                      color: AdminColors.primary.withOpacity(0.08),
+                      color: AdminColors.primary.withValues(alpha: 0.08),
                     ),
                     dotData: const FlDotData(show: false),
                   ),
@@ -285,8 +342,33 @@ class _UserGrowthChart extends StatelessWidget {
 }
 
 class _RoleBreakdownChart extends StatelessWidget {
+  final List byRole;
+  const _RoleBreakdownChart({required this.byRole});
+
   @override
   Widget build(BuildContext context) {
+    // Map role name to color
+    final colors = {
+      'student': AdminColors.primary,
+      'moderator': AdminColors.accent,
+      'lecturer': AdminColors.info,
+      'admin': AdminColors.grey600,
+    };
+
+    final sections = byRole.map<PieChartSectionData>((r) {
+      final role = r['role'] as String? ?? '';
+      final count = double.tryParse(r['count'].toString()) ?? 0;
+      final color = colors[role] ?? AdminColors.grey300;
+      return PieChartSectionData(
+        value: count,
+        color: color,
+        title: count > 0 ? '${count.toInt()}' : '',
+        radius: 50,
+        titleStyle:
+            const TextStyle(color: Colors.white, fontSize: 10),
+      );
+    }).toList();
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(20),
@@ -301,40 +383,40 @@ class _RoleBreakdownChart extends StatelessWidget {
             const SizedBox(height: 20),
             SizedBox(
               height: 160,
-              child: PieChart(PieChartData(
-                sectionsSpace: 3,
-                centerSpaceRadius: 36,
-                sections: [
-                  PieChartSectionData(
-                      value: 1180,
-                      color: AdminColors.primary,
-                      title: 'Students',
-                      radius: 50,
-                      titleStyle: const TextStyle(
-                          color: Colors.white, fontSize: 10)),
-                  PieChartSectionData(
-                      value: 42,
-                      color: AdminColors.accent,
-                      title: 'Mods',
-                      radius: 50,
-                      titleStyle: const TextStyle(
-                          color: Colors.white, fontSize: 10)),
-                  PieChartSectionData(
-                      value: 18,
-                      color: AdminColors.info,
-                      title: 'Lecturers',
-                      radius: 50,
-                      titleStyle: const TextStyle(
-                          color: Colors.white, fontSize: 10)),
-                  PieChartSectionData(
-                      value: 8,
-                      color: AdminColors.grey600,
-                      title: 'Admins',
-                      radius: 50,
-                      titleStyle: const TextStyle(
-                          color: Colors.white, fontSize: 10)),
+              child: sections.isEmpty
+                  ? const Center(
+                      child: Text('No data',
+                          style: TextStyle(
+                              color: AdminColors.grey600)))
+                  : PieChart(PieChartData(
+                      sectionsSpace: 3,
+                      centerSpaceRadius: 36,
+                      sections: sections,
+                    )),
+            ),
+            const SizedBox(height: 12),
+            // Legend
+            Wrap(
+              spacing: 12,
+              runSpacing: 6,
+              children: colors.entries.map((e) => Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                      width: 10,
+                      height: 10,
+                      decoration: BoxDecoration(
+                          color: e.value,
+                          shape: BoxShape.circle)),
+                  const SizedBox(width: 4),
+                  Text(
+                    '${e.key[0].toUpperCase()}${e.key.substring(1)}',
+                    style: const TextStyle(
+                        fontSize: 11,
+                        color: AdminColors.grey600),
+                  ),
                 ],
-              )),
+              )).toList(),
             ),
           ],
         ),

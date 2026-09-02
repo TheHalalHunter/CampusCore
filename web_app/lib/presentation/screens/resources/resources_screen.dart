@@ -42,7 +42,7 @@ class ResourcesScreen extends StatelessWidget {
                         width: isMobile ? 40 : 48,
                         height: isMobile ? 40 : 48,
                         decoration: BoxDecoration(
-                          color: AppColors.primary.withOpacity(0.1),
+                          color: AppColors.primary.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Icon(
@@ -87,7 +87,7 @@ class ResourcesScreen extends StatelessWidget {
                           onPressed: () {},
                         )
                       else
-                        Icon(Icons.download_outlined,
+                        const Icon(Icons.download_outlined,
                             size: 18, color: AppColors.primary),
                     ],
                   ),
