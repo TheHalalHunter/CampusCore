@@ -20,13 +20,23 @@ export class FirebaseAdminService implements OnModuleInit {
       return;
     }
 
+    const projectId = this.config.get<string>("FIREBASE_PROJECT_ID");
+    const privateKey = this.config.get<string>("FIREBASE_PRIVATE_KEY")?.replace(/\\n/g, "\n");
+    const clientEmail = this.config.get<string>("FIREBASE_CLIENT_EMAIL");
+
+    if (!projectId || !privateKey || !clientEmail) {
+      this.logger.error(
+        "Firebase config incomplete — missing FIREBASE_PROJECT_ID, FIREBASE_PRIVATE_KEY, or FIREBASE_CLIENT_EMAIL",
+      );
+      // Don't crash the app — Firebase features will be unavailable
+      return;
+    }
+
     this.app = admin.initializeApp({
       credential: admin.credential.cert({
-        projectId: this.config.get<string>("FIREBASE_PROJECT_ID"),
-        privateKey: this.config
-          .get<string>("FIREBASE_PRIVATE_KEY")
-          ?.replace(/\\n/g, "\n"),
-        clientEmail: this.config.get<string>("FIREBASE_CLIENT_EMAIL"),
+        projectId,
+        privateKey,
+        clientEmail,
       }),
       storageBucket: this.config.get<string>("FIREBASE_STORAGE_BUCKET"),
     });
@@ -39,10 +49,12 @@ export class FirebaseAdminService implements OnModuleInit {
   }
 
   auth(): admin.auth.Auth {
+    if (!this.app) throw new Error("Firebase not initialized — check FIREBASE_PROJECT_ID, FIREBASE_PRIVATE_KEY, FIREBASE_CLIENT_EMAIL");
     return this.app.auth();
   }
 
   storage(): admin.storage.Storage {
+    if (!this.app) throw new Error("Firebase not initialized");
     return this.app.storage();
   }
 }
