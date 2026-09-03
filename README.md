@@ -213,6 +213,8 @@ npm run start:dev
 
 ### Backend (Production — Railway)
 
+Live API: **https://campuscore-production-3f94.up.railway.app/api/v1**
+
 1. Go to [railway.app](https://railway.app) → New Project → Deploy from GitHub
 2. Set root directory to `backend`
 3. Add all `.env` variables in Railway environment tab

@@ -6,6 +6,8 @@ echo.
 echo When ready, open Chrome and go to:
 echo   http://localhost:5081
 echo.
+echo Backend API: https://campuscore-production-3f94.up.railway.app/api/v1
+echo.
 echo Press Ctrl+C to stop the server.
 echo.
 
@@ -23,6 +25,6 @@ echo Getting packages...
 call flutter pub get
 
 echo Starting server...
-call flutter run -d web-server --web-port 5081 --web-hostname localhost --dart-define=API_BASE_URL=http://localhost:3000/api/v1
+call flutter run -d web-server --web-port 5081 --web-hostname localhost --dart-define=API_BASE_URL=https://campuscore-production-3f94.up.railway.app/api/v1
 
 pause
