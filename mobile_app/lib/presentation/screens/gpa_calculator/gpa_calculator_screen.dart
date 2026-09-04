@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fl_chart/fl_chart.dart';
 import '../../../app/theme/app_theme.dart';
 import '../../providers/gpa_provider.dart';
 
@@ -511,6 +512,11 @@ class _GpaCalculatorScreenState extends ConsumerState<GpaCalculatorScreen>
                           fontSize: 16,
                           color: AppColors.textPrimary)),
                   const SizedBox(height: 12),
+                  // GPA trend chart — only show when 2+ semesters saved
+                  if (semesters.length >= 2) ...[
+                    _GpaTrendChart(semesters: semesters),
+                    const SizedBox(height: 20),
+                  ],
                   ...semesters.map((s) => _SemesterCard(
                         semester: s,
                         onDelete: () async {
@@ -673,4 +679,143 @@ class _CourseEntry {
   final nameCtrl = TextEditingController();
   final unitsCtrl = TextEditingController(text: '2');
   String selectedGrade = 'A';
+}
+
+// ─── GPA Trend Chart ──────────────────────────────────────────────────────────
+
+class _GpaTrendChart extends StatelessWidget {
+  final List<GpaSemesterModel> semesters;
+  const _GpaTrendChart({required this.semesters});
+
+  @override
+  Widget build(BuildContext context) {
+    // Sort semesters by level then semester number
+    final sorted = [...semesters]
+      ..sort((a, b) {
+        final levelCmp = a.academicLevel.compareTo(b.academicLevel);
+        if (levelCmp != 0) return levelCmp;
+        return a.semester.compareTo(b.semester);
+      });
+
+    final spots = sorted.asMap().entries.map((e) {
+      return FlSpot(e.key.toDouble(), e.value.gpa);
+    }).toList();
+
+    final minY = (sorted.map((s) => s.gpa).reduce((a, b) => a < b ? a : b) - 0.5)
+        .clamp(0.0, 5.0);
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('GPA Trend',
+                style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 15,
+                    color: AppColors.textPrimary)),
+            const SizedBox(height: 4),
+            const Text('Your GPA across all saved semesters',
+                style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+            const SizedBox(height: 16),
+            SizedBox(
+              height: 180,
+              child: LineChart(
+                LineChartData(
+                  minY: minY,
+                  maxY: 5.0,
+                  gridData: FlGridData(
+                    show: true,
+                    drawVerticalLine: false,
+                    horizontalInterval: 1,
+                    getDrawingHorizontalLine: (_) => FlLine(
+                      color: AppColors.border,
+                      strokeWidth: 0.8,
+                    ),
+                  ),
+                  titlesData: FlTitlesData(
+                    bottomTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        getTitlesWidget: (v, _) {
+                          final i = v.toInt();
+                          if (i < 0 || i >= sorted.length) {
+                            return const SizedBox.shrink();
+                          }
+                          return Padding(
+                            padding: const EdgeInsets.only(top: 6),
+                            child: Text(
+                              '${sorted[i].academicLevel}\nS${sorted[i].semester}',
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                  fontSize: 9,
+                                  color: AppColors.textSecondary),
+                            ),
+                          );
+                        },
+                        reservedSize: 36,
+                      ),
+                    ),
+                    leftTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        interval: 1,
+                        getTitlesWidget: (v, _) => Text(
+                          v.toStringAsFixed(0),
+                          style: const TextStyle(
+                              fontSize: 10, color: AppColors.textSecondary),
+                        ),
+                        reservedSize: 28,
+                      ),
+                    ),
+                    topTitles: const AxisTitles(
+                        sideTitles: SideTitles(showTitles: false)),
+                    rightTitles: const AxisTitles(
+                        sideTitles: SideTitles(showTitles: false)),
+                  ),
+                  borderData: FlBorderData(show: false),
+                  lineBarsData: [
+                    LineChartBarData(
+                      spots: spots,
+                      isCurved: true,
+                      color: AppColors.primary,
+                      barWidth: 3,
+                      dotData: FlDotData(
+                        show: true,
+                        getDotPainter: (spot, _, __, ___) =>
+                            FlDotCirclePainter(
+                          radius: 4,
+                          color: AppColors.primary,
+                          strokeWidth: 2,
+                          strokeColor: Colors.white,
+                        ),
+                      ),
+                      belowBarData: BarAreaData(
+                        show: true,
+                        color: AppColors.primary.withOpacity(0.08),
+                      ),
+                    ),
+                  ],
+                  // Show GPA value on touch
+                  lineTouchData: LineTouchData(
+                    touchTooltipData: LineTouchTooltipData(
+                      getTooltipItems: (spots) => spots
+                          .map((s) => LineTooltipItem(
+                                s.y.toStringAsFixed(2),
+                                const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w700),
+                              ))
+                          .toList(),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
