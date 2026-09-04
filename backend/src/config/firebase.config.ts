@@ -21,7 +21,11 @@ export class FirebaseAdminService implements OnModuleInit {
     }
 
     const projectId = this.config.get<string>("FIREBASE_PROJECT_ID");
-    const privateKey = this.config.get<string>("FIREBASE_PRIVATE_KEY")?.replace(/\\n/g, "\n");
+    const rawKey = this.config.get<string>("FIREBASE_PRIVATE_KEY") ?? "";
+    // Handle both \n literals (local .env) and actual newlines (Railway)
+    const privateKey = rawKey.includes("\\n")
+      ? rawKey.replace(/\\n/g, "\n")
+      : rawKey;
     const clientEmail = this.config.get<string>("FIREBASE_CLIENT_EMAIL");
 
     if (!projectId || !privateKey || !clientEmail) {
