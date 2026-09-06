@@ -5,7 +5,7 @@ import '../../../app/theme/app_theme.dart';
 import '../../../app/router/app_router.dart';
 import '../../../data/models/question_model.dart';
 import '../../providers/paginated_provider.dart';
-import '../widgets/common/load_more_list.dart';
+import '../../widgets/common/load_more_list.dart';
 import 'discussions_screen.dart';
 
 class CommunityScreen extends ConsumerStatefulWidget {
