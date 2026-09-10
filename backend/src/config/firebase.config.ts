@@ -67,7 +67,10 @@ export class FirebaseAdminService implements OnModuleInit {
   }
 
   auth(): admin.auth.Auth {
-    if (!this.app) throw new Error("Firebase not initialized — check FIREBASE_SERVICE_ACCOUNT_JSON or individual FIREBASE_* vars");
+    if (!this.app) {
+      this.logger.error("Firebase auth() called but SDK not initialized — FIREBASE_SERVICE_ACCOUNT_JSON or individual vars missing/invalid");
+      throw new Error("Firebase not initialized — check FIREBASE_SERVICE_ACCOUNT_JSON or individual FIREBASE_* vars in Railway");
+    }
     return this.app.auth();
   }
 

@@ -2,6 +2,8 @@ import {
   Injectable,
   UnauthorizedException,
   BadRequestException,
+  ServiceUnavailableException,
+  Logger,
 } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import { ConfigService } from "@nestjs/config";
@@ -12,6 +14,8 @@ import { FirebaseAdminService } from "../../config/firebase.config";
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
@@ -19,10 +23,6 @@ export class AuthService {
     private readonly firebase: FirebaseAdminService,
   ) {}
 
-  /**
-   * Verifies the Firebase ID token and creates/returns a platform JWT.
-   * Handles both new sign-ups and returning logins.
-   */
   async authenticateWithFirebase(dto: FirebaseAuthDto): Promise<{
     accessToken: string;
     refreshToken: string;
@@ -33,8 +33,15 @@ export class AuthService {
     let decodedToken: import("firebase-admin").auth.DecodedIdToken;
     try {
       decodedToken = await this.firebase.auth().verifyIdToken(dto.idToken);
-    } catch {
-      throw new UnauthorizedException("Invalid Firebase token");
+    } catch (e) {
+      const msg = (e as Error).message ?? '';
+      this.logger.error("Firebase token verification failed: " + msg);
+      if (msg.includes("not initialized") || msg.includes("Firebase")) {
+        throw new ServiceUnavailableException(
+          "Auth service temporarily unavailable — Firebase not configured. Please contact support.",
+        );
+      }
+      throw new UnauthorizedException("Invalid or expired token. Please sign in again.");
     }
 
     const { uid, email, name } = decodedToken;
@@ -46,10 +53,12 @@ export class AuthService {
 
     if (!user) {
       isNewUser = true;
+      // For Google/social sign-ins, split display name into first/last
+      let fullName = dto.fullName || name || email.split("@")[0];
       user = await this.usersService.create({
         firebaseUid: uid,
         email,
-        fullName: dto.fullName || name || email.split("@")[0],
+        fullName,
         departmentId: dto.departmentId,
         academicLevel: dto.academicLevel,
         isEmailVerified: decodedToken.email_verified ?? false,
