@@ -1,19 +1,30 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../app/router/admin_router.dart';
 import '../../../app/theme/admin_theme.dart';
+import '../../../core/providers/admin_auth_provider.dart';
 
-class AdminLoginScreen extends StatefulWidget {
+class AdminLoginScreen extends ConsumerStatefulWidget {
   const AdminLoginScreen({super.key});
 
   @override
-  State<AdminLoginScreen> createState() => _AdminLoginScreenState();
+  ConsumerState<AdminLoginScreen> createState() => _AdminLoginScreenState();
 }
 
-class _AdminLoginScreenState extends State<AdminLoginScreen> {
+class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
   final _emailCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
   bool _obscure = true;
+  bool _loading = false;
+  String? _error;
+
+  @override
+  void dispose() {
+    _emailCtrl.dispose();
+    _passwordCtrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -35,10 +46,11 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                         TextStyle(fontSize: 22, fontWeight: FontWeight.w700)),
                 const SizedBox(height: 4),
                 const Text('Sign in to the admin dashboard',
-                    style: const TextStyle(color: AdminColors.grey600)),
+                    style: TextStyle(color: AdminColors.grey600)),
                 const SizedBox(height: 32),
                 TextFormField(
                   controller: _emailCtrl,
+                  keyboardType: TextInputType.emailAddress,
                   decoration: InputDecoration(
                     labelText: 'Admin Email',
                     prefixIcon: const Icon(Icons.email_outlined),
@@ -81,11 +93,51 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10)),
                     ),
-                    onPressed: () => context.go(AdminRoutes.dashboard),
-                    child: const Text('Sign In',
-                        style: TextStyle(fontWeight: FontWeight.w700)),
+                    onPressed: _loading
+                        ? null
+                        : () async {
+                            setState(() {
+                              _loading = true;
+                              _error = null;
+                            });
+                            final err = await ref
+                                .read(adminAuthProvider.notifier)
+                                .signIn(
+                                  _emailCtrl.text,
+                                  _passwordCtrl.text,
+                                );
+                            if (!mounted) return;
+                            if (err != null) {
+                              setState(() {
+                                _loading = false;
+                                _error = err;
+                              });
+                            } else {
+                              context.go(AdminRoutes.dashboard);
+                            }
+                          },
+                    child: _loading
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Text('Sign In',
+                            style: TextStyle(fontWeight: FontWeight.w700)),
                   ),
                 ),
+                if (_error != null) ...[
+                  const SizedBox(height: 12),
+                  Text(
+                    _error!,
+                    style: const TextStyle(
+                        color: AdminColors.error, fontSize: 13),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
               ],
             ),
           ),

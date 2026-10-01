@@ -1,20 +1,30 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../app/theme/admin_theme.dart';
+import '../../../core/utils/api_client.dart';
+import '../exam_lock/exam_lock_screen.dart';
 
-class SettingsScreen extends StatefulWidget {
+class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
 
   @override
-  State<SettingsScreen> createState() => _SettingsScreenState();
+  ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
 }
 
-class _SettingsScreenState extends State<SettingsScreen> {
-  bool _examLockEnabled = false;
+class _SettingsScreenState extends ConsumerState<SettingsScreen> {
+  // TODO: Wire to backend once a settings endpoint for registrations/AI toggle
+  // is implemented. These remain as UI-only toggles for now.
   bool _newRegistrations = true;
   bool _aiAssistantEnabled = true;
 
   @override
   Widget build(BuildContext context) {
+    final locksAsync = ref.watch(examLocksProvider);
+    final examLockEnabled = locksAsync.maybeWhen(
+      data: (locks) => locks.any((l) => l.isCurrentlyActive),
+      orElse: () => false,
+    );
+
     return Padding(
       padding: const EdgeInsets.all(28),
       child: Column(
@@ -34,8 +44,29 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   title: 'Examination Lock Mode',
                   subtitle:
                       'Restricts AI assistant and discussions during exam periods',
-                  value: _examLockEnabled,
-                  onChanged: (v) => setState(() => _examLockEnabled = v),
+                  value: examLockEnabled,
+                  onChanged: (v) async {
+                    if (v) {
+                      // Turn ON — show create dialog
+                      await showDialog(
+                        context: context,
+                        builder: (_) => CreateLockDialog(
+                          onCreated: () =>
+                              ref.invalidate(examLocksProvider),
+                        ),
+                      );
+                    } else {
+                      // Turn OFF — delete all currently active locks
+                      final locks = locksAsync.asData?.value ?? [];
+                      for (final lock
+                          in locks.where((l) => l.isCurrentlyActive)) {
+                        try {
+                          await adminApi.delete('/exam-lock/${lock.id}');
+                        } catch (_) {}
+                      }
+                      ref.invalidate(examLocksProvider);
+                    }
+                  },
                 ),
                 const Divider(height: 1, indent: 60),
                 _SettingsTile(
@@ -66,8 +97,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text('Integrity Policy',
-                      style:
-                          TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+                      style: TextStyle(
+                          fontWeight: FontWeight.w700, fontSize: 16)),
                   const SizedBox(height: 8),
                   const Text(
                     'All students must accept the Academic Integrity Policy on first login. '

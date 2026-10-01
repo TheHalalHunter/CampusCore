@@ -252,22 +252,22 @@ class _ExamLockScreenState extends ConsumerState<ExamLockScreen> {
     showDialog(
       context: context,
       builder: (_) =>
-          _CreateLockDialog(onCreated: () => ref.invalidate(examLocksProvider)),
+          CreateLockDialog(onCreated: () => ref.invalidate(examLocksProvider)),
     );
   }
 }
 
 // ─── Create dialog ────────────────────────────────────────────────────────────
 
-class _CreateLockDialog extends StatefulWidget {
+class CreateLockDialog extends StatefulWidget {
   final VoidCallback onCreated;
-  const _CreateLockDialog({required this.onCreated});
+  const CreateLockDialog({required this.onCreated});
 
   @override
   State<_CreateLockDialog> createState() => _CreateLockDialogState();
 }
 
-class _CreateLockDialogState extends State<_CreateLockDialog> {
+class _CreateLockDialogState extends State<CreateLockDialog> {
   final _formKey = GlobalKey<FormState>();
   final _nameCtrl = TextEditingController();
   final _reasonCtrl = TextEditingController();

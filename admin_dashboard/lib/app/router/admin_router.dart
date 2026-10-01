@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/providers/admin_auth_provider.dart';
 import '../../presentation/screens/auth/admin_login_screen.dart';
 import '../../presentation/screens/dashboard/dashboard_screen.dart';
 import '../../presentation/screens/users/users_screen.dart';
@@ -14,8 +15,18 @@ import '../../presentation/screens/gamification/gamification_screen.dart';
 import '../../presentation/shell/admin_shell.dart';
 
 final adminRouterProvider = Provider<GoRouter>((ref) {
+  // Listen to auth state so router rebuilds on auth changes
+  final authState = ref.watch(adminAuthProvider);
+
   return GoRouter(
     initialLocation: AdminRoutes.login,
+    redirect: (context, state) {
+      final isLoggedIn = authState.isAuthenticated;
+      final isLoginRoute = state.matchedLocation == AdminRoutes.login;
+      if (!isLoggedIn && !isLoginRoute) return AdminRoutes.login;
+      if (isLoggedIn && isLoginRoute) return AdminRoutes.dashboard;
+      return null;
+    },
     routes: [
       GoRoute(
         path: AdminRoutes.login,

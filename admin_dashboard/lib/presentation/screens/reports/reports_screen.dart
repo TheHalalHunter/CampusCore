@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../app/theme/admin_theme.dart';
 
+// TODO: Wire to backend once a reports/flags endpoint is implemented.
+// Backend currently has no reports module. Static data is a placeholder only.
 class ReportsScreen extends StatelessWidget {
   const ReportsScreen({super.key});
 

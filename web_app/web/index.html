@@ -1,38 +1,98 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <!--
-    If you are serving your web app in a path other than the root, change the
-    href value below to reflect the base path you are serving from.
-
-    The path provided below has to start and end with a slash "/" in order for
-    it to work correctly.
-
-    For more details:
-    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
-
-    This is a placeholder for base href that will be replaced by the value of
-    the `--base-href` argument provided to `flutter build`.
-  -->
   <base href="$FLUTTER_BASE_HREF">
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="A new Flutter project.">
+  <meta name="description" content="CampusCore — Learn. Connect. Achieve.">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <!-- iOS meta tags & icons -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="web_app">
+  <meta name="apple-mobile-web-app-title" content="CampusCore">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png"/>
 
-  <title>web_app</title>
+  <!-- Nunito font from Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <title>CampusCore</title>
   <link rel="manifest" href="manifest.json">
+
+  <style>
+    body {
+      margin: 0;
+      background-color: #0A1628;
+    }
+    /* Splash screen while Flutter loads */
+    #splash {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: #0A1628;
+      z-index: 9999;
+      transition: opacity 0.5s ease;
+    }
+    #splash .logo {
+      width: 80px;
+      height: 80px;
+      background: linear-gradient(135deg, #1565C0, #2196F3, #00B4D8);
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Nunito', sans-serif;
+      font-size: 44px;
+      font-weight: 800;
+      color: white;
+      box-shadow: 0 8px 30px rgba(33,150,243,0.4);
+    }
+    #splash h1 {
+      margin: 16px 0 4px;
+      font-family: 'Nunito', sans-serif;
+      font-size: 26px;
+      font-weight: 800;
+      color: white;
+    }
+    #splash h1 span { color: #4FC3F7; }
+    #splash p {
+      margin: 0;
+      font-family: 'Nunito', sans-serif;
+      font-size: 12px;
+      letter-spacing: 2px;
+      color: #B0C4DE;
+    }
+    #splash.hidden { opacity: 0; pointer-events: none; }
+  </style>
 </head>
 <body>
+  <!-- Splash shown while Flutter initialises -->
+  <div id="splash">
+    <div class="logo">C</div>
+    <h1>Campus<span>Core</span></h1>
+    <p>LEARN &nbsp;•&nbsp; CONNECT &nbsp;•&nbsp; ACHIEVE</p>
+  </div>
+
+  <script>
+    // Hide splash once Flutter renders its first frame
+    window.addEventListener('flutter-first-frame', function () {
+      const splash = document.getElementById('splash');
+      if (splash) {
+        splash.classList.add('hidden');
+        setTimeout(() => splash.remove(), 600);
+      }
+    });
+  </script>
+
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>

@@ -1,48 +1,29 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../app/theme/admin_theme.dart';
 import '../../../core/utils/responsive.dart';
+import '../../../core/utils/api_client.dart';
+import '../../../core/providers/admin_users_provider.dart';
 
-class UsersScreen extends StatefulWidget {
+class UsersScreen extends ConsumerStatefulWidget {
   const UsersScreen({super.key});
 
   @override
-  State<UsersScreen> createState() => _UsersScreenState();
+  ConsumerState<UsersScreen> createState() => _UsersScreenState();
 }
 
-class _UsersScreenState extends State<UsersScreen> {
+class _UsersScreenState extends ConsumerState<UsersScreen> {
   String _searchQuery = '';
   String _roleFilter = 'All';
 
   final _roleOptions = ['All', 'Student', 'Moderator', 'Lecturer', 'Admin'];
-
-  static final _users = List.generate(
-      12,
-      (i) => {
-            'name': 'Student ${i + 1}',
-            'email': 'student${i + 1}@lautech.edu.ng',
-            'role': i == 0
-                ? 'Admin'
-                : i < 3
-                    ? 'Moderator'
-                    : 'Student',
-            'level': '${(i % 4 + 1) * 100}L',
-            'status': i == 5 ? 'Suspended' : 'Active',
-            'joined': '${i + 1} Jan 2026',
-          });
 
   @override
   Widget build(BuildContext context) {
     final isMobile = Responsive.isMobile(context);
     final padding = Responsive.getPadding(context);
     final spacing = Responsive.getSpacing(context);
-
-    final filtered = _users.where((u) {
-      final matchSearch = _searchQuery.isEmpty ||
-          (u['name']!).toLowerCase().contains(_searchQuery.toLowerCase()) ||
-          (u['email']!).toLowerCase().contains(_searchQuery.toLowerCase());
-      final matchRole = _roleFilter == 'All' || u['role'] == _roleFilter;
-      return matchSearch && matchRole;
-    }).toList();
+    final usersAsync = ref.watch(adminUsersProvider);
 
     return Padding(
       padding: padding,
@@ -87,8 +68,8 @@ class _UsersScreenState extends State<UsersScreen> {
                       .toList(),
                   onChanged: (v) => setState(() => _roleFilter = v ?? 'All'),
                   underline: Container(),
-                  style:
-                      const TextStyle(fontSize: 12, color: AdminColors.grey800),
+                  style: const TextStyle(
+                      fontSize: 12, color: AdminColors.grey800),
                 ),
               ],
             )
@@ -126,160 +107,213 @@ class _UsersScreenState extends State<UsersScreen> {
             ),
           SizedBox(height: spacing + 8),
           Expanded(
-            child: Card(
-              child: isMobile
-                  ? ListView.separated(
-                      itemCount: filtered.length,
-                      separatorBuilder: (_, __) => const Divider(height: 1),
-                      itemBuilder: (context, index) {
-                        final u = filtered[index];
-                        final isSuspended = u['status'] == 'Suspended';
-                        return Padding(
-                          padding: const EdgeInsets.all(12),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
+            child: usersAsync.when(
+              loading: () =>
+                  const Center(child: CircularProgressIndicator()),
+              error: (_, __) => const Center(
+                  child: Text('Could not load users. Please try again.')),
+              data: (users) {
+                final filtered = users.where((u) {
+                  final matchSearch = _searchQuery.isEmpty ||
+                      u.fullName
+                          .toLowerCase()
+                          .contains(_searchQuery.toLowerCase()) ||
+                      u.email
+                          .toLowerCase()
+                          .contains(_searchQuery.toLowerCase());
+                  final matchRole = _roleFilter == 'All' ||
+                      u.role.toLowerCase() ==
+                          _roleFilter.toLowerCase();
+                  return matchSearch && matchRole;
+                }).toList();
+
+                if (filtered.isEmpty) {
+                  return const Center(child: Text('No users found.'));
+                }
+
+                return Card(
+                  child: isMobile
+                      ? ListView.separated(
+                          itemCount: filtered.length,
+                          separatorBuilder: (_, __) =>
+                              const Divider(height: 1),
+                          itemBuilder: (context, index) {
+                            final u = filtered[index];
+                            final isSuspended = !u.isActive;
+                            final roleDisplay = _capitalize(u.role);
+                            return Padding(
+                              padding: const EdgeInsets.all(12),
+                              child: Column(
+                                crossAxisAlignment:
+                                    CrossAxisAlignment.start,
                                 children: [
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          u['name']!,
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.w600,
-                                            fontSize: 13,
-                                          ),
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                        Text(
-                                          u['email']!,
-                                          style: const TextStyle(
-                                              fontSize: 11,
-                                              color: AdminColors.grey600),
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  _RoleChip(role: u['role']!, isMobile: true),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Wrap(
-                                    spacing: 4,
-                                    children: [
-                                      _StatusChip(
-                                          status: u['status']!, isMobile: true),
-                                      Text(
-                                        u['level']!,
-                                        style: const TextStyle(
-                                            fontSize: 11,
-                                            color: AdminColors.grey600),
-                                      ),
-                                    ],
-                                  ),
                                   Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
                                     children: [
-                                      IconButton(
-                                        icon: Icon(
-                                          isSuspended
-                                              ? Icons.check_circle_outline
-                                              : Icons.block,
-                                          size: 16,
-                                          color: isSuspended
-                                              ? AdminColors.success
-                                              : AdminColors.warning,
-                                        ),
-                                        onPressed: () {},
-                                        padding: EdgeInsets.zero,
-                                        constraints: const BoxConstraints(
-                                          minWidth: 32,
-                                          minHeight: 32,
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              u.fullName,
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.w600,
+                                                fontSize: 13,
+                                              ),
+                                              overflow:
+                                                  TextOverflow.ellipsis,
+                                            ),
+                                            Text(
+                                              u.email,
+                                              style: const TextStyle(
+                                                  fontSize: 11,
+                                                  color:
+                                                      AdminColors.grey600),
+                                              overflow:
+                                                  TextOverflow.ellipsis,
+                                            ),
+                                          ],
                                         ),
                                       ),
-                                      IconButton(
-                                        icon: const Icon(Icons.more_vert,
-                                            size: 16),
-                                        onPressed: () => _showChangeRoleDialog(
-                                            context, u['name']!),
-                                        padding: EdgeInsets.zero,
-                                        constraints: const BoxConstraints(
-                                          minWidth: 32,
-                                          minHeight: 32,
-                                        ),
+                                      _RoleChip(
+                                          role: roleDisplay,
+                                          isMobile: true),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Wrap(
+                                        spacing: 4,
+                                        children: [
+                                          _StatusChip(
+                                              status: isSuspended
+                                                  ? 'Suspended'
+                                                  : 'Active',
+                                              isMobile: true),
+                                          if (u.academicLevel != null)
+                                            Text(
+                                              u.academicLevel!,
+                                              style: const TextStyle(
+                                                  fontSize: 11,
+                                                  color:
+                                                      AdminColors.grey600),
+                                            ),
+                                        ],
+                                      ),
+                                      Row(
+                                        children: [
+                                          IconButton(
+                                            icon: Icon(
+                                              isSuspended
+                                                  ? Icons
+                                                      .check_circle_outline
+                                                  : Icons.block,
+                                              size: 16,
+                                              color: isSuspended
+                                                  ? AdminColors.success
+                                                  : AdminColors.warning,
+                                            ),
+                                            onPressed: () =>
+                                                _toggleSuspend(u),
+                                            padding: EdgeInsets.zero,
+                                            constraints:
+                                                const BoxConstraints(
+                                              minWidth: 32,
+                                              minHeight: 32,
+                                            ),
+                                          ),
+                                          IconButton(
+                                            icon: const Icon(
+                                                Icons.more_vert,
+                                                size: 16),
+                                            onPressed: () =>
+                                                _showChangeRoleDialog(
+                                                    context, u),
+                                            padding: EdgeInsets.zero,
+                                            constraints:
+                                                const BoxConstraints(
+                                              minWidth: 32,
+                                              minHeight: 32,
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ],
                                   ),
                                 ],
                               ),
+                            );
+                          },
+                        )
+                      : SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: DataTable(
+                            headingRowColor: WidgetStateProperty.all(
+                                const Color(0xFFF9FAFB)),
+                            columns: const [
+                              DataColumn(label: Text('Name')),
+                              DataColumn(label: Text('Email')),
+                              DataColumn(label: Text('Role')),
+                              DataColumn(label: Text('Level')),
+                              DataColumn(label: Text('Status')),
+                              DataColumn(label: Text('Actions')),
                             ],
+                            rows: filtered.map((u) {
+                              final isSuspended = !u.isActive;
+                              final roleDisplay = _capitalize(u.role);
+                              return DataRow(cells: [
+                                DataCell(Text(
+                                  u.fullName,
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.w600),
+                                )),
+                                DataCell(Text(u.email)),
+                                DataCell(_RoleChip(role: roleDisplay)),
+                                DataCell(
+                                    Text(u.academicLevel ?? '—')),
+                                DataCell(_StatusChip(
+                                    status: isSuspended
+                                        ? 'Suspended'
+                                        : 'Active')),
+                                DataCell(Row(
+                                  children: [
+                                    IconButton(
+                                      icon: Icon(
+                                        isSuspended
+                                            ? Icons.check_circle_outline
+                                            : Icons.block,
+                                        size: 18,
+                                        color: isSuspended
+                                            ? AdminColors.success
+                                            : AdminColors.warning,
+                                      ),
+                                      tooltip: isSuspended
+                                          ? 'Activate'
+                                          : 'Suspend',
+                                      onPressed: () => _toggleSuspend(u),
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(
+                                          Icons.manage_accounts_outlined,
+                                          size: 18),
+                                      tooltip: 'Change role',
+                                      onPressed: () =>
+                                          _showChangeRoleDialog(
+                                              context, u),
+                                    ),
+                                  ],
+                                )),
+                              ]);
+                            }).toList(),
                           ),
-                        );
-                      },
-                    )
-                  : SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: DataTable(
-                        headingRowColor:
-                            WidgetStateProperty.all(const Color(0xFFF9FAFB)),
-                        columns: const [
-                          DataColumn(label: Text('Name')),
-                          DataColumn(label: Text('Email')),
-                          DataColumn(label: Text('Role')),
-                          DataColumn(label: Text('Level')),
-                          DataColumn(label: Text('Status')),
-                          DataColumn(label: Text('Actions')),
-                        ],
-                        rows: filtered.map((u) {
-                          final isSuspended = u['status'] == 'Suspended';
-                          return DataRow(cells: [
-                            DataCell(Text(
-                              u['name']!,
-                              style:
-                                  const TextStyle(fontWeight: FontWeight.w600),
-                            )),
-                            DataCell(Text(u['email']!)),
-                            DataCell(_RoleChip(role: u['role']!)),
-                            DataCell(Text(u['level']!)),
-                            DataCell(_StatusChip(status: u['status']!)),
-                            DataCell(Row(
-                              children: [
-                                IconButton(
-                                  icon: Icon(
-                                    isSuspended
-                                        ? Icons.check_circle_outline
-                                        : Icons.block,
-                                    size: 18,
-                                    color: isSuspended
-                                        ? AdminColors.success
-                                        : AdminColors.warning,
-                                  ),
-                                  tooltip: isSuspended ? 'Activate' : 'Suspend',
-                                  onPressed: () {},
-                                ),
-                                IconButton(
-                                  icon: const Icon(
-                                      Icons.manage_accounts_outlined,
-                                      size: 18),
-                                  tooltip: 'Change role',
-                                  onPressed: () => _showChangeRoleDialog(
-                                      context, u['name']!),
-                                ),
-                              ],
-                            )),
-                          ]);
-                        }).toList(),
-                      ),
-                    ),
+                        ),
+                );
+              },
             ),
           ),
         ],
@@ -287,23 +321,58 @@ class _UsersScreenState extends State<UsersScreen> {
     );
   }
 
-  void _showChangeRoleDialog(BuildContext context, String userName) {
+  Future<void> _toggleSuspend(AdminUser u) async {
+    final endpoint = u.isActive
+        ? '/admin/users/${u.id}/suspend'
+        : '/admin/users/${u.id}/activate';
+    try {
+      await adminApi.patch(endpoint);
+      ref.invalidate(adminUsersProvider);
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Action failed. Please try again.')),
+        );
+      }
+    }
+  }
+
+  void _showChangeRoleDialog(BuildContext context, AdminUser u) {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: Text('Change Role — $userName'),
+        title: Text('Change Role — ${u.fullName}'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: ['Student', 'Moderator', 'Lecturer', 'Admin']
               .map((r) => ListTile(
                     title: Text(r),
-                    onTap: () => Navigator.pop(context),
+                    onTap: () async {
+                      Navigator.pop(context);
+                      try {
+                        await adminApi.patch(
+                          '/admin/users/${u.id}/role',
+                          data: {'role': r.toLowerCase()},
+                        );
+                        ref.invalidate(adminUsersProvider);
+                      } catch (_) {
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                                content: Text('Role change failed.')),
+                          );
+                        }
+                      }
+                    },
                   ))
               .toList(),
         ),
       ),
     );
   }
+
+  String _capitalize(String s) =>
+      s.isEmpty ? s : '${s[0].toUpperCase()}${s.substring(1).toLowerCase()}';
 }
 
 class _RoleChip extends StatelessWidget {
