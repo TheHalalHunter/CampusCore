@@ -247,7 +247,112 @@ class _SignInFormState extends ConsumerState<_SignInForm> {
     super.dispose();
   }
 
-  Future<void> _submit() async {
+  Future<void> _forgotPassword() async {
+    final email = _emailCtrl.text.trim();
+    if (email.isEmpty || !email.contains('@')) {
+      _showResetDialog(prefillEmail: email);
+      return;
+    }
+    await _sendReset(email);
+  }
+
+  Future<void> _sendReset(String email) async {
+    try {
+      await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
+      if (!mounted) return;
+      showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Text('Check your email',
+              style: TextStyle(fontFamily: 'Nunito', fontWeight: FontWeight.w700)),
+          content: Text(
+            'A password reset link has been sent to $email. Check your inbox.',
+            style: const TextStyle(fontFamily: 'Nunito'),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('OK',
+                  style: TextStyle(
+                      color: AppColors.primary,
+                      fontFamily: 'Nunito',
+                      fontWeight: FontWeight.w700)),
+            ),
+          ],
+        ),
+      );
+    } on FirebaseAuthException catch (e) {
+      if (!mounted) return;
+      final msg = e.code == 'user-not-found'
+          ? 'No account found with that email.'
+          : 'Could not send reset email. Please try again.';
+      showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Text('Error',
+              style: TextStyle(fontFamily: 'Nunito', fontWeight: FontWeight.w700)),
+          content: Text(msg, style: const TextStyle(fontFamily: 'Nunito')),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('OK',
+                  style: TextStyle(color: AppColors.primary, fontFamily: 'Nunito')),
+            ),
+          ],
+        ),
+      );
+    }
+  }
+
+  void _showResetDialog({String prefillEmail = ''}) {
+    final ctrl = TextEditingController(text: prefillEmail);
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Reset Password',
+            style: TextStyle(fontFamily: 'Nunito', fontWeight: FontWeight.w700)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Enter your email address and we\'ll send you a reset link.',
+                style: TextStyle(fontFamily: 'Nunito')),
+            const SizedBox(height: 16),
+            TextField(
+              controller: ctrl,
+              keyboardType: TextInputType.emailAddress,
+              decoration: const InputDecoration(
+                labelText: 'Email address',
+                prefixIcon: Icon(Icons.email_outlined),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancel',
+                style: TextStyle(color: AppColors.textHint, fontFamily: 'Nunito')),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              if (ctrl.text.trim().isNotEmpty) _sendReset(ctrl.text.trim());
+            },
+            child: const Text('Send Reset Link',
+                style: TextStyle(
+                    color: AppColors.primary,
+                    fontFamily: 'Nunito',
+                    fontWeight: FontWeight.w700)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _submitSignIn() async {
     if (!_formKey.currentState!.validate()) return;
     final error = await ref.read(authProvider.notifier).signIn(
           _emailCtrl.text.trim(),
@@ -287,7 +392,7 @@ class _SignInFormState extends ConsumerState<_SignInForm> {
               controller: _passwordCtrl,
               obscureText: _obscure,
               textInputAction: TextInputAction.done,
-              onFieldSubmitted: (_) => _submit(),
+              onFieldSubmitted: (_) => _submitSignIn(),
               decoration: InputDecoration(
                 labelText: 'Password',
                 prefixIcon: const Icon(Icons.lock_outlined),
@@ -304,6 +409,27 @@ class _SignInFormState extends ConsumerState<_SignInForm> {
                 return null;
               },
             ),
+            const SizedBox(height: 4),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed: isLoading ? null : _forgotPassword,
+                style: TextButton.styleFrom(
+                  padding: EdgeInsets.zero,
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                child: const Text(
+                  'Forgot password?',
+                  style: TextStyle(
+                    color: AppColors.primary,
+                    fontSize: 13,
+                    fontFamily: 'Nunito',
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
             if (auth.error != null) ...[
               const SizedBox(height: 10),
               _ErrorBox(message: auth.error!),
@@ -312,7 +438,7 @@ class _SignInFormState extends ConsumerState<_SignInForm> {
             SizedBox(
               height: 50,
               child: ElevatedButton(
-                onPressed: isLoading ? null : _submit,
+                onPressed: isLoading ? null : _submitSignIn,
                 child: isLoading
                     ? const SizedBox(width: 18, height: 18,
                         child: CircularProgressIndicator(
