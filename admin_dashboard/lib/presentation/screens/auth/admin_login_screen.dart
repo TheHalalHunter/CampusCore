@@ -16,8 +16,6 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
   final _emailCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
   bool _obscure = true;
-  bool _loading = false;
-  String? _error;
 
   @override
   void dispose() {
@@ -28,6 +26,9 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final authState = ref.watch(adminAuthProvider);
+    final isLoading = authState.isLoading;
+    final error = authState.error;
     return Scaffold(
       backgroundColor: AdminColors.sidebar,
       body: Center(
@@ -93,13 +94,9 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10)),
                     ),
-                    onPressed: _loading
+                    onPressed: isLoading
                         ? null
                         : () async {
-                            setState(() {
-                              _loading = true;
-                              _error = null;
-                            });
                             final err = await ref
                                 .read(adminAuthProvider.notifier)
                                 .signIn(
@@ -107,16 +104,11 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
                                   _passwordCtrl.text,
                                 );
                             if (!mounted) return;
-                            if (err != null) {
-                              setState(() {
-                                _loading = false;
-                                _error = err;
-                              });
-                            } else {
+                            if (err == null) {
                               context.go(AdminRoutes.dashboard);
                             }
                           },
-                    child: _loading
+                    child: isLoading
                         ? const SizedBox(
                             width: 20,
                             height: 20,
@@ -129,10 +121,10 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
                             style: TextStyle(fontWeight: FontWeight.w700)),
                   ),
                 ),
-                if (_error != null) ...[
+                if (error != null) ...[
                   const SizedBox(height: 12),
                   Text(
-                    _error!,
+                    error,
                     style: const TextStyle(
                         color: AdminColors.error, fontSize: 13),
                     textAlign: TextAlign.center,

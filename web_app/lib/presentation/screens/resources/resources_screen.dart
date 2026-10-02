@@ -9,9 +9,7 @@ import '../../../core/network/api_client.dart';
 import '../../../core/constants/api_constants.dart';
 import '../../../core/providers/auth_provider.dart';
 
-// ── Web file picker helper (no dart:html) ─────────────────────────────────────
-// ignore: avoid_web_libraries_in_flutter
-import 'dart:html' as html;
+import 'package:file_picker/file_picker.dart';
 
 // ── Providers ─────────────────────────────────────────────────────────────────
 final resourcesProvider =
@@ -200,25 +198,37 @@ class _UploadDialogState extends ConsumerState<_UploadDialog> {
     super.dispose();
   }
 
-  void _pickFile() {
-    final input = html.FileUploadInputElement()
-      ..accept = '.pdf,.pptx,.ppt,.docx,.doc,.xlsx,.xls,.txt,.png,.jpg,.jpeg'
-      ..click();
-
-    input.onChange.listen((event) {
-      final file = input.files?.first;
-      if (file == null) return;
-
-      final reader = html.FileReader();
-      reader.readAsArrayBuffer(file);
-      reader.onLoad.listen((_) {
-        setState(() {
-          _fileName  = file.name;
-          _fileBytes = reader.result as Uint8List;
-          _fileMime  = file.type;
-        });
-      });
+  Future<void> _pickFile() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['pdf', 'pptx', 'ppt', 'docx', 'doc', 'xlsx', 'xls', 'txt', 'png', 'jpg', 'jpeg'],
+      withData: true, // loads bytes directly — required for web
+    );
+    if (result == null || result.files.isEmpty) return;
+    final file = result.files.first;
+    if (file.bytes == null) return;
+    setState(() {
+      _fileName  = file.name;
+      _fileBytes = file.bytes!;
+      _fileMime  = _mimeFromExtension(file.extension ?? '');
     });
+  }
+
+  /// Derives a MIME type from a file extension for Firebase Storage metadata.
+  String _mimeFromExtension(String ext) {
+    switch (ext.toLowerCase()) {
+      case 'pdf':  return 'application/pdf';
+      case 'pptx': return 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
+      case 'ppt':  return 'application/vnd.ms-powerpoint';
+      case 'docx': return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+      case 'doc':  return 'application/msword';
+      case 'xlsx': return 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+      case 'xls':  return 'application/vnd.ms-excel';
+      case 'png':  return 'image/png';
+      case 'jpg':
+      case 'jpeg': return 'image/jpeg';
+      default:     return 'application/octet-stream';
+    }
   }
 
   Future<void> _submit() async {

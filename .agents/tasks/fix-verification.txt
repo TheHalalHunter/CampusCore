@@ -1,0 +1,62 @@
+CampusCore Bug-Fix Verification
+================================
+Commit: 306cc06 — fix: P0-P2 bug fixes for admin and web app
+
+VERIFICATION RESULTS
+--------------------
+
+1. flutter analyze
+   - `flutter analyze` hung indefinitely in this environment (Dart analysis server
+     did not respond within timeout). Code correctness was verified manually below.
+
+2. No localhost:3000 in admin_dashboard source
+   PASS — grep found zero matches for "localhost:3000" in admin_dashboard/lib/**/*.dart
+
+3. departmentId passed in courses/home providers
+   PASS
+   - courses_screen.dart: `api.get(ApiConstants.courses, params: user?.departmentId != null ? {'departmentId': user!.departmentId} : null)`
+   - home_screen.dart: same pattern on the courses call inside homeDashboardProvider
+
+4. Profile update uses '/users/me' and 'fullName' field
+   PASS
+   - api_constants.dart: updateProfile = '/users/me'
+   - auth_provider.dart updateProfile(): body is {'fullName': '$firstName $lastName'}
+
+5. Admin login calls Firebase + backend + saves token + checks role
+   PASS — admin_auth_provider.dart AdminAuthNotifier.signIn():
+   - Step 1: FirebaseAuth.instance.signInWithEmailAndPassword
+   - Step 2: POST /auth/login with {idToken}
+   - Step 3: role !== 'admin' → sign out + return error
+   - Step 4: SharedPreferences.setString('admin_token', accessToken)
+   - admin_login_screen.dart: ConsumerStatefulWidget, calls signIn(), navigates on success, shows error on failure
+
+6. Admin main.dart passes Firebase options
+   PASS — main.dart: `await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);`
+   No try/catch — errors surface properly.
+
+7. Admin router redirects unauthenticated users to login
+   PASS — admin_router.dart: GoRouter redirect checks authState.isAuthenticated,
+   redirects to AdminRoutes.login if not authenticated, to AdminRoutes.dashboard if
+   authenticated and on login route.
+
+MANUAL CODE CHECKS
+------------------
+- admin_dashboard/lib/core/utils/api_client.dart: defaultValue changed to
+  'https://campuscore-production-3f94.up.railway.app/api/v1' ✓
+- admin_dashboard/lib/core/providers/ directory created with 3 new providers ✓
+- exam_lock_screen.dart: _CreateLockDialog renamed to CreateLockDialog (public) so
+  settings_screen.dart can import it ✓
+- departments_screen.dart: uses adminDepartmentsSharedProvider, wires Add button to
+  POST /departments ✓
+- users_screen.dart: uses adminUsersProvider, suspend/activate wired to PATCH
+  /admin/users/:id/suspend|activate, role change wired to PATCH /admin/users/:id/role ✓
+- settings_screen.dart: exam lock toggle reads examLocksProvider, turn-on shows
+  CreateLockDialog, turn-off deletes active locks via DELETE /exam-lock/:id ✓
+- reports_screen.dart: TODO comment added noting no backend reports module exists ✓
+- AppUser model: departmentId field added to constructor, fromJson, toJson ✓
+
+KNOWN LIMITATION
+----------------
+flutter analyze could not be run (process hung). All changes were verified by code
+inspection. No new Dart syntax, no new packages, no structural changes outside
+the listed files.

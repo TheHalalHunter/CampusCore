@@ -15,16 +15,18 @@ import '../../presentation/screens/gamification/gamification_screen.dart';
 import '../../presentation/shell/admin_shell.dart';
 
 final adminRouterProvider = Provider<GoRouter>((ref) {
-  // Listen to auth state so router rebuilds on auth changes
-  final authState = ref.watch(adminAuthProvider);
+  // Only watch isAuthenticated — ignore isLoading/error changes so the
+  // router does not rebuild (and remount the login screen) mid-sign-in.
+  final isAuthenticated = ref.watch(
+    adminAuthProvider.select((s) => s.isAuthenticated),
+  );
 
   return GoRouter(
     initialLocation: AdminRoutes.login,
     redirect: (context, state) {
-      final isLoggedIn = authState.isAuthenticated;
       final isLoginRoute = state.matchedLocation == AdminRoutes.login;
-      if (!isLoggedIn && !isLoginRoute) return AdminRoutes.login;
-      if (isLoggedIn && isLoginRoute) return AdminRoutes.dashboard;
+      if (!isAuthenticated && !isLoginRoute) return AdminRoutes.login;
+      if (isAuthenticated && isLoginRoute) return AdminRoutes.dashboard;
       return null;
     },
     routes: [

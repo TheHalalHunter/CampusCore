@@ -264,7 +264,7 @@ class CreateLockDialog extends StatefulWidget {
   const CreateLockDialog({required this.onCreated});
 
   @override
-  State<_CreateLockDialog> createState() => _CreateLockDialogState();
+  State<CreateLockDialog> createState() => _CreateLockDialogState();
 }
 
 class _CreateLockDialogState extends State<CreateLockDialog> {
