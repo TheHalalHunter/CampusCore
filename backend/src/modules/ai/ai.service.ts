@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException } from "@nestjs/common";
+import { Injectable, BadRequestException, Logger } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { ConfigService } from "@nestjs/config";
@@ -16,6 +16,7 @@ const EXAM_CHEAT_PATTERNS = [
 
 @Injectable()
 export class AiService {
+  private readonly logger = new Logger(AiService.name);
   private openai: OpenAI;
   private model: string;
 
@@ -61,6 +62,23 @@ export class AiService {
     return JSON.parse(stripped);
   }
 
+  /** Safely extract text content from an OpenAI-compatible response.
+   *  Handles both standard OpenAI and alternative providers (e.g. AgentRouter)
+   *  that may return the message nested differently. */
+  private extractContent(response: any): string | null {
+    // Standard OpenAI format
+    if (response?.choices?.[0]?.message?.content) {
+      return response.choices[0].message.content;
+    }
+    // Some providers put content directly on the response
+    if (response?.content) return response.content;
+    if (response?.text) return response.text;
+    if (response?.message?.content) return response.message.content;
+    // Log the actual response shape for debugging
+    this.logger?.warn?.('Unexpected AI response shape: ' + JSON.stringify(response)?.substring(0, 200));
+    return null;
+  }
+
   async explain(
     userId: string,
     concept: string,
@@ -85,8 +103,7 @@ export class AiService {
       max_tokens: 1000,
     });
 
-    const result =
-      response.choices[0]?.message?.content || "Unable to generate explanation.";
+    const result = this.extractContent(response) || "Unable to generate explanation.";
     await this.logUsage(
       userId,
       AiAction.EXPLAIN,
@@ -136,8 +153,7 @@ Generate exactly ${count} questions. correctAnswer is the 0-indexed position of 
       response.usage?.total_tokens,
     );
     try {
-      const content =
-        response.choices[0]?.message?.content || '{"questions":[]}';
+      const content = this.extractContent(response) || '{"questions":[]}';
       const parsed = this.extractJson(content);
       return parsed.questions || [];
     } catch {
@@ -159,8 +175,7 @@ Generate exactly ${count} questions. correctAnswer is the 0-indexed position of 
       max_tokens: 600,
     });
 
-    const result =
-      response.choices[0]?.message?.content || "Unable to summarize.";
+    const result = this.extractContent(response) || "Unable to summarize.";
     await this.logUsage(
       userId,
       AiAction.SUMMARIZE,
@@ -204,8 +219,7 @@ Generate exactly ${count} flashcards.`,
       response.usage?.total_tokens,
     );
     try {
-      const content =
-        response.choices[0]?.message?.content || '{"flashcards":[]}';
+      const content = this.extractContent(response) || '{"flashcards":[]}';
       const parsed = this.extractJson(content);
       return parsed.flashcards || [];
     } catch {
@@ -242,7 +256,7 @@ Respond ONLY with a valid JSON object (no markdown) in this format:
       response.usage?.total_tokens,
     );
     try {
-      const content = response.choices[0]?.message?.content || '{"topics":[]}';
+      const content = this.extractContent(response) || '{"topics":[]}';
       const parsed = this.extractJson(content);
       return parsed.topics || [];
     } catch {
