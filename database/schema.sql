@@ -45,6 +45,7 @@ CREATE TABLE users (
   reputation_points         INTEGER NOT NULL DEFAULT 0,
   last_seen_at              TIMESTAMPTZ,
   accepted_integrity_policy BOOLEAN NOT NULL DEFAULT FALSE,
+  fcm_token                 TEXT,
   created_at                TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at                TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
