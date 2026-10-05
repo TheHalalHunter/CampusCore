@@ -4,7 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 class AdminApiClient {
   static const String baseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'https://campuscore-production-3f94.up.railway.app/api/v1',
+    defaultValue: 'https://campuscore-bfrq.onrender.com/api/v1',
   );
   late final Dio _dio;
 

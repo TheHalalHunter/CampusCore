@@ -1,6 +1,6 @@
 class ApiConstants {
   static const String baseUrl =
-      'https://campuscore-production-3f94.up.railway.app/api/v1';
+      'https://campuscore-bfrq.onrender.com/api/v1';
 
   // Auth
   static const String login = '/auth/login';
