@@ -100,10 +100,10 @@ class _CourseCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isMobile = Responsive.isMobile(context);
-    final name     = course['name']?.toString()       ?? 'Course';
-    final code     = course['code']?.toString()       ?? '';
-    final level    = course['level']?.toString()      ?? '';
-    final semester = course['semester']?.toString()   ?? '';
+    final name     = course['title']?.toString()          ?? course['name']?.toString()  ?? 'Course';
+    final code     = course['courseCode']?.toString()      ?? course['code']?.toString()  ?? '';
+    final level    = course['academicLevel']?.toString()   ?? course['level']?.toString() ?? '';
+    final semester = course['semester']?.toString()        ?? '';
 
     return Card(
       child: Padding(
@@ -147,7 +147,7 @@ class _CourseCard extends StatelessWidget {
               runSpacing: 4,
               children: [
                 if (level.isNotEmpty)
-                  _Tag(label: '${level}L', color: AppColors.primary),
+                  _Tag(label: level, color: AppColors.primary),
                 if (semester.isNotEmpty)
                   _Tag(label: 'Sem $semester', color: AppColors.cyan),
               ],
