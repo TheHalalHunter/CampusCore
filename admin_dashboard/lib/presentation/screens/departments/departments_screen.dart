@@ -176,8 +176,9 @@ class _AddDepartmentDialogState extends State<_AddDepartmentDialog> {
     try {
       await adminApi.post('/departments', data: {
         'name': _nameCtrl.text.trim(),
-        if (_uniCtrl.text.trim().isNotEmpty)
-          'university': _uniCtrl.text.trim(),
+        'universityName': _uniCtrl.text.trim().isNotEmpty
+            ? _uniCtrl.text.trim()
+            : 'LAUTECH',
       });
       widget.onCreated();
       if (mounted) Navigator.pop(context);
