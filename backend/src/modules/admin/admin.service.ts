@@ -26,12 +26,13 @@ export class AdminService {
     return { totalUsers, activeUsers, byRole };
   }
 
-  getAllUsers(page = 1, limit = 20): Promise<[User[], number]> {
-    return this.usersRepo.findAndCount({
+  async getAllUsers(page = 1, limit = 20): Promise<{ users: User[]; total: number }> {
+    const [users, total] = await this.usersRepo.findAndCount({
       skip: (page - 1) * limit,
       take: limit,
       order: { createdAt: "DESC" },
     });
+    return { users, total };
   }
 
   async suspendUser(id: string): Promise<void> {

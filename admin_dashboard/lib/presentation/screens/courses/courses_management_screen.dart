@@ -243,8 +243,10 @@ class _CoursesManagementScreenState
                             )
                           : Card(
                               child: SingleChildScrollView(
-                                scrollDirection: Axis.horizontal,
-                                child: DataTable(
+                                scrollDirection: Axis.vertical,
+                                child: SingleChildScrollView(
+                                  scrollDirection: Axis.horizontal,
+                                  child: DataTable(
                                   headingRowColor: WidgetStateProperty.all(
                                       const Color(0xFFF9FAFB)),
                                   columns: const [
@@ -291,6 +293,7 @@ class _CoursesManagementScreenState
                                             )),
                                           ]))
                                       .toList(),
+                                ),
                                 ),
                               ),
                             );

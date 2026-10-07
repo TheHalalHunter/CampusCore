@@ -41,11 +41,24 @@ final adminUsersProvider = FutureProvider<List<AdminUser>>((ref) async {
   try {
     final response = await adminApi.get('/admin/users', params: {'limit': 100});
     final raw = response.data['data'] ?? response.data;
-    final list = raw is List ? raw : (raw['users'] as List? ?? []);
+    List list;
+    if (raw is Map) {
+      // Shaped response: { users: [...], total: N }
+      list = raw['users'] as List? ?? [];
+    } else if (raw is List && raw.isNotEmpty && raw[0] is List) {
+      // Tuple response: [[...users], count] — legacy fallback
+      list = raw[0] as List;
+    } else if (raw is List) {
+      list = raw;
+    } else {
+      list = [];
+    }
     return list
         .map((e) => AdminUser.fromJson(e as Map<String, dynamic>))
         .toList();
-  } catch (_) {
+  } catch (e) {
+    // ignore: avoid_print
+    print('adminUsersProvider error: $e');
     return [];
   }
 });

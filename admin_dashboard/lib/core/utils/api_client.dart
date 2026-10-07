@@ -25,6 +25,14 @@ class AdminApiClient {
         }
         return handler.next(options);
       },
+      onError: (error, handler) async {
+        if (error.response?.statusCode == 401) {
+          // Token expired — clear it so the router redirects to login
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.remove('admin_token');
+        }
+        return handler.next(error);
+      },
     ));
   }
 

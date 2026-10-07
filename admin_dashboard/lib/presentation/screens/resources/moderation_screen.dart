@@ -60,7 +60,9 @@ final pendingResourcesProvider =
     return data
         .map((r) => PendingResource.fromJson(r as Map<String, dynamic>))
         .toList();
-  } catch (_) {
+  } catch (e) {
+    // ignore: avoid_print
+    print('pendingResourcesProvider error: $e');
     return [];
   }
 });
