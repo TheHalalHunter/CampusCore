@@ -1,0 +1,22 @@
+{
+  "id": "FEAT-001",
+  "type": "feat",
+  "description": "Add connection and search constants to api_constants.dart, then wire /connections route in app_router.dart to the new ConnectionsScreen instead of ComingSoonScreen.",
+  "status": "completed",
+  "steps": [
+    "1. Open web_app/lib/core/constants/api_constants.dart. At the bottom of the class body, after the `unreadCount` constant, add:\n   // Connections\n   static const String connections = '/connections';\n   static String connectionRequest    = '/connections/request';\n   static String connectionsPendingReceived = '/connections/pending/received';\n   static String connectionsPendingSent     = '/connections/pending/sent';\n   static String connectionAccept(String id) => '/connections/$id/accept';\n   static String connectionRemove(String id) => '/connections/$id';\n   static String connectionStatus(String userId) => '/connections/status/$userId';\n   // Users\n   static String userProfile(String id) => '/users/$id/profile';",
+
+    "2. Open web_app/lib/app/router/app_router.dart. Add this import after the last existing screen import:\n   import '../../presentation/screens/connections/connections_screen.dart';\n   Then replace the entire GoRoute for path: '/connections' with:\n   GoRoute(\n     path: '/connections',\n     name: 'connections',\n     builder: (_, __) => const ConnectionsScreen(),\n   ),\n   The ComingSoonScreen import line can remain since /notifications and /leaderboard still use it."
+  ],
+  "acceptance_criteria": [
+    "api_constants.dart compiles with zero errors and contains all 7 new connection-related constants/methods.",
+    "app_router.dart imports ConnectionsScreen and routes /connections to it.",
+    "`flutter analyze` in web_app/ produces zero errors after these changes (the screen file must exist before analyze can pass — FEAT-002 creates it)."
+  ],
+  "verification": [
+    "After FEAT-002 is also complete: run `cd web_app && flutter analyze` — expect zero errors.",
+    "Run `cd web_app && flutter build web` — must succeed."
+  ],
+  "blocked_reason": null,
+  "findings": "Added 8 entries to ApiConstants: connections (const), connectionRequest, connectionsPendingReceived, connectionsPendingSent (static String fields), connectionAccept(id), connectionRemove(id), connectionStatus(userId) (static methods), and userProfile(id) (static method). Updated app_router.dart: added import for connections_screen.dart and replaced the /connections GoRoute builder from ComingSoonScreen to ConnectionsScreen. ComingSoonScreen import retained for /notifications and /leaderboard routes."
+}

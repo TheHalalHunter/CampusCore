@@ -36,4 +36,16 @@ class ApiConstants {
 
   // Notifications
   static const String unreadCount = '/notifications/unread-count';
+
+  // Connections
+  static const String connections = '/connections';
+  static String connectionRequest = '/connections/request';
+  static String connectionsPendingReceived = '/connections/pending/received';
+  static String connectionsPendingSent     = '/connections/pending/sent';
+  static String connectionAccept(String id) => '/connections/$id/accept';
+  static String connectionRemove(String id) => '/connections/$id';
+  static String connectionStatus(String userId) => '/connections/status/$userId';
+
+  // Users
+  static String userProfile(String id) => '/users/$id/profile';
 }

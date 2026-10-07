@@ -13,6 +13,7 @@ import '../../presentation/screens/progress/progress_screen.dart';
 import '../../presentation/screens/ai/ai_screen.dart';
 import '../../presentation/screens/profile/profile_screen.dart';
 import '../../presentation/screens/coming_soon/coming_soon_screen.dart';
+import '../../presentation/screens/connections/connections_screen.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   final notifier = _AuthChangeNotifier(ref);
@@ -55,11 +56,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/connections',
             name: 'connections',
-            builder: (_, __) => const ComingSoonScreen(
-              featureName: 'Connections',
-              description: 'Connect with fellow students, form study groups, and build your academic network. This feature is coming soon!',
-              icon: Icons.people_outlined,
-            ),
+            builder: (_, __) => const ConnectionsScreen(),
           ),
           GoRoute(
             path: '/notifications',
