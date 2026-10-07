@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   ForbiddenException,
+  BadRequestException,
 } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
@@ -149,6 +150,9 @@ export class CommunityService {
   }
 
   async unflagContent(type: "question" | "answer", id: string): Promise<void> {
+    if (type !== "question" && type !== "answer") {
+      throw new BadRequestException("type must be question or answer");
+    }
     if (type === "question") {
       await this.questionsRepo.update(id, { isFlagged: false });
     } else {

@@ -1100,7 +1100,7 @@ class _GpaBottomBar extends StatelessWidget {
         border: Border(top: BorderSide(color: AppColors.border)),
         boxShadow: [
           BoxShadow(
-            color: Color(0x14000000),
+            color: AppColors.shadow,
             blurRadius: 8,
             offset: Offset(0, -2),
           ),
@@ -1245,7 +1245,7 @@ class _LevelDropdown extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DropdownButtonFormField<String>(
-      value: value,
+      initialValue: value,
       decoration: const InputDecoration(labelText: 'Academic Level'),
       style: const TextStyle(
           fontFamily: 'Nunito', fontSize: 14, color: AppColors.textPrimary),
@@ -1269,7 +1269,7 @@ class _SemesterDropdown extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DropdownButtonFormField<int>(
-      value: value,
+      initialValue: value,
       decoration: const InputDecoration(labelText: 'Semester'),
       style: const TextStyle(
           fontFamily: 'Nunito', fontSize: 14, color: AppColors.textPrimary),

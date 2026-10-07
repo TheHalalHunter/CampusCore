@@ -49,6 +49,10 @@ class AppColors {
   static const Color white = Color(0xFFFFFFFF);
   static const Color black = Color(0xFF000000);
 
+  // ── Shadows ───────────────────────────────────────────────────────────────
+  /// Soft upward shadow used on sticky bottom bars and floating surfaces.
+  static const Color shadow = Color(0x14000000);
+
   // ── Gradients ─────────────────────────────────────────────────────────────
   static const LinearGradient primaryGradient = LinearGradient(
     colors: [primary, primaryLight, cyan],
