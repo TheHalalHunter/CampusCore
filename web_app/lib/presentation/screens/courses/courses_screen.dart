@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../app/theme/app_theme.dart';
 import '../../../core/utils/responsive.dart';
 import '../../../core/network/api_client.dart';
@@ -106,8 +107,14 @@ class _CourseCard extends StatelessWidget {
     final semester = course['semester']?.toString()        ?? '';
 
     return Card(
-      child: Padding(
-        padding: EdgeInsets.all(isMobile ? 12 : 16),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () {
+          final id = course['id']?.toString() ?? '';
+          if (id.isNotEmpty) context.go('/courses/$id');
+        },
+        child: Padding(
+          padding: EdgeInsets.all(isMobile ? 12 : 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -155,7 +162,8 @@ class _CourseCard extends StatelessWidget {
           ],
         ),
       ),
-    );
+    ),
+  );
   }
 }
 

@@ -6,6 +6,7 @@ import '../../core/providers/auth_provider.dart';
 import '../../presentation/screens/auth/login_screen.dart';
 import '../../presentation/screens/home/home_screen.dart';
 import '../../presentation/screens/courses/courses_screen.dart';
+import '../../presentation/screens/courses/course_detail_screen.dart';
 import '../../presentation/screens/resources/resources_screen.dart';
 import '../../presentation/screens/community/community_screen.dart';
 import '../../presentation/screens/progress/progress_screen.dart';
@@ -39,6 +40,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         routes: [
           GoRoute(path: '/',          name: 'home',      builder: (_, __) => const HomeScreen()),
           GoRoute(path: '/courses',   name: 'courses',   builder: (_, __) => const CoursesScreen()),
+          GoRoute(
+            path: '/courses/:id',
+            name: 'course-detail',
+            builder: (_, state) => CourseDetailScreen(
+              courseId: state.pathParameters['id']!,
+            ),
+          ),
           GoRoute(path: '/resources', name: 'resources', builder: (_, __) => const ResourcesScreen()),
           GoRoute(path: '/community', name: 'community', builder: (_, __) => const CommunityScreen()),
           GoRoute(path: '/progress',  name: 'progress',  builder: (_, __) => const ProgressScreen()),
