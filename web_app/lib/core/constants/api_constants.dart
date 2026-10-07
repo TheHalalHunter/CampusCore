@@ -26,6 +26,9 @@ class ApiConstants {
   // Progress / GPA
   static const String gpa      = '/gpa';
   static const String progress = '/progress';
+  static const String gpaCgpa      = '/gpa/cgpa';
+  static const String gpaSemesters = '/gpa/semesters';
+  static String deleteSemester(String id) => '/gpa/semesters/$id';
 
   // AI — all real backend endpoints
   static const String aiExplain       = '/ai/explain';       // POST {concept, courseContext?}

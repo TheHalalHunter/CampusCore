@@ -134,6 +134,28 @@ export class CommunityService {
     }
   }
 
+  async getFlaggedContent(): Promise<{ questions: Question[]; answers: Answer[] }> {
+    const [questions, answers] = await Promise.all([
+      this.questionsRepo.find({
+        where: { isFlagged: true },
+        order: { createdAt: "DESC" },
+      }),
+      this.answersRepo.find({
+        where: { isFlagged: true },
+        order: { createdAt: "DESC" },
+      }),
+    ]);
+    return { questions, answers };
+  }
+
+  async unflagContent(type: "question" | "answer", id: string): Promise<void> {
+    if (type === "question") {
+      await this.questionsRepo.update(id, { isFlagged: false });
+    } else {
+      await this.answersRepo.update(id, { isFlagged: false });
+    }
+  }
+
   // --- Upvotes ---
 
   async upvoteQuestion(id: string): Promise<{ upvoteCount: number }> {

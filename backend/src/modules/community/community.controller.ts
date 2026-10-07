@@ -102,6 +102,25 @@ export class CommunityController {
     return this.service.flagContent(type, id);
   }
 
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @Get("flagged")
+  @ApiOperation({ summary: "Get all flagged questions and answers (admin only)" })
+  getFlagged() {
+    return this.service.getFlaggedContent();
+  }
+
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @Patch("flagged/:type/:id/resolve")
+  @ApiOperation({ summary: "Unflag (resolve) a flagged question or answer (admin only)" })
+  resolveFlag(
+    @Param("type") type: "question" | "answer",
+    @Param("id") id: string,
+  ) {
+    return this.service.unflagContent(type, id);
+  }
+
   @Post("questions/:id/upvote")
   @ApiOperation({ summary: "Upvote a question" })
   upvoteQuestion(@Param("id") id: string) {
