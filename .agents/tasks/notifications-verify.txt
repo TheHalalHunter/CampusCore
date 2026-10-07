@@ -1,0 +1,45 @@
+Notifications screen implementation — verification results
+==========================================================
+
+Date: 2026-10-07
+
+## flutter analyze (4 changed files)
+
+Command: flutter analyze lib/presentation/screens/notifications/notifications_screen.dart lib/app/shell/app_shell.dart lib/app/router/app_router.dart lib/core/constants/api_constants.dart
+
+Result: No issues found! (ran in 8.7s)
+Exit code: 0
+
+## flutter build web --release
+
+Command: flutter build web --release (from web_app/)
+
+Result: √ Built build\web (269.1s)
+Exit code: 1 (only due to --wasm advisory info message; build artefact produced successfully)
+
+Advisory output (not an error):
+  "Wasm dry run succeeded. Consider building and testing your application with the --wasm flag."
+  CupertinoIcons font not included warning (pre-existing, unrelated to notifications changes)
+
+## Files changed
+
+1. web_app/lib/core/constants/api_constants.dart
+   - Added: notifications, notificationsReadAll, markNotificationRead(id)
+
+2. web_app/lib/presentation/screens/notifications/notifications_screen.dart  [NEW]
+   - _Notification model, _timeAgo helper, _typeIcon helper
+   - notificationsProvider (FutureProvider.autoDispose)
+   - notifUnreadCountProvider (FutureProvider.autoDispose)
+   - NotificationsScreen (ConsumerStatefulWidget, DefaultTabController, 2 tabs)
+   - _NotificationsList, _NotificationTile, _NotificationSkeleton, _EmptyState, _ErrorState
+
+3. web_app/lib/app/router/app_router.dart
+   - /notifications route now builds NotificationsScreen (was ComingSoonScreen)
+
+4. web_app/lib/app/shell/app_shell.dart
+   - Import added for notifications_screen.dart
+   - Notifications added to _navItems (between Community and Progress)
+   - _comingSoonRoutes now only contains /leaderboard
+   - Sidebar Notifications item: leading icon wrapped in _NotifBadge (live unread count)
+   - Mobile AppBar bell: replaced 'Soon' badge with live unread count badge
+   - _NotifBadge widget added at bottom of file

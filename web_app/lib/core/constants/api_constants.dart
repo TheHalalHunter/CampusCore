@@ -35,7 +35,10 @@ class ApiConstants {
   static const String aiPredictTopics = '/ai/predict-topics';// POST {courseTitle, recentTopics[]}
 
   // Notifications
-  static const String unreadCount = '/notifications/unread-count';
+  static const String notifications        = '/notifications';
+  static const String notificationsReadAll = '/notifications/read-all';
+  static const String unreadCount          = '/notifications/unread-count';
+  static String markNotificationRead(String id) => '/notifications/$id/read';
 
   // Connections
   static const String connections = '/connections';

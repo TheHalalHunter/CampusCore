@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../theme/app_theme.dart';
 import '../../core/utils/responsive.dart';
 import '../../core/providers/auth_provider.dart';
+import '../../presentation/screens/notifications/notifications_screen.dart';
 
 class AppShell extends ConsumerStatefulWidget {
   final Widget child;
@@ -17,17 +18,15 @@ class _AppShellState extends ConsumerState<AppShell> {
   bool _sidebarExpanded = true;
 
   final List<({String label, String route, IconData icon})> _navItems = [
-    (label: 'Home',      route: '/',          icon: Icons.home_outlined),
-    (label: 'Courses',   route: '/courses',   icon: Icons.school_outlined),
-    (label: 'Resources', route: '/resources', icon: Icons.library_books_outlined),
-    (label: 'Community', route: '/community', icon: Icons.people_outlined),
-    (label: 'Progress',  route: '/progress',  icon: Icons.trending_up_outlined),
-    (label: 'AI Assist', route: '/ai',        icon: Icons.auto_awesome_outlined),
-    (label: 'Profile',   route: '/profile',   icon: Icons.person_outlined),
+    (label: 'Home',          route: '/',               icon: Icons.home_outlined),
+    (label: 'Courses',       route: '/courses',        icon: Icons.school_outlined),
+    (label: 'Resources',     route: '/resources',      icon: Icons.library_books_outlined),
+    (label: 'Community',     route: '/community',      icon: Icons.people_outlined),
+    (label: 'Notifications', route: '/notifications',  icon: Icons.notifications_outlined),
+    (label: 'Progress',      route: '/progress',       icon: Icons.trending_up_outlined),
+    (label: 'AI Assist',     route: '/ai',             icon: Icons.auto_awesome_outlined),
+    (label: 'Profile',       route: '/profile',        icon: Icons.person_outlined),
   ];
-
-  // Routes that show a "Soon" badge
-  static const _comingSoonRoutes = {'/connections', '/notifications', '/leaderboard'};
 
   /// Derive selected index from the current route — survives browser refresh.
   int _indexFromLocation(String location) {
@@ -72,27 +71,47 @@ class _AppShellState extends ConsumerState<AppShell> {
             ]),
           ),
           actions: [
-            // Notifications bell with Coming Soon badge
-            Stack(
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.notifications_outlined, color: Colors.white),
-                  tooltip: 'Notifications (Coming Soon)',
-                  onPressed: () => context.go('/notifications'),
-                ),
-                Positioned(
-                  right: 8, top: 8,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                    decoration: BoxDecoration(
-                      color: AppColors.warning,
-                      borderRadius: BorderRadius.circular(6),
+            // Notifications bell with live unread badge
+            Consumer(
+              builder: (context, ref, _) {
+                final count = ref
+                    .watch(notifUnreadCountProvider)
+                    .maybeWhen(data: (n) => n, orElse: () => 0);
+                return Stack(
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.notifications_outlined,
+                          color: Colors.white),
+                      tooltip: 'Notifications',
+                      onPressed: () => context.go('/notifications'),
                     ),
-                    child: const Text('Soon',
-                        style: TextStyle(color: Colors.white, fontSize: 7, fontWeight: FontWeight.w800, fontFamily: 'Nunito')),
-                  ),
-                ),
-              ],
+                    if (count > 0)
+                      Positioned(
+                        right: 8,
+                        top: 8,
+                        child: Container(
+                          constraints: const BoxConstraints(
+                              minWidth: 16, minHeight: 16),
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                          decoration: BoxDecoration(
+                            color: AppColors.error,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            count > 99 ? '99+' : '$count',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 9,
+                              fontWeight: FontWeight.w800,
+                              fontFamily: 'Nunito',
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ),
+                  ],
+                );
+              },
             ),
             IconButton(
               icon: CircleAvatar(
@@ -250,13 +269,23 @@ class _AppShellState extends ConsumerState<AppShell> {
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: ListTile(
-                            leading: Icon(
-                              item.icon,
-                              color: isSelected
-                                  ? AppColors.cyanBright
-                                  : AppColors.textOnDarkSub,
-                              size: 20,
-                            ),
+                            leading: item.route == '/notifications'
+                                ? _NotifBadge(
+                                    child: Icon(
+                                      item.icon,
+                                      color: isSelected
+                                          ? AppColors.cyanBright
+                                          : AppColors.textOnDarkSub,
+                                      size: 20,
+                                    ),
+                                  )
+                                : Icon(
+                                    item.icon,
+                                    color: isSelected
+                                        ? AppColors.cyanBright
+                                        : AppColors.textOnDarkSub,
+                                    size: 20,
+                                  ),
                             title: _sidebarExpanded
                                 ? Text(
                                     item.label,
@@ -420,6 +449,50 @@ class _AppShellState extends ConsumerState<AppShell> {
           ),
         ],
       ),
+    );
+  }
+}
+
+// ── Notification badge overlay for sidebar icon ───────────────────────────────
+
+class _NotifBadge extends ConsumerWidget {
+  final Widget child;
+  const _NotifBadge({required this.child});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final count = ref
+        .watch(notifUnreadCountProvider)
+        .maybeWhen(data: (n) => n, orElse: () => 0);
+    if (count == 0) return child;
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        child,
+        Positioned(
+          top: -4,
+          right: -6,
+          child: Container(
+            constraints:
+                const BoxConstraints(minWidth: 16, minHeight: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+            decoration: BoxDecoration(
+              color: AppColors.error,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              count > 99 ? '99+' : '$count',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 9,
+                fontWeight: FontWeight.w800,
+                fontFamily: 'Nunito',
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

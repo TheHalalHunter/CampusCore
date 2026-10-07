@@ -14,6 +14,7 @@ import '../../presentation/screens/ai/ai_screen.dart';
 import '../../presentation/screens/profile/profile_screen.dart';
 import '../../presentation/screens/coming_soon/coming_soon_screen.dart';
 import '../../presentation/screens/connections/connections_screen.dart';
+import '../../presentation/screens/notifications/notifications_screen.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   final notifier = _AuthChangeNotifier(ref);
@@ -61,11 +62,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/notifications',
             name: 'notifications',
-            builder: (_, __) => const ComingSoonScreen(
-              featureName: 'Notifications',
-              description: 'Get real-time alerts for question answers, resource approvals, and campus announcements. Coming soon!',
-              icon: Icons.notifications_outlined,
-            ),
+            builder: (_, __) => const NotificationsScreen(),
           ),
           GoRoute(
             path: '/leaderboard',
