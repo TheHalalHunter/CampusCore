@@ -39,9 +39,9 @@ class ApiConstants {
 
   // Connections
   static const String connections = '/connections';
-  static String connectionRequest = '/connections/request';
-  static String connectionsPendingReceived = '/connections/pending/received';
-  static String connectionsPendingSent     = '/connections/pending/sent';
+  static const String connectionRequest = '/connections/request';
+  static const String connectionsPendingReceived = '/connections/pending/received';
+  static const String connectionsPendingSent     = '/connections/pending/sent';
   static String connectionAccept(String id) => '/connections/$id/accept';
   static String connectionRemove(String id) => '/connections/$id';
   static String connectionStatus(String userId) => '/connections/status/$userId';

@@ -1,0 +1,7 @@
+{
+  "task_id": "task-connections-screen",
+  "task_description": "Build a fully functional Connections screen for the CampusCore Flutter web app, replacing the ComingSoonScreen placeholder at /connections. The screen has 3 tabs: My Connections, Requests (received + sent), and Find Students.",
+  "status": "completed",
+  "feature_order": ["FEAT-001", "FEAT-002"],
+  "blocked_reason": null
+}

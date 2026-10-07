@@ -274,6 +274,7 @@ class _ConnectionsScreenState extends ConsumerState<ConnectionsScreen>
       await api.delete(ApiConstants.connectionRemove(connectionId));
       ref.invalidate(connectionsProvider);
       ref.invalidate(pendingReceivedProvider);
+      ref.invalidate(pendingSentProvider);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
           content: Text('Connection removed.',
@@ -661,14 +662,9 @@ class _FindStudentsTab extends ConsumerWidget {
                   loading: () => const Center(
                     child: CircularProgressIndicator(strokeWidth: 2),
                   ),
-                  error: (e, _) => const Center(
-                    child: Text(
-                      'Could not search. Please try again.',
-                      style: TextStyle(
-                        fontFamily: 'Nunito',
-                        color: AppColors.textHint,
-                      ),
-                    ),
+                  error: (e, _) => _ConnErrorWidget(
+                    message: 'Could not search. Please try again.',
+                    onRetry: () => ref.invalidate(_findStudentsProvider(searchQuery)),
                   ),
                   data: (students) {
                     if (students.isEmpty) {
