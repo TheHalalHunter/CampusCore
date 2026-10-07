@@ -67,7 +67,7 @@ Color _gradeColor(String grade) {
     case 'D':
       return AppColors.cyan;
     case 'E':
-      return Colors.orange;
+      return AppColors.warning;
     case 'F':
       return AppColors.error;
     default:
