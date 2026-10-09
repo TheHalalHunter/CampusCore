@@ -37,12 +37,15 @@ export class ResourcesService {
     return resource;
   }
 
-  /** Student submits resource — starts as PENDING */
-  async submit(uploaderId: string, data: Partial<Resource>): Promise<Resource> {
+  /** Submit a resource — auto-approved and marked official for admins/lecturers */
+  async submit(uploader: User, data: Partial<Resource>): Promise<Resource> {
+    const isPrivileged =
+      uploader.role === UserRole.ADMIN || uploader.role === UserRole.LECTURER;
     const resource = this.repo.create({
       ...data,
-      uploaderId,
-      status: ResourceStatus.PENDING,
+      uploaderId: uploader.id,
+      status: isPrivileged ? ResourceStatus.APPROVED : ResourceStatus.PENDING,
+      isOfficial: isPrivileged,
     });
     return this.repo.save(resource);
   }

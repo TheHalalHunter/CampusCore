@@ -40,7 +40,7 @@ export class ResourcesController {
   @Post()
   @ApiOperation({ summary: "Submit a resource for review" })
   submit(@CurrentUser() user: User, @Body() body: any) {
-    return this.service.submit(user.id, body);
+    return this.service.submit(user, body);
   }
 
   // Static sub-paths must come BEFORE :id to avoid route shadowing
