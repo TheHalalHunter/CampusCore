@@ -28,7 +28,11 @@ final resourcesProvider =
 final coursesForUploadProvider =
     FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
   final api  = ref.read(apiClientProvider);
-  final resp = await api.get(ApiConstants.courses);
+  final user = ref.read(currentUserProvider);
+  final resp = await api.get(
+    ApiConstants.courses,
+    params: user?.departmentId != null ? {'departmentId': user!.departmentId} : null,
+  );
   final data = resp.data['data'];
   if (data is List) return data.cast<Map<String, dynamic>>();
   return [];
@@ -293,7 +297,12 @@ class _UploadDialogState extends ConsumerState<_UploadDialog> {
         );
       }
     } catch (e) {
-      setState(() { _uploading = false; _error = 'Upload failed: ${e.toString()}'; });
+      // Surface the full error so we can diagnose Firebase Storage vs backend issues
+      String msg = e.toString();
+      if (msg.contains('firebase_storage') || msg.contains('storage/')) {
+        msg = 'Firebase Storage error: $msg\n\nMake sure Firebase Storage rules allow writes.';
+      }
+      setState(() { _uploading = false; _error = msg; });
     }
   }
 
