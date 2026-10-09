@@ -9,11 +9,16 @@ import '../../../core/constants/api_constants.dart';
 final questionsProvider = FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
   final api  = ref.read(apiClientProvider);
   final resp = await api.get(ApiConstants.questions, params: {'limit': 30});
-  final data = resp.data['data'];
-  if (data is List) return data.cast<Map<String, dynamic>>();
-  if (data is Map && data['items'] is List) {
-    return (data['items'] as List).cast<Map<String, dynamic>>();
+  final data = resp.data['data'] ?? resp.data;
+  // Handle shaped response: { questions: [...], total: N }
+  if (data is Map && data['questions'] is List) {
+    return (data['questions'] as List).cast<Map<String, dynamic>>();
   }
+  // Handle tuple fallback: [[...questions], count]
+  if (data is List && data.isNotEmpty && data[0] is List) {
+    return (data[0] as List).cast<Map<String, dynamic>>();
+  }
+  if (data is List) return data.cast<Map<String, dynamic>>();
   return [];
 });
 
@@ -171,7 +176,7 @@ class _AskQuestionDialogState extends ConsumerState<_AskQuestionDialog> {
 
       final resp = await api.post(ApiConstants.postQuestion, data: {
         'title':   _titleCtrl.text.trim(),
-        'content': _contentCtrl.text.trim(),
+        'body':    _contentCtrl.text.trim(),
         if (tags.isNotEmpty) 'tags': tags,
       });
 
@@ -342,7 +347,7 @@ class _QuestionTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final title       = question['title']?.toString()    ?? 'Question';
-    final content     = question['content']?.toString()  ?? '';
+    final content     = question['body']?.toString()    ?? '';
     final answerCount = question['answerCount']          ?? question['_count']?['answers'] ?? 0;
     final viewCount   = question['viewCount']            ?? 0;
     final author      = question['author']               ?? question['askedBy'];

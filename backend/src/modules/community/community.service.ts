@@ -25,25 +25,58 @@ export class CommunityService {
 
   // --- Questions ---
 
-  findQuestions(filters: {
+  async findQuestions(filters: {
     departmentId?: string;
     courseId?: string;
     level?: string;
     page?: number;
     limit?: number;
-  }): Promise<[Question[], number]> {
-    const where: any = { isFlagged: false };
-    if (filters.departmentId) where.departmentId = filters.departmentId;
-    if (filters.courseId) where.courseId = filters.courseId;
-    if (filters.level) where.academicLevel = filters.level;
-    const page = filters.page ?? 1;
+  }): Promise<{ questions: any[]; total: number }> {
+    const page  = filters.page  ?? 1;
     const limit = Math.min(filters.limit ?? 20, 50);
-    return this.questionsRepo.findAndCount({
-      where,
-      order: { createdAt: "DESC" },
-      skip: (page - 1) * limit,
-      take: limit,
-    });
+
+    const qb = this.questionsRepo
+      .createQueryBuilder("q")
+      .leftJoin("users", "u", "u.id::text = q.author_id::text")
+      .addSelect(["u.id", "u.full_name"])
+      .where("q.is_flagged = false")
+      .orderBy("q.created_at", "DESC")
+      .skip((page - 1) * limit)
+      .take(limit);
+
+    if (filters.departmentId) qb.andWhere("q.department_id = :dId", { dId: filters.departmentId });
+    if (filters.courseId)     qb.andWhere("q.course_id = :cId",     { cId: filters.courseId });
+    if (filters.level)        qb.andWhere("q.academic_level = :lvl", { lvl: filters.level });
+
+    const [rawQuestions, total] = await qb.getManyAndCount();
+
+    // Fetch author names in one query
+    const authorIds = [...new Set(rawQuestions.map(q => q.authorId))];
+    let authorMap: Record<string, { firstName: string; lastName: string }> = {};
+
+    if (authorIds.length > 0) {
+      const authors = await this.questionsRepo.manager
+        .createQueryBuilder()
+        .select(["u.id", "u.full_name"])
+        .from("users", "u")
+        .where("u.id IN (:...ids)", { ids: authorIds })
+        .getRawMany();
+
+      for (const a of authors) {
+        const parts = (a.u_full_name || "").split(" ");
+        authorMap[a.u_id] = {
+          firstName: parts[0] || "Student",
+          lastName:  parts.slice(1).join(" ") || "",
+        };
+      }
+    }
+
+    const questions = rawQuestions.map(q => ({
+      ...q,
+      author: authorMap[q.authorId] ?? { firstName: "Student", lastName: "" },
+    }));
+
+    return { questions, total };
   }
 
   async findQuestion(id: string): Promise<Question> {
