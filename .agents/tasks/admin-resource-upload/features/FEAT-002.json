@@ -1,0 +1,36 @@
+{
+  "id": "FEAT-002",
+  "type": "feat",
+  "description": "Admin dashboard: add firebase_storage and file_picker packages, then add an Upload Resource dialog to moderation_screen.dart. The dialog picks a file (bytes for web), uploads to Firebase Storage under resources/{courseId}/{timestamp}_{filename}, then POSTs to /resources. The screen header gains an 'Upload Resource' button. FEAT-002 is independent of FEAT-001 (Flutter changes don't require the backend to be deployed) but FEAT-001 should be committed first so the full flow works end-to-end.",
+  "status": "completed",
+  "steps": [
+    "Open admin_dashboard/pubspec.yaml. Under `dependencies:`, add `firebase_storage: ^13.4.1` and `file_picker: ^8.0.0`. NOTE: use ^13.4.1 NOT ^11.0.0 — ^11.x is incompatible with firebase_core: ^3.13.0 already present. Run `flutter pub get` to resolve.",
+    "Open admin_dashboard/lib/presentation/screens/resources/moderation_screen.dart. Add imports: `import 'package:firebase_storage/firebase_storage.dart';` and `import 'package:file_picker/file_picker.dart';`.",
+    "In moderation_screen.dart, add a new FutureProvider.family for courses: `final adminResourceCoursesProvider = FutureProvider.family<List<Map<String, dynamic>>, String>((ref, departmentId) async { ... calls GET /courses?departmentId=departmentId ... });`. Also add an import for admin_departments_provider.dart to reuse adminDepartmentsSharedProvider for the department dropdown inside the dialog.",
+    "Modify ModerationScreen.build() — replace the `_PageHeader(...)` widget at the top with a Row: left side is the Expanded _PageHeader, right side is an ElevatedButton.icon (Upload Resource, AdminColors.primary). On tap it calls showDialog with UncontrolledProviderScope wrapping `const _UploadResourceDialog()`, then on dialog close it invalidates pendingResourcesProvider.",
+    "Add `_UploadResourceDialog` as a ConsumerStatefulWidget at the bottom of moderation_screen.dart. State fields: _formKey, _titleCtrl, _descCtrl, _yearCtrl (TextEditingControllers), _selectedType (String?), _selectedDeptId (String?), _selectedCourseId (String?), _pickedFile (PlatformFile?), _uploadProgress (double?), _submitting (bool). Remember to dispose all controllers.",
+    "Inside _UploadResourceDialog: implement _pickFile() using FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['pdf','pptx','ppt','docx','doc','xlsx','png','jpg'], withData: true). withData:true is mandatory for Flutter Web.",
+    "Inside _UploadResourceDialog: implement _submit() — (1) validate form, (2) check _pickedFile != null, (3) build storage path `resources/$_selectedCourseId/${timestamp}_${_pickedFile!.name}`, (4) call ref.putData(_pickedFile!.bytes!, SettableMetadata(contentType: _mimeType(ext))), (5) listen to snapshotEvents to update _uploadProgress, (6) await the task, (7) call ref.getDownloadURL(), (8) POST to /resources via adminApi.post with title, description (if non-empty), type, courseId, fileUrl, fileType (extension), fileSize, academicYear (if non-empty), (9) Navigator.pop(context) + success snackbar on success, (10) error snackbar on failure. Add _mimeType(String ext) helper mapping pdf/pptx/ppt/docx/doc/xlsx/png/jpg to MIME types.",
+    "Build the dialog layout as an AlertDialog with title 'Upload Resource', content SizedBox(width:520) wrapping a Form > SingleChildScrollView > Column with: Title TextFormField (required), Description TextFormField (optional, maxLines:3), Resource Type DropdownButtonFormField (required, options: lecture_note/past_question/slide/practical_manual/assignment/other mapped to display labels), Department DropdownButtonFormField (uses ref.watch(adminDepartmentsSharedProvider), required), Course DropdownButtonFormField shown only when _selectedDeptId != null (uses ref.watch(adminResourceCoursesProvider(_selectedDeptId!)), required), Academic Year TextFormField (optional, hint: '2024/2025'), file picker Row (OutlinedButton 'Pick File' + Chip showing filename if picked). Actions: Cancel TextButton (disabled while _submitting) + Upload ElevatedButton (AdminColors.primary) replaced by LinearProgressIndicator + percentage Text while _uploadProgress != null.",
+    "Run `flutter analyze` — zero errors. Run `flutter build web --dart-define=API_BASE_URL=https://campuscore-bfrq.onrender.com/api/v1` — build succeeds."
+  ],
+  "acceptance_criteria": [
+    "`flutter pub get` resolves with firebase_storage ^13.4.1 and file_picker ^8.0.0 added",
+    "`flutter analyze` reports zero errors in admin_dashboard",
+    "`flutter build web` succeeds",
+    "ModerationScreen shows an 'Upload Resource' button in the header",
+    "_UploadResourceDialog renders with all required fields: Title, Description, Resource Type, Department, Course, Academic Year, File",
+    "File picker uses withData:true so bytes are available for web upload",
+    "Upload path in Firebase Storage follows resources/{courseId}/{timestamp}_{filename}",
+    "Dialog shows LinearProgressIndicator while uploading",
+    "On success: dialog closes and success snackbar appears; pendingResourcesProvider is invalidated",
+    "On error: error snackbar appears and dialog stays open"
+  ],
+  "verification": [
+    "cd admin_dashboard && flutter pub get",
+    "cd admin_dashboard && flutter analyze",
+    "cd admin_dashboard && flutter build web --dart-define=API_BASE_URL=https://campuscore-bfrq.onrender.com/api/v1"
+  ],
+  "blocked_reason": null,
+  "findings": "firebase_storage ^13.4.1 requires firebase_core ^4.x which conflicts with the existing firebase_core ^3.13.0. Used firebase_storage ^12.4.10 instead — the pub tool itself recommended this version and it resolves cleanly. Resolved version: firebase_storage 12.4.10, file_picker 8.3.7. DropdownButtonFormField uses initialValue instead of value (deprecated in Flutter 3.33+). flutter analyze reports 341 issues project-wide but all errors are pre-existing FirebaseDataConnect undefined-class issues unrelated to this feature; moderation_screen.dart has zero errors. flutter build web exits 0 and produces build/web successfully."
+}
