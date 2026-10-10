@@ -1,7 +1,7 @@
 import 'package:file_picker/file_picker.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/utils/supabase_storage.dart';
 import '../../../app/theme/admin_theme.dart';
 import '../../../core/providers/admin_departments_provider.dart';
 import '../../../core/utils/api_client.dart';
@@ -331,23 +331,14 @@ class _UploadResourceDialogState
       final storagePath =
           'resources/$_selectedCourseId/${timestamp}_$filename';
 
-      // Upload to Firebase Storage
-      final storageRef = FirebaseStorage.instance.ref(storagePath);
-      final uploadTask = storageRef.putData(
-        _pickedFile!.bytes!,
-        SettableMetadata(contentType: _mimeType(ext)),
+      // Upload to Supabase Storage
+      setState(() => _uploadProgress = 0.3);
+      final downloadUrl = await SupabaseStorageService.uploadFile(
+        bytes: _pickedFile!.bytes!,
+        path: storagePath,
+        mimeType: _mimeType(ext),
       );
-
-      // Track progress
-      uploadTask.snapshotEvents.listen((snapshot) {
-        if (snapshot.totalBytes > 0 && mounted) {
-          setState(() => _uploadProgress =
-              snapshot.bytesTransferred / snapshot.totalBytes);
-        }
-      });
-
-      await uploadTask;
-      final downloadUrl = await storageRef.getDownloadURL();
+      setState(() => _uploadProgress = 0.8);
 
       // POST to backend /resources
       await adminApi.post('/resources', data: {

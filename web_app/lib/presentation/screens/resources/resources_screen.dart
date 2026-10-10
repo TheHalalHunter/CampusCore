@@ -1,14 +1,13 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../app/theme/app_theme.dart';
 import '../../../core/utils/responsive.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/constants/api_constants.dart';
 import '../../../core/providers/auth_provider.dart';
-
+import '../../../core/storage/supabase_storage.dart';
 import 'package:file_picker/file_picker.dart';
 
 // ── Providers ─────────────────────────────────────────────────────────────────
@@ -249,23 +248,20 @@ class _UploadDialogState extends ConsumerState<_UploadDialog> {
     setState(() { _uploading = true; _error = null; _uploadProgress = 0; });
 
     try {
-      // 1. Upload file to Firebase Storage
+      // 1. Upload file to Supabase Storage
       final user   = ref.read(currentUserProvider);
       final ext    = _fileName!.split('.').last;
       final path   = 'resources/${user?.id ?? "anon"}/${DateTime.now().millisecondsSinceEpoch}.$ext';
-      final ref_   = FirebaseStorage.instance.ref(path);
-      final task   = ref_.putData(
-        _fileBytes!,
-        SettableMetadata(contentType: _fileMime),
+
+      setState(() => _uploadProgress = 0.3);
+
+      final fileUrl = await SupabaseStorageService.uploadFile(
+        bytes: _fileBytes!,
+        path: path,
+        mimeType: _fileMime ?? 'application/octet-stream',
       );
 
-      task.snapshotEvents.listen((snap) {
-        final progress = snap.bytesTransferred / snap.totalBytes;
-        if (mounted) setState(() => _uploadProgress = progress);
-      });
-
-      await task;
-      final fileUrl = await ref_.getDownloadURL();
+      setState(() => _uploadProgress = 0.8);
 
       // 2. POST resource metadata to backend
       final api  = ref.read(apiClientProvider);
