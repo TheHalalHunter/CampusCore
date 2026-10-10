@@ -28,10 +28,11 @@ final coursesForUploadProvider =
     FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
   final api  = ref.read(apiClientProvider);
   final user = ref.read(currentUserProvider);
-  final resp = await api.get(
-    ApiConstants.courses,
-    params: user?.departmentId != null ? {'departmentId': user!.departmentId} : null,
-  );
+  // Pass departmentId if available, otherwise load all courses
+  final params = user?.departmentId != null
+      ? {'departmentId': user!.departmentId, 'limit': 100}
+      : {'limit': 100};
+  final resp = await api.get(ApiConstants.courses, params: params);
   final data = resp.data['data'];
   if (data is List) return data.cast<Map<String, dynamic>>();
   return [];
@@ -425,11 +426,16 @@ class _UploadDialogState extends ConsumerState<_UploadDialog> {
                           data: (courses) => DropdownButtonFormField<String>(
                             value: _selectedCourseId,
                             decoration: const InputDecoration(labelText: 'Course *', prefixIcon: Icon(Icons.school_outlined)),
+                            hint: courses.isEmpty
+                                ? const Text('No courses found', style: TextStyle(fontFamily: 'Nunito'))
+                                : const Text('Select a course', style: TextStyle(fontFamily: 'Nunito')),
                             items: courses.map((c) {
+                              final code  = c['courseCode']?.toString() ?? c['code']?.toString() ?? '';
+                              final title = c['title']?.toString()      ?? c['name']?.toString() ?? 'Course';
                               return DropdownMenuItem(
                                 value: c['id']?.toString(),
                                 child: Text(
-                                  '${c['code'] ?? ''} — ${c['name'] ?? ''}',
+                                  '$code — $title',
                                   overflow: TextOverflow.ellipsis,
                                   style: const TextStyle(fontSize: 13, fontFamily: 'Nunito'),
                                 ),
