@@ -21,6 +21,7 @@ import { ConnectionsModule } from "./modules/connections/connections.module";
 import { SearchModule } from "./modules/search/search.module";
 import { DiscussionsModule } from "./modules/discussions/discussions.module";
 import { GpaModule } from "./modules/gpa/gpa.module";
+import { LibraryModule } from "./modules/library/library.module";
 
 @Module({
   imports: [
@@ -91,6 +92,7 @@ import { GpaModule } from "./modules/gpa/gpa.module";
     SearchModule,
     DiscussionsModule,
     GpaModule,
+    LibraryModule,
   ],
 })
 export class AppModule {}

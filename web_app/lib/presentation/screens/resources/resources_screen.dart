@@ -556,7 +556,7 @@ class _UploadDialogState extends ConsumerState<_UploadDialog> {
 }
 
 // ── Resource Row ──────────────────────────────────────────────────────────────
-class _ResourceRow extends StatelessWidget {
+class _ResourceRow extends ConsumerWidget {
   final Map<String, dynamic> resource;
   final bool isMobile;
   final double spacing;
@@ -600,13 +600,14 @@ class _ResourceRow extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final title    = resource['title']?.toString()    ?? 'Resource';
     final fileType = resource['fileType']?.toString() ?? resource['type']?.toString() ?? 'file';
     final resType  = resource['type']?.toString()     ?? '';
     final fileUrl  = resource['fileUrl']?.toString();
     final status   = resource['status']?.toString()   ?? 'approved';
     final course   = resource['course']?['code']?.toString() ?? '';
+    final resourceId = resource['id']?.toString() ?? '';
 
     final iconData  = _iconFor(fileType);
     final iconColor = _colorFor(fileType);
@@ -651,6 +652,15 @@ class _ResourceRow extends StatelessWidget {
               ],
             ),
           ),
+          // Save to Library
+          if (resourceId.isNotEmpty)
+            IconButton(
+              icon: const Icon(Icons.bookmark_add_outlined),
+              color: AppColors.textHint,
+              iconSize: isMobile ? 18 : 22,
+              tooltip: 'Save to library',
+              onPressed: () => _saveToLibrary(context, ref, resourceId),
+            ),
           if (fileUrl != null && fileUrl.isNotEmpty && status == 'approved')
             IconButton(
               icon: const Icon(Icons.download_outlined),
@@ -667,6 +677,34 @@ class _ResourceRow extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Future<void> _saveToLibrary(
+      BuildContext context, WidgetRef ref, String resourceId) async {
+    try {
+      final api = ref.read(apiClientProvider);
+      await api.post(ApiConstants.library,
+          data: {'resourceId': resourceId});
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Saved to library 📚',
+                style: TextStyle(fontFamily: 'Nunito')),
+            backgroundColor: AppColors.success,
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Could not save: $e',
+                style: const TextStyle(fontFamily: 'Nunito')),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
   }
 }
 

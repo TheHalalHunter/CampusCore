@@ -66,4 +66,29 @@ export class UsersService {
     } = user;
     return publicData;
   }
+
+  async getLeaderboard(): Promise<
+    Pick<
+      User,
+      | "id"
+      | "fullName"
+      | "reputationPoints"
+      | "role"
+      | "academicLevel"
+      | "departmentId"
+    >[]
+  > {
+    return this.usersRepository.find({
+      select: [
+        "id",
+        "fullName",
+        "reputationPoints",
+        "role",
+        "academicLevel",
+        "departmentId",
+      ],
+      order: { reputationPoints: "DESC" },
+      take: 50,
+    });
+  }
 }

@@ -4,6 +4,7 @@ import { UsersService } from "./users.service";
 import { UpdateUserDto } from "./dto/update-user.dto";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
+import { Public } from "../../common/decorators/public.decorator";
 import { User } from "./entities/user.entity";
 
 @ApiTags("Users")
@@ -30,6 +31,13 @@ export class UsersController {
   @ApiOperation({ summary: "Accept the Academic Integrity Policy (first login)" })
   acceptPolicy(@CurrentUser("id") userId: string) {
     return this.usersService.acceptIntegrityPolicy(userId);
+  }
+
+  @Public()
+  @Get("leaderboard")
+  @ApiOperation({ summary: "Get top 50 users by reputation points" })
+  getLeaderboard() {
+    return this.usersService.getLeaderboard();
   }
 
   @Get(":id/profile")

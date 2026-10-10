@@ -54,4 +54,9 @@ class ApiConstants {
 
   // Users
   static String userProfile(String id) => '/users/$id/profile';
+  static const String leaderboard = '/users/leaderboard';
+
+  // Personal Library
+  static const String library = '/library';
+  static String libraryRemove(String resourceId) => '/library/$resourceId';
 }

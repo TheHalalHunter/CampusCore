@@ -25,6 +25,8 @@ class _AppShellState extends ConsumerState<AppShell> {
     (label: 'Notifications', route: '/notifications',  icon: Icons.notifications_outlined),
     (label: 'Progress',      route: '/progress',       icon: Icons.trending_up_outlined),
     (label: 'AI Assist',     route: '/ai',             icon: Icons.auto_awesome_outlined),
+    (label: 'Leaderboard',   route: '/leaderboard',    icon: Icons.leaderboard_outlined),
+    (label: 'Library',       route: '/library',        icon: Icons.bookmark_outline),
     (label: 'Profile',       route: '/profile',        icon: Icons.person_outlined),
   ];
 

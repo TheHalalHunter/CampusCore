@@ -12,9 +12,10 @@ import '../../presentation/screens/community/community_screen.dart';
 import '../../presentation/screens/progress/progress_screen.dart';
 import '../../presentation/screens/ai/ai_screen.dart';
 import '../../presentation/screens/profile/profile_screen.dart';
-import '../../presentation/screens/coming_soon/coming_soon_screen.dart';
 import '../../presentation/screens/connections/connections_screen.dart';
 import '../../presentation/screens/notifications/notifications_screen.dart';
+import '../../presentation/screens/leaderboard/leaderboard_screen.dart';
+import '../../presentation/screens/library/library_screen.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   final notifier = _AuthChangeNotifier(ref);
@@ -67,11 +68,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/leaderboard',
             name: 'leaderboard',
-            builder: (_, __) => const ComingSoonScreen(
-              featureName: 'Leaderboard',
-              description: 'See top contributors in your department, earn badges, and climb the reputation ranks. Coming soon!',
-              icon: Icons.leaderboard_outlined,
-            ),
+            builder: (_, __) => const LeaderboardScreen(),
+          ),
+          GoRoute(
+            path: '/library',
+            name: 'library',
+            builder: (_, __) => const LibraryScreen(),
           ),
         ],
       ),
