@@ -1,0 +1,52 @@
+CampusCore — 4-Feature Review Fix Verification
+================================================
+Run date   : 2025-10-07
+Git commit : 00239fc
+Branch     : main
+
+REVIEW FINDINGS FIXED
+─────────────────────
+Finding 1 (hardcoded-medal-colors) — FIXED
+  • Added AppColors.gold   = Color(0xFFFFD700) to app_theme.dart
+  • Added AppColors.bronze = Color(0xFFCD7F32) to app_theme.dart
+  • Replaced Color(0xFFFFD700) and Color(0xFFCD7F32) literals in
+    leaderboard_screen.dart with AppColors.gold / AppColors.bronze
+  • Grep check: no Color(0xFF...) literals remain in leaderboard_screen.dart ✓
+
+Finding 2 (createdAt-overwrite) — FIXED
+  • _saveCurrentConversation now looks up the existing conversation
+    in _conversations by _currentConvId before constructing the map
+  • createdAt is carried forward from the existing entry; only falls
+    back to DateTime.now().toIso8601String() when no prior entry exists
+    (i.e., a brand-new conversation being persisted for the first time)
+  • updatedAt is still always stamped with DateTime.now() ✓
+
+VERIFICATION COMMANDS RUN
+─────────────────────────
+1. flutter analyze (web_app/)
+   Command  : flutter analyze
+   Result   : 359 issues (all info/warning level)
+   Errors in changed files: 0
+   All errors are pre-existing in lib/dataconnect_generated/ —
+   unrelated to the 4-feature implementation or these fixes.
+   Changed files checked (no errors):
+     - web_app/lib/app/theme/app_theme.dart
+     - web_app/lib/presentation/screens/leaderboard/leaderboard_screen.dart
+     - web_app/lib/presentation/screens/ai/ai_screen.dart
+
+2. npm run lint (backend/)
+   Command  : npm run lint
+   Result   : SKIPPED — node_modules/.bin is empty (no local eslint binary)
+   npm install timed out in the sandbox environment (no internet access).
+   Backend changed files were manually reviewed for correctness:
+     - users.controller.ts  : @Public() on leaderboard, placed before :id/profile ✓
+     - users.service.ts     : getLeaderboard() uses TypeORM .find() with select/order/take ✓
+     - library/*.ts         : idempotent save, NotFoundException on missing resource ✓
+
+COMMIT
+──────
+feat: leaderboard, personal library, AI chat history, homepage redesign
+  — commit d47b8ac (original 4-feature implementation)
+
+fix: resolve review findings — AppColors medal constants, preserve createdAt in AI history
+  — commit 00239fc (review fixes)
