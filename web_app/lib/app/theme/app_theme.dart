@@ -49,6 +49,10 @@ class AppColors {
   static const Color white = Color(0xFFFFFFFF);
   static const Color black = Color(0xFF000000);
 
+  // ── Medal colors (leaderboard) ────────────────────────────────────────────
+  static const Color gold   = Color(0xFFFFD700);
+  static const Color bronze = Color(0xFFCD7F32);
+
   // ── Shadows ───────────────────────────────────────────────────────────────
   /// Soft upward shadow used on sticky bottom bars and floating surfaces.
   static const Color shadow = Color(0x14000000);

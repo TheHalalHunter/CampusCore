@@ -302,13 +302,13 @@ class _LeaderboardTile extends StatelessWidget {
   Widget _rankWidget() {
     if (rank == 1) {
       return const Icon(Icons.emoji_events,
-          color: Color(0xFFFFD700), size: 28);
+          color: AppColors.gold, size: 28);
     } else if (rank == 2) {
       return const Icon(Icons.emoji_events,
           color: AppColors.grey400, size: 28);
     } else if (rank == 3) {
       return const Icon(Icons.emoji_events,
-          color: Color(0xFFCD7F32), size: 28);
+          color: AppColors.bronze, size: 28);
     }
     return SizedBox(
       width: 28,

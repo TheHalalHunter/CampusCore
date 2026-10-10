@@ -253,11 +253,18 @@ class _AiScreenState extends ConsumerState<AiScreen> {
   }
 
   Future<void> _saveCurrentConversation(List<_Message> messages) async {
+    // Preserve the original createdAt — only fall back to now() for brand-new conversations.
+    final existing = _conversations.firstWhere(
+      (c) => c['id']?.toString() == _currentConvId,
+      orElse: () => <String, dynamic>{},
+    );
+    final createdAt = existing['createdAt']?.toString() ?? DateTime.now().toIso8601String();
+
     final conv = {
       'id':        _currentConvId,
       'title':     _currentTitle,
       'messages':  messages.map((m) => m.toJson()).toList(),
-      'createdAt': DateTime.now().toIso8601String(),
+      'createdAt': createdAt,
       'updatedAt': DateTime.now().toIso8601String(),
     };
     await ConversationStorage.saveConversation(conv);
