@@ -14,8 +14,15 @@ import 'package:file_picker/file_picker.dart';
 final resourcesProvider =
     FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
   final api  = ref.read(apiClientProvider);
-  final resp = await api.get(ApiConstants.resources, params: {'limit': 50});
+  final user = ref.read(currentUserProvider);
+  final params = <String, dynamic>{'limit': 50};
+  if (user?.departmentId != null) params['departmentId'] = user!.departmentId;
+  final resp = await api.get(ApiConstants.resources, params: params);
   final data = resp.data['data'];
+  // Handle tuple: [[...resources], count]
+  if (data is List && data.isNotEmpty && data[0] is List) {
+    return (data[0] as List).cast<Map<String, dynamic>>();
+  }
   if (data is List) return data.cast<Map<String, dynamic>>();
   if (data is Map) {
     final items = data['items'] ?? data['data'];
