@@ -26,7 +26,7 @@ export class AiService {
     private readonly usageRepo: Repository<AiUsage>,
   ) {
     const apiKey = config.get<string>("GEMINI_API_KEY") || "";
-    this.model = config.get<string>("GEMINI_MODEL") || "gemini-2.5-flash";
+    this.model = config.get<string>("GEMINI_MODEL") || "gemini-2.0-flash-001";
     this.ai = new GoogleGenAI({ apiKey });
     this.logger.log(`AI: using Gemini (${this.model})`);
   }
@@ -35,8 +35,10 @@ export class AiService {
     contents: string,
     systemInstruction?: string,
   ): Promise<string> {
+    // @google/genai expects model name without 'models/' prefix
+    const modelName = this.model.replace(/^models\//, "");
     const response = await this.ai.models.generateContent({
-      model: this.model,
+      model: modelName,
       contents,
       ...(systemInstruction ? { config: { systemInstruction } } : {}),
     });
