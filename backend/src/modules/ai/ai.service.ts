@@ -2,7 +2,7 @@ import { Injectable, BadRequestException, Logger } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { ConfigService } from "@nestjs/config";
-import OpenAI from "openai";
+import { GoogleGenAI } from "@google/genai";
 import { AiUsage, AiAction } from "./entities/ai-usage.entity";
 
 const EXAM_CHEAT_PATTERNS = [
@@ -17,7 +17,7 @@ const EXAM_CHEAT_PATTERNS = [
 @Injectable()
 export class AiService {
   private readonly logger = new Logger(AiService.name);
-  private openai: OpenAI;
+  private ai: GoogleGenAI;
   private model: string;
 
   constructor(
@@ -25,44 +25,22 @@ export class AiService {
     @InjectRepository(AiUsage)
     private readonly usageRepo: Repository<AiUsage>,
   ) {
-    // Gemini supports OpenAI-compatible API via this base URL
-    const geminiKey = config.get<string>("GEMINI_API_KEY");
-    const openaiKey = config.get<string>("OPENAI_API_KEY");
-
-    if (geminiKey) {
-      this.openai = new OpenAI({
-        apiKey: geminiKey,
-        baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/",
-      });
-      this.model = config.get<string>("GEMINI_MODEL") || "gemini-1.5-flash";
-      this.logger.log(`AI: using Gemini (${this.model})`);
-    } else {
-      this.openai = new OpenAI({
-        apiKey: openaiKey || "",
-        baseURL: config.get("OPENAI_BASE_URL") || "https://api.openai.com/v1",
-      });
-      this.model = config.get<string>("OPENAI_MODEL") || "gpt-4o-mini";
-      this.logger.log(`AI: using OpenAI-compatible (${this.model})`);
-    }
+    const apiKey = config.get<string>("GEMINI_API_KEY") || "";
+    this.model = config.get<string>("GEMINI_MODEL") || "gemini-2.5-flash";
+    this.ai = new GoogleGenAI({ apiKey });
+    this.logger.log(`AI: using Gemini (${this.model})`);
   }
 
   private async generate(
-    userPrompt: string,
-    systemPrompt?: string,
+    contents: string,
+    systemInstruction?: string,
   ): Promise<string> {
-    const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [];
-    if (systemPrompt) {
-      messages.push({ role: "system", content: systemPrompt });
-    }
-    messages.push({ role: "user", content: userPrompt });
-
-    const response = await this.openai.chat.completions.create({
+    const response = await this.ai.models.generateContent({
       model: this.model,
-      messages,
-      max_tokens: 2000,
+      contents,
+      ...(systemInstruction ? { config: { systemInstruction } } : {}),
     });
-
-    return response.choices?.[0]?.message?.content || "";
+    return response.text ?? "";
   }
 
   private async logUsage(
@@ -81,7 +59,7 @@ export class AiService {
   }
 
   private detectExamCheat(prompt: string): boolean {
-    return EXAM_CHEAT_PATTERNS.some((pattern) => pattern.test(prompt));
+    return EXAM_CHEAT_PATTERNS.some((p) => p.test(prompt));
   }
 
   private extractJson(content: string): any {
