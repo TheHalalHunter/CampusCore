@@ -2,7 +2,7 @@ import { Injectable, BadRequestException, Logger } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { ConfigService } from "@nestjs/config";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenAI } from "@google/genai";
 import { AiUsage, AiAction } from "./entities/ai-usage.entity";
 
 const EXAM_CHEAT_PATTERNS = [
@@ -17,7 +17,7 @@ const EXAM_CHEAT_PATTERNS = [
 @Injectable()
 export class AiService {
   private readonly logger = new Logger(AiService.name);
-  private genAI: GoogleGenerativeAI;
+  private genAI: GoogleGenAI;
   private model: string;
 
   constructor(
@@ -27,16 +27,16 @@ export class AiService {
   ) {
     const apiKey = config.get<string>("GEMINI_API_KEY") || config.get<string>("OPENAI_API_KEY") || "";
     this.model   = config.get<string>("GEMINI_MODEL") || config.get<string>("OPENAI_MODEL") || "gemini-1.5-flash";
-    this.genAI   = new GoogleGenerativeAI(apiKey);
+    this.genAI   = new GoogleGenAI({ apiKey });
   }
 
   private async generate(prompt: string, systemInstruction?: string): Promise<string> {
-    const model = this.genAI.getGenerativeModel({
+    const result = await this.genAI.models.generateContent({
       model: this.model,
-      ...(systemInstruction ? { systemInstruction } : {}),
+      contents: prompt,
+      ...(systemInstruction ? { config: { systemInstruction } } : {}),
     });
-    const result = await model.generateContent(prompt);
-    return result.response.text();
+    return result.text ?? "";
   }
 
   private async logUsage(
