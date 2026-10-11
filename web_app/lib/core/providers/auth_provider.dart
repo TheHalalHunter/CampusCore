@@ -16,6 +16,7 @@ class AppUser {
   final int? reputationPoints;
   final String? level;
   final String? departmentId;
+  final String? phone;
 
   const AppUser({
     required this.id,
@@ -27,6 +28,7 @@ class AppUser {
     this.reputationPoints,
     this.level,
     this.departmentId,
+    this.phone,
   });
 
   String get fullName => '$firstName $lastName';
@@ -37,16 +39,24 @@ class AppUser {
   }
 
   factory AppUser.fromJson(Map<String, dynamic> json) {
+    // Backend returns fullName — split into first/last
+    final fullName = json['fullName']?.toString() ?? '';
+    final parts    = fullName.trim().split(' ');
+    final firstName = json['firstName']?.toString() ??
+        (parts.isNotEmpty ? parts.first : '');
+    final lastName  = json['lastName']?.toString() ??
+        (parts.length > 1 ? parts.sublist(1).join(' ') : '');
     return AppUser(
-      id:               json['id']?.toString()        ?? '',
-      email:            json['email']?.toString()      ?? '',
-      firstName:        json['firstName']?.toString()  ?? '',
-      lastName:         json['lastName']?.toString()   ?? '',
-      role:             json['role']?.toString()        ?? 'student',
-      avatarUrl:        json['avatarUrl']?.toString(),
+      id:               json['id']?.toString()              ?? '',
+      email:            json['email']?.toString()            ?? '',
+      firstName:        firstName,
+      lastName:         lastName,
+      role:             json['role']?.toString()             ?? 'student',
+      avatarUrl:        json['avatarUrl']?.toString()        ?? json['avatar']?.toString(),
       reputationPoints: json['reputationPoints'] as int?,
-      level:            json['level']?.toString(),
-      departmentId:     json['departmentId']?.toString(),
+      level:            json['academicLevel']?.toString()    ?? json['level']?.toString(),
+      departmentId:     json['departmentId']?.toString()     ?? json['department_id']?.toString(),
+      phone:            json['phone']?.toString(),
     );
   }
 
@@ -54,7 +64,7 @@ class AppUser {
     'id': id, 'email': email, 'firstName': firstName,
     'lastName': lastName, 'role': role, 'avatarUrl': avatarUrl,
     'reputationPoints': reputationPoints, 'level': level,
-    'departmentId': departmentId,
+    'departmentId': departmentId, 'phone': phone,
   };
 }
 
@@ -241,12 +251,16 @@ class AuthNotifier extends StateNotifier<AuthState> {
   Future<String?> updateProfile({
     required String firstName,
     required String lastName,
+    String? phone,
   }) async {
     state = state.copyWith(isLoading: true, clearError: true);
     try {
-      final resp = await _api.patch(ApiConstants.updateProfile, data: {
+      final body = <String, dynamic>{
         'fullName': '$firstName $lastName',
-      });
+      };
+      if (phone != null && phone.isNotEmpty) body['phone'] = phone;
+
+      final resp = await _api.patch(ApiConstants.updateProfile, data: body);
       final body = resp.data as Map<String, dynamic>;
       if (body['success'] != true) {
         state = state.copyWith(isLoading: false, error: body['message']?.toString() ?? 'Update failed');

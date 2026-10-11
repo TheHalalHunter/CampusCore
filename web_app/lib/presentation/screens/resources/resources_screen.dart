@@ -605,7 +605,13 @@ class _ResourceRow extends ConsumerWidget {
   Future<void> _open(String? url) async {
     if (url == null || url.isEmpty) return;
     final uri = Uri.tryParse(url);
-    if (uri != null) await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (uri != null) await launchUrl(uri, mode: LaunchMode.platformDefault);
+  }
+
+  Future<void> _openInBrowser(String? url) async {
+    if (url == null || url.isEmpty) return;
+    final uri = Uri.tryParse(url);
+    if (uri != null) await launchUrl(uri, mode: LaunchMode.platformDefault);
   }
 
   @override
@@ -670,15 +676,22 @@ class _ResourceRow extends ConsumerWidget {
               tooltip: 'Save to library',
               onPressed: () => _saveToLibrary(context, ref, resourceId),
             ),
-          if (fileUrl != null && fileUrl.isNotEmpty && status == 'approved')
+          if (fileUrl != null && fileUrl.isNotEmpty && status == 'approved') ...[
+            IconButton(
+              icon: const Icon(Icons.visibility_outlined),
+              color: AppColors.success,
+              iconSize: isMobile ? 18 : 22,
+              tooltip: 'View / Read',
+              onPressed: () => _openInBrowser(fileUrl),
+            ),
             IconButton(
               icon: const Icon(Icons.download_outlined),
               color: AppColors.primary,
               iconSize: isMobile ? 18 : 22,
               tooltip: 'Download',
               onPressed: () => _open(fileUrl),
-            )
-          else if (status == 'pending')
+            ),
+          ] else if (status == 'pending')
             const Padding(
               padding: EdgeInsets.all(8),
               child: Icon(Icons.hourglass_empty_outlined, color: AppColors.warning, size: 18),

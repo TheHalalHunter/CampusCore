@@ -15,6 +15,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   final _formKey       = GlobalKey<FormState>();
   final _firstNameCtrl = TextEditingController();
   final _lastNameCtrl  = TextEditingController();
+  final _phoneCtrl     = TextEditingController();
   bool _editing  = false;
   bool _saving   = false;
   String? _successMsg;
@@ -25,12 +26,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final user = ref.read(currentUserProvider);
     _firstNameCtrl.text = user?.firstName ?? '';
     _lastNameCtrl.text  = user?.lastName  ?? '';
+    _phoneCtrl.text     = user?.phone     ?? '';
   }
 
   @override
   void dispose() {
     _firstNameCtrl.dispose();
     _lastNameCtrl.dispose();
+    _phoneCtrl.dispose();
     super.dispose();
   }
 
@@ -41,6 +44,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final error = await ref.read(authProvider.notifier).updateProfile(
       firstName: _firstNameCtrl.text.trim(),
       lastName:  _lastNameCtrl.text.trim(),
+      phone:     _phoneCtrl.text.trim(),
     );
 
     setState(() {
@@ -203,6 +207,18 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                               helperText: 'Email cannot be changed here.',
                             ),
                           ),
+                          const SizedBox(height: 16),
+
+                          // Phone
+                          TextFormField(
+                            controller: _phoneCtrl,
+                            enabled: _editing,
+                            keyboardType: TextInputType.phone,
+                            decoration: const InputDecoration(
+                              labelText: 'Phone Number (optional)',
+                              prefixIcon: Icon(Icons.phone_outlined),
+                            ),
+                          ),
 
                           // Error
                           if (authState.error != null) ...[
@@ -265,6 +281,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                             final u = ref.read(currentUserProvider);
                                             _firstNameCtrl.text = u?.firstName ?? '';
                                             _lastNameCtrl.text  = u?.lastName  ?? '';
+                                            _phoneCtrl.text     = u?.phone     ?? '';
                                             setState(() => _editing = false);
                                           },
                                     child: const Text('Cancel'),
