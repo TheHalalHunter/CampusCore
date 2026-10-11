@@ -7,6 +7,7 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { User } from "./entities/user.entity";
 import { UpdateUserDto } from "./dto/update-user.dto";
+import { UserRole } from "./enums/user-role.enum";
 
 @Injectable()
 export class UsersService {
@@ -87,6 +88,7 @@ export class UsersService {
         "academicLevel",
         "departmentId",
       ],
+      where: { isActive: true, role: UserRole.STUDENT },
       order: { reputationPoints: "DESC" },
       take: 50,
     });

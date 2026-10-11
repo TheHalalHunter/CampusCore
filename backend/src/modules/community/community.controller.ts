@@ -66,7 +66,13 @@ export class CommunityController {
   @ApiOperation({ summary: "Post a new question" })
   async postQuestion(@CurrentUser() user: User, @Body() dto: PostQuestionDto) {
     await this.checkDiscussionsLock(user);
-    return this.service.postQuestion(user.id, dto);
+    // Auto-fill department and level from user if not provided
+    const data = {
+      ...dto,
+      departmentId:  dto.departmentId  || user.departmentId  || undefined,
+      academicLevel: dto.academicLevel || user.academicLevel  || undefined,
+    };
+    return this.service.postQuestion(user.id, data);
   }
 
   @Post("questions/:id/answers")
