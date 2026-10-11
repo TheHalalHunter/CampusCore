@@ -2,7 +2,7 @@ import { Injectable, BadRequestException, Logger } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { ConfigService } from "@nestjs/config";
-import OpenAI from "openai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import { AiUsage, AiAction } from "./entities/ai-usage.entity";
 
 const EXAM_CHEAT_PATTERNS = [
@@ -17,7 +17,7 @@ const EXAM_CHEAT_PATTERNS = [
 @Injectable()
 export class AiService {
   private readonly logger = new Logger(AiService.name);
-  private openai: OpenAI;
+  private genAI: GoogleGenerativeAI;
   private model: string;
 
   constructor(
@@ -25,23 +25,29 @@ export class AiService {
     @InjectRepository(AiUsage)
     private readonly usageRepo: Repository<AiUsage>,
   ) {
-    this.openai = new OpenAI({
-      apiKey: config.get("OPENAI_API_KEY"),
-      baseURL: config.get("OPENAI_BASE_URL") || "https://api.openai.com/v1",
+    const apiKey = config.get<string>("GEMINI_API_KEY") || config.get<string>("OPENAI_API_KEY") || "";
+    this.model   = config.get<string>("GEMINI_MODEL") || config.get<string>("OPENAI_MODEL") || "gemini-1.5-flash";
+    this.genAI   = new GoogleGenerativeAI(apiKey);
+  }
+
+  private async generate(prompt: string, systemInstruction?: string): Promise<string> {
+    const model = this.genAI.getGenerativeModel({
+      model: this.model,
+      ...(systemInstruction ? { systemInstruction } : {}),
     });
-    this.model = config.get("OPENAI_MODEL", "gpt-4o-mini");
+    const result = await model.generateContent(prompt);
+    return result.response.text();
   }
 
   private async logUsage(
     userId: string,
     action: AiAction,
     prompt: string,
-    tokensUsed?: number,
     courseContext?: string,
   ): Promise<void> {
     try {
       await this.usageRepo.save(
-        this.usageRepo.create({ userId, action, prompt, tokensUsed, courseContext }),
+        this.usageRepo.create({ userId, action, prompt, courseContext }),
       );
     } catch {
       // Non-critical — never block AI response on log failure
@@ -54,29 +60,11 @@ export class AiService {
 
   /** Extract JSON from a response that may contain markdown code fences */
   private extractJson(content: string): any {
-    // Strip markdown code fences if present
     const stripped = content
       .replace(/```json\s*/gi, "")
       .replace(/```\s*/gi, "")
       .trim();
     return JSON.parse(stripped);
-  }
-
-  /** Safely extract text content from an OpenAI-compatible response.
-   *  Handles both standard OpenAI and alternative providers (e.g. AgentRouter)
-   *  that may return the message nested differently. */
-  private extractContent(response: any): string | null {
-    // Standard OpenAI format
-    if (response?.choices?.[0]?.message?.content) {
-      return response.choices[0].message.content;
-    }
-    // Some providers put content directly on the response
-    if (response?.content) return response.content;
-    if (response?.text) return response.text;
-    if (response?.message?.content) return response.message.content;
-    // Log the actual response shape for debugging
-    this.logger?.warn?.('Unexpected AI response shape: ' + JSON.stringify(response)?.substring(0, 200));
-    return null;
   }
 
   async explain(
@@ -90,41 +78,17 @@ export class AiService {
       );
     }
 
-    const systemPrompt = courseContext
+    const system = courseContext
       ? `You are an academic tutor helping a Nigerian university student studying ${courseContext}. Explain concepts clearly in simple English. Be educational and concise.`
       : `You are an academic tutor helping a Nigerian university student. Explain concepts clearly in simple English.`;
 
-    const response = await this.openai.chat.completions.create({
-      model: this.model,
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: `Please explain: ${concept}` },
-      ],
-      max_tokens: 1000,
-    });
-
-    const result = this.extractContent(response) || "Unable to generate explanation.";
-    await this.logUsage(
-      userId,
-      AiAction.EXPLAIN,
-      concept,
-      response.usage?.total_tokens,
-      courseContext,
-    );
+    const result = await this.generate(`Please explain: ${concept}`, system);
+    await this.logUsage(userId, AiAction.EXPLAIN, concept, courseContext);
     return result;
   }
 
-  async generateQuiz(
-    userId: string,
-    topic: string,
-    count = 5,
-  ): Promise<object[]> {
-    const response = await this.openai.chat.completions.create({
-      model: this.model,
-      messages: [
-        {
-          role: "system",
-          content: `You are an academic quiz generator for Nigerian university students. 
+  async generateQuiz(userId: string, topic: string, count = 5): Promise<object[]> {
+    const system = `You are an academic quiz generator for Nigerian university students. 
 Respond ONLY with a valid JSON object (no markdown, no explanation) in this exact format:
 {
   "questions": [
@@ -136,25 +100,12 @@ Respond ONLY with a valid JSON object (no markdown, no explanation) in this exac
     }
   ]
 }
-Generate exactly ${count} questions. correctAnswer is the 0-indexed position of the correct option.`,
-        },
-        {
-          role: "user",
-          content: `Generate ${count} MCQ questions about: ${topic}`,
-        },
-      ],
-      max_tokens: 2000,
-    });
+Generate exactly ${count} questions. correctAnswer is the 0-indexed position of the correct option.`;
 
-    await this.logUsage(
-      userId,
-      AiAction.QUIZ,
-      topic,
-      response.usage?.total_tokens,
-    );
+    const result = await this.generate(`Generate ${count} MCQ questions about: ${topic}`, system);
+    await this.logUsage(userId, AiAction.QUIZ, topic);
     try {
-      const content = this.extractContent(response) || '{"questions":[]}';
-      const parsed = this.extractJson(content);
+      const parsed = this.extractJson(result);
       return parsed.questions || [];
     } catch {
       return [];
@@ -162,65 +113,26 @@ Generate exactly ${count} questions. correctAnswer is the 0-indexed position of 
   }
 
   async summarize(userId: string, text: string): Promise<string> {
-    const response = await this.openai.chat.completions.create({
-      model: this.model,
-      messages: [
-        {
-          role: "system",
-          content:
-            "You are a study assistant for Nigerian university students. Summarize the provided academic content concisely. Highlight key points using bullet points where appropriate.",
-        },
-        { role: "user", content: `Summarize this:\n\n${text}` },
-      ],
-      max_tokens: 600,
-    });
-
-    const result = this.extractContent(response) || "Unable to summarize.";
-    await this.logUsage(
-      userId,
-      AiAction.SUMMARIZE,
-      text.substring(0, 500), // truncate long text for the log
-      response.usage?.total_tokens,
-    );
+    const system = "You are a study assistant for Nigerian university students. Summarize the provided academic content concisely. Highlight key points using bullet points where appropriate.";
+    const result = await this.generate(`Summarize this:\n\n${text}`, system);
+    await this.logUsage(userId, AiAction.SUMMARIZE, text.substring(0, 500));
     return result;
   }
 
-  async generateFlashcards(
-    userId: string,
-    topic: string,
-    count = 10,
-  ): Promise<object[]> {
-    const response = await this.openai.chat.completions.create({
-      model: this.model,
-      messages: [
-        {
-          role: "system",
-          content: `You are a study assistant. 
+  async generateFlashcards(userId: string, topic: string, count = 10): Promise<object[]> {
+    const system = `You are a study assistant. 
 Respond ONLY with a valid JSON object (no markdown, no explanation) in this exact format:
 {
   "flashcards": [
     { "front": "term or question", "back": "definition or answer" }
   ]
 }
-Generate exactly ${count} flashcards.`,
-        },
-        {
-          role: "user",
-          content: `Create ${count} flashcards for the topic: ${topic}`,
-        },
-      ],
-      max_tokens: 1500,
-    });
+Generate exactly ${count} flashcards.`;
 
-    await this.logUsage(
-      userId,
-      AiAction.FLASHCARDS,
-      topic,
-      response.usage?.total_tokens,
-    );
+    const result = await this.generate(`Create ${count} flashcards for the topic: ${topic}`, system);
+    await this.logUsage(userId, AiAction.FLASHCARDS, topic);
     try {
-      const content = this.extractContent(response) || '{"flashcards":[]}';
-      const parsed = this.extractJson(content);
+      const parsed = this.extractJson(result);
       return parsed.flashcards || [];
     } catch {
       return [];
@@ -232,32 +144,17 @@ Generate exactly ${count} flashcards.`,
     courseTitle: string,
     recentTopics: string[],
   ): Promise<string[]> {
-    const response = await this.openai.chat.completions.create({
-      model: this.model,
-      messages: [
-        {
-          role: "system",
-          content: `You are an academic advisor for Nigerian university students.
+    const system = `You are an academic advisor for Nigerian university students.
 Respond ONLY with a valid JSON object (no markdown) in this format:
-{ "topics": ["topic1", "topic2", "topic3"] }`,
-        },
-        {
-          role: "user",
-          content: `Course: ${courseTitle}\nRecent topics covered: ${recentTopics.join(", ")}\n\nWhat are the most likely exam topics?`,
-        },
-      ],
-      max_tokens: 400,
-    });
+{ "topics": ["topic1", "topic2", "topic3"] }`;
 
-    await this.logUsage(
-      userId,
-      AiAction.PREDICT,
-      `${courseTitle}: ${recentTopics.join(", ")}`,
-      response.usage?.total_tokens,
+    const result = await this.generate(
+      `Course: ${courseTitle}\nRecent topics covered: ${recentTopics.join(", ")}\n\nWhat are the most likely exam topics?`,
+      system,
     );
+    await this.logUsage(userId, AiAction.PREDICT, `${courseTitle}: ${recentTopics.join(", ")}`);
     try {
-      const content = this.extractContent(response) || '{"topics":[]}';
-      const parsed = this.extractJson(content);
+      const parsed = this.extractJson(result);
       return parsed.topics || [];
     } catch {
       return [];
