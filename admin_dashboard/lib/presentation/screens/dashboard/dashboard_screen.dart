@@ -161,15 +161,15 @@ class _RecentActivity extends ConsumerWidget {
               trailing: const Icon(Icons.arrow_forward_ios,
                   size: 12, color: AdminColors.grey600),
             ),
-            ListTile(
+            const ListTile(
               dense: true,
-              leading: const Icon(Icons.check_circle_outline,
+              leading: Icon(Icons.check_circle_outline,
                   color: AdminColors.success, size: 20),
-              title: const Text('Platform is running normally',
+              title: Text('Platform is running normally',
                   style: TextStyle(
                       color: AdminColors.grey900,
                       fontWeight: FontWeight.w500)),
-              trailing: const Icon(Icons.arrow_forward_ios,
+              trailing: Icon(Icons.arrow_forward_ios,
                   size: 12, color: AdminColors.grey600),
             ),
           ],
@@ -361,86 +361,3 @@ class _UsersByRoleBarChart extends StatelessWidget {
   }
 }
 
-class _RoleBreakdownChart extends StatelessWidget {
-  final List byRole;
-  const _RoleBreakdownChart({required this.byRole});
-
-  @override
-  Widget build(BuildContext context) {
-    // Map role name to color
-    final colors = {
-      'student': AdminColors.primary,
-      'moderator': AdminColors.accent,
-      'lecturer': AdminColors.info,
-      'admin': AdminColors.grey600,
-    };
-
-    final sections = byRole.map<PieChartSectionData>((r) {
-      final role = r['role'] as String? ?? '';
-      final count = double.tryParse(r['count'].toString()) ?? 0;
-      final color = colors[role] ?? AdminColors.grey300;
-      return PieChartSectionData(
-        value: count,
-        color: color,
-        title: count > 0 ? '${count.toInt()}' : '',
-        radius: 50,
-        titleStyle:
-            const TextStyle(color: Colors.white, fontSize: 10),
-      );
-    }).toList();
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Users by Role',
-                style: TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 16,
-                    color: AdminColors.grey900)),
-            const SizedBox(height: 20),
-            SizedBox(
-              height: 160,
-              child: sections.isEmpty
-                  ? const Center(
-                      child: Text('No data',
-                          style: TextStyle(
-                              color: AdminColors.grey600)))
-                  : PieChart(PieChartData(
-                      sectionsSpace: 3,
-                      centerSpaceRadius: 36,
-                      sections: sections,
-                    )),
-            ),
-            const SizedBox(height: 12),
-            // Legend
-            Wrap(
-              spacing: 12,
-              runSpacing: 6,
-              children: colors.entries.map((e) => Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                      width: 10,
-                      height: 10,
-                      decoration: BoxDecoration(
-                          color: e.value,
-                          shape: BoxShape.circle)),
-                  const SizedBox(width: 4),
-                  Text(
-                    '${e.key[0].toUpperCase()}${e.key.substring(1)}',
-                    style: const TextStyle(
-                        fontSize: 11,
-                        color: AdminColors.grey600),
-                  ),
-                ],
-              )).toList(),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}

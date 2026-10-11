@@ -8,9 +8,11 @@ import '../../../core/providers/auth_provider.dart';
 
 // ── Provider ──────────────────────────────────────────────────────────────────
 final questionsProvider = FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
-  // Wait until auth is initialized; avoid firing unauthenticated requests
+  // Wait until auth is initialized; avoid firing unauthenticated requests.
+  // Return empty list (not an error) so the screen shows the loading skeleton
+  // rather than the Retry widget while Firebase finishes async init.
   final authState = ref.watch(authProvider);
-  if (!authState.initialized) throw Exception('Auth not ready');
+  if (!authState.initialized) return [];
 
   final api  = ref.watch(apiClientProvider);
   final resp = await api.get(ApiConstants.questions, params: {'limit': 30});
