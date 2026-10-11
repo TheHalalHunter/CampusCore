@@ -261,12 +261,12 @@ class AuthNotifier extends StateNotifier<AuthState> {
       if (phone != null && phone.isNotEmpty) body['phone'] = phone;
 
       final resp = await _api.patch(ApiConstants.updateProfile, data: body);
-      final body = resp.data as Map<String, dynamic>;
-      if (body['success'] != true) {
-        state = state.copyWith(isLoading: false, error: body['message']?.toString() ?? 'Update failed');
-        return body['message']?.toString() ?? 'Update failed';
+      final respBody = resp.data as Map<String, dynamic>;
+      if (respBody['success'] != true) {
+        state = state.copyWith(isLoading: false, error: respBody['message']?.toString() ?? 'Update failed');
+        return respBody['message']?.toString() ?? 'Update failed';
       }
-      final data = body['data'] as Map<String, dynamic>? ?? {};
+      final data = respBody['data'] as Map<String, dynamic>? ?? {};
       final updated = AppUser.fromJson({...state.user!.toJson(), ...data});
       await TokenStorage.saveUser(jsonEncode(updated.toJson()));
       state = state.copyWith(user: updated, isLoading: false);
