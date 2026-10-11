@@ -1,0 +1,62 @@
+## Verification Results — CampusCore Multi-Fix
+
+Date: iteration 1
+
+---
+
+### web_app flutter analyze
+Command: flutter analyze (run in web_app/)
+Result: 362 issues (all pre-existing lint/info level in dataconnect_generated/ and 
+        other unchanged files). ZERO errors in files changed by this task:
+        - lib/main.dart
+        - lib/core/network/api_client.dart
+        - lib/core/providers/auth_provider.dart
+        - lib/presentation/screens/community/community_screen.dart
+        - lib/presentation/screens/courses/course_detail_screen.dart
+        Pre-existing errors: FirebaseDataConnect undefined class in
+        lib/dataconnect_generated/* — NOT introduced by this task.
+
+### admin_dashboard flutter analyze
+Command: flutter analyze (run in admin_dashboard/)
+Result: 340 issues (all pre-existing lint/info level in dataconnect_generated/ and
+        other unchanged files). ZERO errors in files changed by this task:
+        - lib/main.dart
+        - lib/presentation/screens/dashboard/dashboard_screen.dart
+
+### web_app flutter build web --release
+Command: flutter build web --release (run in web_app/)
+Result: SUCCESS — "√ Built build\web" (377s)
+        The previously failing 'body is already declared' compile error is gone.
+        Wasm dry-run warning produced exit code 1 (cosmetic warning, not a failure).
+
+---
+
+### Changes made per fix
+
+Fix 1 – Community screen (community_screen.dart):
+  - Added import for auth_provider.dart
+  - Changed ref.read(apiClientProvider) → ref.watch(apiClientProvider) in questionsProvider
+  - Added authProvider watch + initialized guard to avoid unauthenticated requests
+
+Fix 2 – Course resources (course_detail_screen.dart):
+  - Changed ref.read → ref.watch in courseResourcesProvider
+  - Reordered data parsing: check TypeORM tuple [items[], count] before flat list
+  - Also fixed courseDetailProvider to use ref.watch
+
+Fix 3 – API timeout (api_client.dart):
+  - Increased receiveTimeout from 15s to 30s
+
+Fix 4 – Ask AI Tutor button (course_detail_screen.dart):
+  - Changed onPressed: () {} → onPressed: () => context.go('/ai')
+
+Fix 5 – Admin growth chart (dashboard_screen.dart):
+  - Removed _UserGrowthChart (hardcoded LineChart with fake data)
+  - Replaced charts Row with _UsersByRoleBarChart using real byRole data from statsProvider
+  - New widget renders BarChart with AdminColors per role (student/moderator/lecturer/admin)
+
+Fix 6 – Keep-alive ping web_app (web_app/lib/main.dart):
+  - Added dart:async and package:dio/dio.dart imports
+  - Added Timer.periodic(10 min) after runApp to ping /api/v1/departments
+
+Fix 7 – Keep-alive ping admin (admin_dashboard/lib/main.dart):
+  - Same pattern as Fix 6 applied to admin dashboard main.dart

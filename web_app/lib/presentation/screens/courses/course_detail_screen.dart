@@ -11,7 +11,7 @@ import '../../../core/providers/auth_provider.dart';
 
 final courseDetailProvider = FutureProvider.autoDispose
     .family<Map<String, dynamic>, String>((ref, courseId) async {
-  final api  = ref.read(apiClientProvider);
+  final api  = ref.watch(apiClientProvider);
   final resp = await api.get('${ApiConstants.courses}/$courseId');
   final data = resp.data['data'] ?? resp.data;
   return data as Map<String, dynamic>;
@@ -19,18 +19,24 @@ final courseDetailProvider = FutureProvider.autoDispose
 
 final courseResourcesProvider = FutureProvider.autoDispose
     .family<List<Map<String, dynamic>>, String>((ref, courseId) async {
-  final api  = ref.read(apiClientProvider);
+  final api  = ref.watch(apiClientProvider);
   final resp = await api.get(ApiConstants.resources, params: {
     'courseId': courseId,
     'status':   'approved',
     'limit':    50,
   });
   final data = resp.data['data'];
-  if (data is List) return data.cast<Map<String, dynamic>>();
+  // TypeORM tuple: [[...items], count]
+  if (data is List && data.isNotEmpty && data[0] is List) {
+    return (data[0] as List).cast<Map<String, dynamic>>();
+  }
+  // Shaped object: { items: [...] } or { data: [...] } or { resources: [...] }
   if (data is Map) {
-    final items = data['items'] ?? data['data'];
+    final items = data['items'] ?? data['data'] ?? data['resources'];
     if (items is List) return items.cast<Map<String, dynamic>>();
   }
+  // Flat list fallback
+  if (data is List) return data.cast<Map<String, dynamic>>();
   return [];
 });
 
@@ -219,7 +225,7 @@ class _OverviewTab extends StatelessWidget {
             children: [
               Expanded(
                 child: OutlinedButton.icon(
-                  onPressed: () {},
+                  onPressed: () => context.go('/ai'),
                   icon: const Icon(Icons.smart_toy_outlined),
                   label: const Text('Ask AI Tutor'),
                   style: OutlinedButton.styleFrom(

@@ -113,17 +113,7 @@ class DashboardScreen extends ConsumerWidget {
           statsAsync.when(
             data: (stats) {
               final byRole = stats['byRole'] as List? ?? [];
-              return Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Expanded(child: _UserGrowthChart()),
-                  const SizedBox(width: 20),
-                  SizedBox(
-                    width: 260,
-                    child: _RoleBreakdownChart(byRole: byRole),
-                  ),
-                ],
-              );
+              return _UsersByRoleBarChart(byRole: byRole);
             },
             loading: () => const SizedBox(height: 200,
                 child: Center(child: CircularProgressIndicator())),
@@ -262,77 +252,107 @@ class _StatCard extends StatelessWidget {
   }
 }
 
-class _UserGrowthChart extends StatelessWidget {
-  const _UserGrowthChart();
+class _UsersByRoleBarChart extends StatelessWidget {
+  final List byRole;
+  const _UsersByRoleBarChart({required this.byRole});
 
   @override
   Widget build(BuildContext context) {
+    const roleColors = <String, Color>{
+      'student':   AdminColors.primary,
+      'moderator': AdminColors.accent,
+      'lecturer':  AdminColors.info,
+      'admin':     AdminColors.grey600,
+    };
+
+    final groups = <BarChartGroupData>[];
+    final labels = <String>[];
+    for (int i = 0; i < byRole.length; i++) {
+      final r     = byRole[i] as Map;
+      final role  = r['role']?.toString() ?? '';
+      final count = double.tryParse(r['count'].toString()) ?? 0;
+      final color = roleColors[role] ?? AdminColors.grey300;
+      final label = role.isNotEmpty
+          ? '${role[0].toUpperCase()}${role.substring(1)}'
+          : '?';
+      labels.add(label);
+      groups.add(BarChartGroupData(
+        x: i,
+        barRods: [
+          BarChartRodData(
+            toY: count,
+            color: color,
+            width: 28,
+            borderRadius: BorderRadius.circular(4),
+          ),
+        ],
+      ));
+    }
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('User Growth (cumulative)',
-                style: TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 16,
-                    color: AdminColors.grey900)),
-            const SizedBox(height: 8),
-            const Text('Historical trend — update with real data via analytics API',
-                style: TextStyle(
-                    color: AdminColors.grey600, fontSize: 12)),
+            const Text(
+              'Users by Role',
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                fontSize: 16,
+                color: AdminColors.grey900,
+              ),
+            ),
             const SizedBox(height: 20),
             SizedBox(
-              height: 180,
-              child: LineChart(LineChartData(
-                gridData: const FlGridData(show: false),
-                titlesData: FlTitlesData(
-                  bottomTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      getTitlesWidget: (v, _) {
-                        const months = [
-                          'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'
-                        ];
-                        return Text(
-                          months[v.toInt() % months.length],
-                          style: const TextStyle(
-                              fontSize: 11,
-                              color: AdminColors.grey600),
-                        );
-                      },
-                    ),
-                  ),
-                  leftTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: false)),
-                  topTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: false)),
-                  rightTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: false)),
-                ),
-                borderData: FlBorderData(show: false),
-                lineBarsData: [
-                  LineChartBarData(
-                    spots: const [
-                      FlSpot(0, 0),
-                      FlSpot(1, 50),
-                      FlSpot(2, 120),
-                      FlSpot(3, 200),
-                      FlSpot(4, 310),
-                      FlSpot(5, 450),
-                    ],
-                    isCurved: true,
-                    color: AdminColors.primary,
-                    barWidth: 3,
-                    belowBarData: BarAreaData(
-                      show: true,
-                      color: AdminColors.primary.withValues(alpha: 0.08),
-                    ),
-                    dotData: const FlDotData(show: false),
-                  ),
-                ],
-              )),
+              height: 200,
+              child: groups.isEmpty
+                  ? const Center(
+                      child: Text('No data',
+                          style: TextStyle(color: AdminColors.grey600)))
+                  : BarChart(BarChartData(
+                      gridData: const FlGridData(show: false),
+                      borderData: FlBorderData(show: false),
+                      titlesData: FlTitlesData(
+                        bottomTitles: AxisTitles(
+                          sideTitles: SideTitles(
+                            showTitles: true,
+                            getTitlesWidget: (v, _) {
+                              final idx = v.toInt();
+                              if (idx < 0 || idx >= labels.length) {
+                                return const SizedBox.shrink();
+                              }
+                              return Padding(
+                                padding: const EdgeInsets.only(top: 6),
+                                child: Text(
+                                  labels[idx],
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    color: AdminColors.grey600,
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                        leftTitles: AxisTitles(
+                          sideTitles: SideTitles(
+                            showTitles: true,
+                            reservedSize: 32,
+                            getTitlesWidget: (v, _) => Text(
+                              v.toInt().toString(),
+                              style: const TextStyle(
+                                  fontSize: 10, color: AdminColors.grey600),
+                            ),
+                          ),
+                        ),
+                        topTitles: const AxisTitles(
+                            sideTitles: SideTitles(showTitles: false)),
+                        rightTitles: const AxisTitles(
+                            sideTitles: SideTitles(showTitles: false)),
+                      ),
+                      barGroups: groups,
+                    )),
             ),
           ],
         ),

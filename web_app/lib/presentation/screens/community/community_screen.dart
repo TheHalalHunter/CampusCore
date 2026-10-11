@@ -4,10 +4,15 @@ import '../../../app/theme/app_theme.dart';
 import '../../../core/utils/responsive.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/constants/api_constants.dart';
+import '../../../core/providers/auth_provider.dart';
 
 // ── Provider ──────────────────────────────────────────────────────────────────
 final questionsProvider = FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
-  final api  = ref.read(apiClientProvider);
+  // Wait until auth is initialized; avoid firing unauthenticated requests
+  final authState = ref.watch(authProvider);
+  if (!authState.initialized) throw Exception('Auth not ready');
+
+  final api  = ref.watch(apiClientProvider);
   final resp = await api.get(ApiConstants.questions, params: {'limit': 30});
   final data = resp.data['data'] ?? resp.data;
   // Handle shaped response: { questions: [...], total: N }
