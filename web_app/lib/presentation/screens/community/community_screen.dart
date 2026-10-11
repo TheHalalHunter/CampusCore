@@ -204,7 +204,7 @@ class _AskQuestionDialogState extends ConsumerState<_AskQuestionDialog> {
         );
       }
     } catch (e) {
-      setState(() { _posting = false; _error = 'Could not post. Please try again.'; });
+      setState(() { _posting = false; _error = 'Could not post: ${e.toString()}'; });
     }
   }
 

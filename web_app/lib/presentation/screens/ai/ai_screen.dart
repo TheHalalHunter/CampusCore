@@ -143,7 +143,7 @@ class _AiNotifier extends StateNotifier<List<_Message>> {
       state = [...state, _Message(text: 'Could not generate quiz questions. Try a different topic.', type: _MsgType.error)];
       return;
     }
-    final sb = StringBuffer('Here are 5 quiz questions on **$topic**:\n\n');
+    final sb = StringBuffer('Here are 5 quiz questions on $topic:\n\n');
     for (int i = 0; i < questions.length; i++) {
       final q = questions[i] as Map<String, dynamic>;
       sb.writeln('${i + 1}. ${q['question']}');
@@ -152,7 +152,7 @@ class _AiNotifier extends StateNotifier<List<_Message>> {
         sb.writeln('   ${String.fromCharCode(65 + j)}. ${opts[j]}');
       }
       final correct = q['correctAnswer'] as int? ?? 0;
-      sb.writeln('   ? Answer: ${String.fromCharCode(65 + correct)}. ${q['explanation'] ?? ''}');
+      sb.writeln('   Answer: ${String.fromCharCode(65 + correct)}. ${q['explanation'] ?? ''}');
       sb.writeln();
     }
     state = [...state, _Message(text: sb.toString().trim(), type: _MsgType.ai, toolLabel: 'Quiz')];
@@ -166,11 +166,11 @@ class _AiNotifier extends StateNotifier<List<_Message>> {
       state = [...state, _Message(text: 'Could not generate flashcards. Try a different topic.', type: _MsgType.error)];
       return;
     }
-    final sb = StringBuffer('Here are ${cards.length} flashcards for **$topic**:\n\n');
+    final sb = StringBuffer('Here are ${cards.length} flashcards for $topic:\n\n');
     for (int i = 0; i < cards.length; i++) {
       final c = cards[i] as Map<String, dynamic>;
-      sb.writeln('?? **${c['front']}**');
-      sb.writeln('   ? ${c['back']}');
+      sb.writeln('${i + 1}. ${c['front']}');
+      sb.writeln('   ${c['back']}');
       sb.writeln();
     }
     state = [...state, _Message(text: sb.toString().trim(), type: _MsgType.ai, toolLabel: 'Flashcards')];
@@ -187,8 +187,10 @@ class _AiNotifier extends StateNotifier<List<_Message>> {
       state = [...state, _Message(text: 'Could not predict topics. Try a more specific course name.', type: _MsgType.error)];
       return;
     }
-    final sb = StringBuffer('Likely exam topics for **$courseTitle**:\n\n');
-    for (final t in topics) { sb.writeln('• $t'); }
+    final sb = StringBuffer('Likely exam topics for $courseTitle:\n\n');
+    for (int i = 0; i < topics.length; i++) {
+      sb.writeln('${i + 1}. ${topics[i]}');
+    }
     state = [...state, _Message(text: sb.toString().trim(), type: _MsgType.ai, toolLabel: 'Predicted Topics')];
   }
 }
