@@ -8,7 +8,7 @@ RUN apk add --no-cache python3 make g++
 
 # Install ALL dependencies (including devDeps for nest build)
 COPY package*.json ./
-RUN npm install
+RUN npm ci
 
 # Copy source and compile TypeScript
 COPY . .
@@ -26,7 +26,7 @@ RUN apk add --no-cache python3 make g++
 
 # Install production dependencies only
 COPY package*.json ./
-RUN npm install --omit=dev
+RUN npm ci --omit=dev
 
 # Copy compiled output from builder
 COPY --from=builder /app/dist ./dist
