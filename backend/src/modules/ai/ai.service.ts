@@ -2,7 +2,7 @@ import { Injectable, BadRequestException, Logger } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { ConfigService } from "@nestjs/config";
-import { GoogleGenAI } from "@google/genai";
+import OpenAI from "openai";
 import { AiUsage, AiAction } from "./entities/ai-usage.entity";
 
 const EXAM_CHEAT_PATTERNS = [
@@ -17,7 +17,7 @@ const EXAM_CHEAT_PATTERNS = [
 @Injectable()
 export class AiService {
   private readonly logger = new Logger(AiService.name);
-  private genAI: GoogleGenAI;
+  private openai: OpenAI;
   private model: string;
 
   constructor(
@@ -25,18 +25,44 @@ export class AiService {
     @InjectRepository(AiUsage)
     private readonly usageRepo: Repository<AiUsage>,
   ) {
-    const apiKey = config.get<string>("GEMINI_API_KEY") || config.get<string>("OPENAI_API_KEY") || "";
-    this.model   = config.get<string>("GEMINI_MODEL") || config.get<string>("OPENAI_MODEL") || "gemini-1.5-flash";
-    this.genAI   = new GoogleGenAI({ apiKey });
+    // Gemini supports OpenAI-compatible API via this base URL
+    const geminiKey = config.get<string>("GEMINI_API_KEY");
+    const openaiKey = config.get<string>("OPENAI_API_KEY");
+
+    if (geminiKey) {
+      this.openai = new OpenAI({
+        apiKey: geminiKey,
+        baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/",
+      });
+      this.model = config.get<string>("GEMINI_MODEL") || "gemini-1.5-flash";
+      this.logger.log(`AI: using Gemini (${this.model})`);
+    } else {
+      this.openai = new OpenAI({
+        apiKey: openaiKey || "",
+        baseURL: config.get("OPENAI_BASE_URL") || "https://api.openai.com/v1",
+      });
+      this.model = config.get<string>("OPENAI_MODEL") || "gpt-4o-mini";
+      this.logger.log(`AI: using OpenAI-compatible (${this.model})`);
+    }
   }
 
-  private async generate(prompt: string, systemInstruction?: string): Promise<string> {
-    const result = await this.genAI.models.generateContent({
+  private async generate(
+    userPrompt: string,
+    systemPrompt?: string,
+  ): Promise<string> {
+    const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [];
+    if (systemPrompt) {
+      messages.push({ role: "system", content: systemPrompt });
+    }
+    messages.push({ role: "user", content: userPrompt });
+
+    const response = await this.openai.chat.completions.create({
       model: this.model,
-      contents: prompt,
-      ...(systemInstruction ? { config: { systemInstruction } } : {}),
+      messages,
+      max_tokens: 2000,
     });
-    return result.text ?? "";
+
+    return response.choices?.[0]?.message?.content || "";
   }
 
   private async logUsage(
@@ -50,7 +76,7 @@ export class AiService {
         this.usageRepo.create({ userId, action, prompt, courseContext }),
       );
     } catch {
-      // Non-critical — never block AI response on log failure
+      // Non-critical
     }
   }
 
@@ -58,7 +84,6 @@ export class AiService {
     return EXAM_CHEAT_PATTERNS.some((pattern) => pattern.test(prompt));
   }
 
-  /** Extract JSON from a response that may contain markdown code fences */
   private extractJson(content: string): any {
     const stripped = content
       .replace(/```json\s*/gi, "")
@@ -87,8 +112,12 @@ export class AiService {
     return result;
   }
 
-  async generateQuiz(userId: string, topic: string, count = 5): Promise<object[]> {
-    const system = `You are an academic quiz generator for Nigerian university students. 
+  async generateQuiz(
+    userId: string,
+    topic: string,
+    count = 5,
+  ): Promise<object[]> {
+    const system = `You are an academic quiz generator for Nigerian university students.
 Respond ONLY with a valid JSON object (no markdown, no explanation) in this exact format:
 {
   "questions": [
@@ -102,25 +131,32 @@ Respond ONLY with a valid JSON object (no markdown, no explanation) in this exac
 }
 Generate exactly ${count} questions. correctAnswer is the 0-indexed position of the correct option.`;
 
-    const result = await this.generate(`Generate ${count} MCQ questions about: ${topic}`, system);
+    const result = await this.generate(
+      `Generate ${count} MCQ questions about: ${topic}`,
+      system,
+    );
     await this.logUsage(userId, AiAction.QUIZ, topic);
     try {
-      const parsed = this.extractJson(result);
-      return parsed.questions || [];
+      return this.extractJson(result).questions || [];
     } catch {
       return [];
     }
   }
 
   async summarize(userId: string, text: string): Promise<string> {
-    const system = "You are a study assistant for Nigerian university students. Summarize the provided academic content concisely. Highlight key points using bullet points where appropriate.";
+    const system =
+      "You are a study assistant for Nigerian university students. Summarize the provided academic content concisely. Highlight key points using bullet points where appropriate.";
     const result = await this.generate(`Summarize this:\n\n${text}`, system);
     await this.logUsage(userId, AiAction.SUMMARIZE, text.substring(0, 500));
     return result;
   }
 
-  async generateFlashcards(userId: string, topic: string, count = 10): Promise<object[]> {
-    const system = `You are a study assistant. 
+  async generateFlashcards(
+    userId: string,
+    topic: string,
+    count = 10,
+  ): Promise<object[]> {
+    const system = `You are a study assistant.
 Respond ONLY with a valid JSON object (no markdown, no explanation) in this exact format:
 {
   "flashcards": [
@@ -129,11 +165,13 @@ Respond ONLY with a valid JSON object (no markdown, no explanation) in this exac
 }
 Generate exactly ${count} flashcards.`;
 
-    const result = await this.generate(`Create ${count} flashcards for the topic: ${topic}`, system);
+    const result = await this.generate(
+      `Create ${count} flashcards for the topic: ${topic}`,
+      system,
+    );
     await this.logUsage(userId, AiAction.FLASHCARDS, topic);
     try {
-      const parsed = this.extractJson(result);
-      return parsed.flashcards || [];
+      return this.extractJson(result).flashcards || [];
     } catch {
       return [];
     }
@@ -152,10 +190,13 @@ Respond ONLY with a valid JSON object (no markdown) in this format:
       `Course: ${courseTitle}\nRecent topics covered: ${recentTopics.join(", ")}\n\nWhat are the most likely exam topics?`,
       system,
     );
-    await this.logUsage(userId, AiAction.PREDICT, `${courseTitle}: ${recentTopics.join(", ")}`);
+    await this.logUsage(
+      userId,
+      AiAction.PREDICT,
+      `${courseTitle}: ${recentTopics.join(", ")}`,
+    );
     try {
-      const parsed = this.extractJson(result);
-      return parsed.topics || [];
+      return this.extractJson(result).topics || [];
     } catch {
       return [];
     }
