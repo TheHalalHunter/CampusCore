@@ -33,6 +33,19 @@ export class AiService {
     this.logger.log(`AI: using model ${this.model}`);
   }
 
+  private stripMarkdown(text: string): string {
+    return text
+      .replace(/#{1,6}\s+/g, "")           // remove ## headers
+      .replace(/\*\*(.+?)\*\*/g, "$1")     // remove **bold**
+      .replace(/\*(.+?)\*/g, "$1")         // remove *italic*
+      .replace(/`{1,3}[^`]*`{1,3}/g, "")  // remove `code`
+      .replace(/^\s*[-*+]\s+/gm, "• ")    // convert bullet points to •
+      .replace(/^\s*\d+\.\s+/gm, "")      // remove numbered list markers
+      .replace(/\[(.+?)\]\(.+?\)/g, "$1") // remove [links](url)
+      .replace(/\n{3,}/g, "\n\n")         // collapse excessive newlines
+      .trim();
+  }
+
   private async generate(
     userPrompt: string,
     systemPrompt?: string,
@@ -49,7 +62,8 @@ export class AiService {
       max_tokens: 2000,
     });
 
-    return response.choices?.[0]?.message?.content || "";
+    const content = response.choices?.[0]?.message?.content || "";
+    return this.stripMarkdown(content);
   }
 
   private async logUsage(
@@ -91,8 +105,8 @@ export class AiService {
     }
 
     const system = courseContext
-      ? `You are an academic tutor helping a Nigerian university student studying ${courseContext}. Explain concepts clearly in simple English. Be educational and concise.`
-      : `You are an academic tutor helping a Nigerian university student. Explain concepts clearly in simple English.`;
+      ? `You are an academic tutor helping a Nigerian university student studying ${courseContext}. Explain concepts clearly in simple English. Be educational and concise. Do NOT use markdown formatting, asterisks, or hash symbols in your response.`
+      : `You are an academic tutor helping a Nigerian university student. Explain concepts clearly in simple English. Do NOT use markdown formatting, asterisks, or hash symbols in your response.`;
 
     const result = await this.generate(`Please explain: ${concept}`, system);
     await this.logUsage(userId, AiAction.EXPLAIN, concept, courseContext);
@@ -132,7 +146,7 @@ Generate exactly ${count} questions. correctAnswer is the 0-indexed position of 
 
   async summarize(userId: string, text: string): Promise<string> {
     const system =
-      "You are a study assistant for Nigerian university students. Summarize the provided academic content concisely. Highlight key points using bullet points where appropriate.";
+      "You are a study assistant for Nigerian university students. Summarize the provided academic content concisely. Highlight key points using bullet points (use • not *). Do NOT use markdown formatting, asterisks, or hash symbols.";
     const result = await this.generate(`Summarize this:\n\n${text}`, system);
     await this.logUsage(userId, AiAction.SUMMARIZE, text.substring(0, 500));
     return result;
