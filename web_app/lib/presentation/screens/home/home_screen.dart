@@ -81,7 +81,7 @@ class HomeScreen extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '$greeting ??',
+                    '$greeting',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: isMobile ? 20 : 26,
@@ -288,7 +288,7 @@ class _SectionHeader extends StatelessWidget {
         ),
         TextButton(
           onPressed: onViewAll,
-          child: const Text('View all ?', style: TextStyle(fontSize: 12, fontFamily: 'Nunito')),
+          child: const Text('View all', style: TextStyle(fontSize: 12, fontFamily: 'Nunito')),
         ),
       ],
     );

@@ -80,7 +80,7 @@ extension _AiModeLabel on _AiMode {
 // Notifier � manages message list
 // ---------------------------------------------------------------------------
 const _kWelcome = _Message(
-  text: "Hi! I'm your CampusCore AI Study Assistant 🎓\n\nChoose a mode below:\n• **Ask / Explain** — explain any concept\n• **Summarize** — paste text to summarize\n• **Quiz Me** — generate practice questions\n• **Flashcards** — create study cards\n• **Predict Topics** — likely exam topics",
+  text: "Hi! I'm your CampusCore AI Study Assistant\n\nChoose a mode below:\n- Ask / Explain: explain any concept\n- Summarize: paste text to summarize\n- Quiz Me: generate practice questions\n- Flashcards: create study cards\n- Predict Topics: likely exam topics",
   type: _MsgType.ai,
 );
 
