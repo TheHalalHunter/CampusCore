@@ -39,7 +39,7 @@ export class AiService {
       .replace(/\*\*(.+?)\*\*/g, "$1")     // remove **bold**
       .replace(/\*(.+?)\*/g, "$1")         // remove *italic*
       .replace(/`{1,3}[^`]*`{1,3}/g, "")  // remove `code`
-      .replace(/^\s*[-*+]\s+/gm, "• ")    // convert bullet points to •
+      .replace(/^\s*[-*+]\s+/gm, "- ")    // convert bullet points to -
       .replace(/^\s*\d+\.\s+/gm, "")      // remove numbered list markers
       .replace(/\[(.+?)\]\(.+?\)/g, "$1") // remove [links](url)
       .replace(/\n{3,}/g, "\n\n")         // collapse excessive newlines
@@ -146,7 +146,7 @@ Generate exactly ${count} questions. correctAnswer is the 0-indexed position of 
 
   async summarize(userId: string, text: string): Promise<string> {
     const system =
-      "You are a study assistant for Nigerian university students. Summarize the provided academic content concisely. Highlight key points using bullet points (use • not *). Do NOT use markdown formatting, asterisks, or hash symbols.";
+      "You are a study assistant for Nigerian university students. Summarize the provided academic content concisely. Highlight key points using dashes (use - not *). Do NOT use markdown formatting, asterisks, or hash symbols.";
     const result = await this.generate(`Summarize this:\n\n${text}`, system);
     await this.logUsage(userId, AiAction.SUMMARIZE, text.substring(0, 500));
     return result;
