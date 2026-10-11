@@ -183,7 +183,7 @@ class _AskQuestionDialogState extends ConsumerState<_AskQuestionDialog> {
 
       final resp = await api.post(ApiConstants.postQuestion, data: {
         'title':   _titleCtrl.text.trim(),
-        'body':    _contentCtrl.text.trim(),
+        if (_contentCtrl.text.trim().isNotEmpty) 'body': _contentCtrl.text.trim(),
         if (tags.isNotEmpty) 'tags': tags,
       });
 

@@ -14,10 +14,10 @@ export class PostQuestionDto {
   @MaxLength(300)
   title: string;
 
-  @ApiProperty()
+  @ApiPropertyOptional()
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  body: string;
+  body?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
