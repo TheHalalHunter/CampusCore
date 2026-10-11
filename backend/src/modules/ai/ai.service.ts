@@ -29,7 +29,7 @@ export class AiService {
       apiKey: config.get("OPENAI_API_KEY") || "",
       baseURL: config.get("OPENAI_BASE_URL") || "https://api.openai.com/v1",
     });
-    this.model = config.get("OPENAI_MODEL") || "llama-3.1-8b-instant";
+    this.model = config.get("OPENAI_MODEL") || "openai/gpt-oss-20b";
     this.logger.log(`AI: using model ${this.model}`);
   }
 
