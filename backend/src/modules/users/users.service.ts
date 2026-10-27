@@ -1,13 +1,9 @@
-import {
-  Injectable,
-  NotFoundException,
-  ConflictException,
-} from "@nestjs/common";
-import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
-import { User } from "./entities/user.entity";
-import { UpdateUserDto } from "./dto/update-user.dto";
-import { UserRole } from "./enums/user-role.enum";
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { User } from './entities/user.entity';
+import { UpdateUserDto } from './dto/update-user.dto';
+import { UserRole } from './enums/user-role.enum';
 
 @Injectable()
 export class UsersService {
@@ -18,7 +14,7 @@ export class UsersService {
 
   async findById(id: string): Promise<User> {
     const user = await this.usersRepository.findOne({ where: { id } });
-    if (!user) throw new NotFoundException("User not found");
+    if (!user) throw new NotFoundException('User not found');
     return user;
   }
 
@@ -32,7 +28,7 @@ export class UsersService {
 
   async create(data: Partial<User>): Promise<User> {
     const existing = await this.findByEmail(data.email);
-    if (existing) throw new ConflictException("Email already registered");
+    if (existing) throw new ConflictException('Email already registered');
     const user = this.usersRepository.create(data);
     return this.usersRepository.save(user);
   }
@@ -48,7 +44,7 @@ export class UsersService {
   }
 
   async addReputationPoints(id: string, points: number): Promise<void> {
-    await this.usersRepository.increment({ id }, "reputationPoints", points);
+    await this.usersRepository.increment({ id }, 'reputationPoints', points);
   }
 
   async acceptIntegrityPolicy(id: string): Promise<{ accepted: boolean }> {
@@ -69,27 +65,12 @@ export class UsersService {
   }
 
   async getLeaderboard(): Promise<
-    Pick<
-      User,
-      | "id"
-      | "fullName"
-      | "reputationPoints"
-      | "role"
-      | "academicLevel"
-      | "departmentId"
-    >[]
+    Pick<User, 'id' | 'fullName' | 'reputationPoints' | 'role' | 'academicLevel' | 'departmentId'>[]
   > {
     return this.usersRepository.find({
-      select: [
-        "id",
-        "fullName",
-        "reputationPoints",
-        "role",
-        "academicLevel",
-        "departmentId",
-      ],
+      select: ['id', 'fullName', 'reputationPoints', 'role', 'academicLevel', 'departmentId'],
       where: { isActive: true, role: UserRole.STUDENT },
-      order: { reputationPoints: "DESC" },
+      order: { reputationPoints: 'DESC' },
       take: 50,
     });
   }

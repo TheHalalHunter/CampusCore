@@ -1,9 +1,9 @@
-import { Injectable, Logger } from "@nestjs/common";
-import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
-import * as admin from "firebase-admin";
-import { Notification, NotificationType } from "./entities/notification.entity";
-import { FirebaseAdminService } from "../../config/firebase.config";
+import { Injectable, Logger } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import * as admin from 'firebase-admin';
+import { Notification, NotificationType } from './entities/notification.entity';
+import { FirebaseAdminService } from '../../config/firebase.config';
 
 @Injectable()
 export class NotificationsService {
@@ -42,7 +42,7 @@ export class NotificationsService {
     if (token) {
       await this.sendPush(token, data.title, data.body, {
         type: data.type,
-        relatedId: data.relatedId ?? "",
+        relatedId: data.relatedId ?? '',
         notificationId: saved.id,
       });
     }
@@ -63,11 +63,11 @@ export class NotificationsService {
         notification: { title, body },
         data,
         android: {
-          priority: "high",
-          notification: { channelId: "campuscore_default" },
+          priority: 'high',
+          notification: { channelId: 'campuscore_default' },
         },
         apns: {
-          payload: { aps: { badge: 1, sound: "default" } },
+          payload: { aps: { badge: 1, sound: 'default' } },
         },
       });
       this.logger.debug(`FCM push sent to ${fcmToken.substring(0, 20)}...`);
@@ -82,9 +82,9 @@ export class NotificationsService {
     try {
       const result = await this.repo.manager
         .createQueryBuilder()
-        .select("u.fcm_token", "token")
-        .from("users", "u")
-        .where("u.id = :userId", { userId })
+        .select('u.fcm_token', 'token')
+        .from('users', 'u')
+        .where('u.id = :userId', { userId })
         .getRawOne();
       return result?.token ?? null;
     } catch {
@@ -95,7 +95,7 @@ export class NotificationsService {
   getUserNotifications(userId: string): Promise<Notification[]> {
     return this.repo.find({
       where: { userId },
-      order: { createdAt: "DESC" },
+      order: { createdAt: 'DESC' },
       take: 50,
     });
   }

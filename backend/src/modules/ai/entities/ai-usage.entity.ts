@@ -1,11 +1,11 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, Index } from 'typeorm';
 
 export enum AiAction {
-  EXPLAIN    = 'explain',
-  QUIZ       = 'quiz',
+  EXPLAIN = 'explain',
+  QUIZ = 'quiz',
   FLASHCARDS = 'flashcards',
-  SUMMARIZE  = 'summarize',
-  PREDICT    = 'predict_topics',
+  SUMMARIZE = 'summarize',
+  PREDICT = 'predict_topics',
 }
 
 @Entity('ai_usage')

@@ -1,12 +1,8 @@
-import {
-  Injectable,
-  NotFoundException,
-  ConflictException,
-} from "@nestjs/common";
-import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
-import { PersonalLibraryItem } from "./entities/personal-library.entity";
-import { Resource } from "../resources/entities/resource.entity";
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { PersonalLibraryItem } from './entities/personal-library.entity';
+import { Resource } from '../resources/entities/resource.entity';
 
 @Injectable()
 export class LibraryService {
@@ -20,27 +16,24 @@ export class LibraryService {
   async getSavedResources(userId: string): Promise<PersonalLibraryItem[]> {
     return this.libraryRepository.find({
       where: { userId },
-      relations: ["resource"],
-      order: { createdAt: "DESC" },
+      relations: ['resource'],
+      order: { createdAt: 'DESC' },
     });
   }
 
-  async saveResource(
-    userId: string,
-    resourceId: string,
-  ): Promise<PersonalLibraryItem> {
+  async saveResource(userId: string, resourceId: string): Promise<PersonalLibraryItem> {
     // Verify resource exists
     const resource = await this.resourceRepository.findOne({
       where: { id: resourceId },
     });
     if (!resource) {
-      throw new NotFoundException("Resource not found");
+      throw new NotFoundException('Resource not found');
     }
 
     // Check if already saved (idempotent)
     const existing = await this.libraryRepository.findOne({
       where: { userId, resourceId },
-      relations: ["resource"],
+      relations: ['resource'],
     });
     if (existing) {
       return existing;
@@ -52,7 +45,7 @@ export class LibraryService {
     // Return with relation loaded
     return this.libraryRepository.findOne({
       where: { id: saved.id },
-      relations: ["resource"],
+      relations: ['resource'],
     }) as Promise<PersonalLibraryItem>;
   }
 
@@ -61,7 +54,7 @@ export class LibraryService {
       where: { userId, resourceId },
     });
     if (!item) {
-      throw new NotFoundException("Item not found in your library");
+      throw new NotFoundException('Item not found in your library');
     }
     await this.libraryRepository.remove(item);
   }

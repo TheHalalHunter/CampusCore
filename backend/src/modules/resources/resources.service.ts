@@ -1,16 +1,12 @@
-import {
-  Injectable,
-  NotFoundException,
-  ForbiddenException,
-} from "@nestjs/common";
-import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
-import { Resource, ResourceStatus } from "./entities/resource.entity";
-import { UserRole } from "../users/enums/user-role.enum";
-import { User } from "../users/entities/user.entity";
-import { GamificationService } from "../gamification/gamification.service";
-import { NotificationsService } from "../notifications/notifications.service";
-import { NotificationType } from "../notifications/entities/notification.entity";
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Resource, ResourceStatus } from './entities/resource.entity';
+import { UserRole } from '../users/enums/user-role.enum';
+import { User } from '../users/entities/user.entity';
+import { GamificationService } from '../gamification/gamification.service';
+import { NotificationsService } from '../notifications/notifications.service';
+import { NotificationType } from '../notifications/entities/notification.entity';
 
 @Injectable()
 export class ResourcesService {
@@ -22,12 +18,17 @@ export class ResourcesService {
   ) {}
 
   /** Public: approved resources — filtered by courseId and/or departmentId */
-  findByCourse(courseId: string | undefined, page = 1, limit = 20, departmentId?: string): Promise<[Resource[], number]> {
+  findByCourse(
+    courseId: string | undefined,
+    page = 1,
+    limit = 20,
+    departmentId?: string,
+  ): Promise<[Resource[], number]> {
     const where: any = { status: ResourceStatus.APPROVED };
     if (courseId) where.courseId = courseId;
     return this.repo.findAndCount({
       where,
-      order: { createdAt: "DESC" },
+      order: { createdAt: 'DESC' },
       skip: (page - 1) * limit,
       take: Math.min(limit, 50),
     });
@@ -35,14 +36,13 @@ export class ResourcesService {
 
   async findOne(id: string): Promise<Resource> {
     const resource = await this.repo.findOne({ where: { id } });
-    if (!resource) throw new NotFoundException("Resource not found");
+    if (!resource) throw new NotFoundException('Resource not found');
     return resource;
   }
 
   /** Submit a resource — auto-approved and marked official for admins/lecturers */
   async submit(uploader: User, data: Partial<Resource>): Promise<Resource> {
-    const isPrivileged =
-      uploader.role === UserRole.ADMIN || uploader.role === UserRole.LECTURER;
+    const isPrivileged = uploader.role === UserRole.ADMIN || uploader.role === UserRole.LECTURER;
     const resource = this.repo.create({
       ...data,
       uploaderId: uploader.id,
@@ -59,13 +59,8 @@ export class ResourcesService {
     status: ResourceStatus.APPROVED | ResourceStatus.REJECTED,
     reviewNote?: string,
   ): Promise<Resource> {
-    if (
-      reviewer.role !== UserRole.MODERATOR &&
-      reviewer.role !== UserRole.ADMIN
-    ) {
-      throw new ForbiddenException(
-        "Only moderators and admins can review resources",
-      );
+    if (reviewer.role !== UserRole.MODERATOR && reviewer.role !== UserRole.ADMIN) {
+      throw new ForbiddenException('Only moderators and admins can review resources');
     }
     const resource = await this.findOne(id);
     resource.status = status;
@@ -80,13 +75,13 @@ export class ResourcesService {
       });
       await this.gamification.awardPoints(
         resource.uploaderId,
-        "UPLOAD_APPROVED",
+        'UPLOAD_APPROVED',
         uploader?.stellarAddress,
       );
       await this.gamification.checkAndAwardBadges(resource.uploaderId);
       await this.notifications.create({
         userId: resource.uploaderId,
-        title: "Upload Approved! 🎉",
+        title: 'Upload Approved! 🎉',
         body: `Your resource "${resource.title}" has been approved and is now live.`,
         type: NotificationType.UPLOAD_APPROVED,
         relatedId: resource.id,
@@ -98,7 +93,7 @@ export class ResourcesService {
       });
       await this.notifications.create({
         userId: resource.uploaderId,
-        title: "Upload Not Approved",
+        title: 'Upload Not Approved',
         body: reviewNote
           ? `Your resource "${resource.title}" was not approved. Reason: ${reviewNote}`
           : `Your resource "${resource.title}" was not approved.`,
@@ -115,11 +110,11 @@ export class ResourcesService {
   findPending(): Promise<Resource[]> {
     return this.repo.find({
       where: { status: ResourceStatus.PENDING },
-      order: { createdAt: "ASC" },
+      order: { createdAt: 'ASC' },
     });
   }
 
   async incrementDownload(id: string): Promise<void> {
-    await this.repo.increment({ id }, "downloadCount", 1);
+    await this.repo.increment({ id }, 'downloadCount', 1);
   }
 }

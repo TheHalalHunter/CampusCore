@@ -1,0 +1,18 @@
+{
+  "verdict": "CHANGES_REQUESTED",
+  "findings": [
+    {
+      "id": "hardcoded-medal-colors",
+      "severity": "blocking",
+      "summary": "Hardcoded medal colors in leaderboard_screen.dart",
+      "detail": "Color(0xFFFFD700) (gold) and Color(0xFFCD7F32) (bronze) are used directly in _rankWidget(). AppColors defines no gold or bronze constants. Fix: add AppColors.gold and AppColors.bronze to app_theme.dart and replace the literals, or map to existing semantic colors."
+    },
+    {
+      "id": "createdAt-overwrite",
+      "severity": "blocking",
+      "summary": "AI conversation createdAt is overwritten on every save",
+      "detail": "_saveCurrentConversation always writes 'createdAt': DateTime.now().toIso8601String(), destroying the original creation timestamp on each message sent. Fix: load the existing createdAt from _conversations by _currentConvId and carry it forward; only fall back to DateTime.now() when creating a new conversation."
+    }
+  ],
+  "reviewDoc": "c:\\Users\\USER\\Documents\\CampusCoreNew\\.agents\\tasks\\4features-review.md"
+}

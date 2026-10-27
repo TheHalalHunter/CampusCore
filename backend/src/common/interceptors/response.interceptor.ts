@@ -1,11 +1,6 @@
-import {
-  Injectable,
-  NestInterceptor,
-  ExecutionContext,
-  CallHandler,
-} from "@nestjs/common";
-import { Observable } from "rxjs";
-import { map } from "rxjs/operators";
+import { Injectable, NestInterceptor, ExecutionContext, CallHandler } from '@nestjs/common';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 export interface ApiResponse<T> {
   success: boolean;
@@ -18,14 +13,8 @@ export interface ApiResponse<T> {
  *  interceptor passes it through untouched to prevent double-wrapping.
  */
 @Injectable()
-export class ResponseInterceptor<T> implements NestInterceptor<
-  T,
-  ApiResponse<T>
-> {
-  intercept(
-    _context: ExecutionContext,
-    next: CallHandler,
-  ): Observable<ApiResponse<T>> {
+export class ResponseInterceptor<T> implements NestInterceptor<T, ApiResponse<T>> {
+  intercept(_context: ExecutionContext, next: CallHandler): Observable<ApiResponse<T>> {
     return next.handle().pipe(
       map((data) => {
         // Already wrapped — pass through as-is

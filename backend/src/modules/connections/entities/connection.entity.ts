@@ -6,37 +6,37 @@ import {
   UpdateDateColumn,
   Index,
   Unique,
-} from "typeorm";
+} from 'typeorm';
 
 export enum ConnectionStatus {
-  PENDING = "pending",
-  ACCEPTED = "accepted",
+  PENDING = 'pending',
+  ACCEPTED = 'accepted',
 }
 
-@Entity("connections")
-@Unique(["requesterId", "receiverId"]) // prevent duplicate requests
+@Entity('connections')
+@Unique(['requesterId', 'receiverId']) // prevent duplicate requests
 export class Connection {
-  @PrimaryGeneratedColumn("uuid")
+  @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ name: "requester_id" })
+  @Column({ name: 'requester_id' })
   @Index()
   requesterId: string;
 
-  @Column({ name: "receiver_id" })
+  @Column({ name: 'receiver_id' })
   @Index()
   receiverId: string;
 
   @Column({
-    type: "enum",
+    type: 'enum',
     enum: ConnectionStatus,
     default: ConnectionStatus.PENDING,
   })
   status: ConnectionStatus;
 
-  @CreateDateColumn({ name: "created_at" })
+  @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
-  @UpdateDateColumn({ name: "updated_at" })
+  @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 }

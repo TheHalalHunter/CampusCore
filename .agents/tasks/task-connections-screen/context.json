@@ -1,0 +1,26 @@
+{
+  "project_type": "Flutter Web app (student-facing) + NestJS backend",
+  "language": "Dart (Flutter) for the app; TypeScript (NestJS) for backend",
+  "build_system": "Flutter SDK 3.16+, standard `flutter build web`. No special quirks.",
+  "test_framework": "flutter_test (no existing screen-level tests in the project)",
+  "build_command": "cd web_app && flutter build web",
+  "test_command": "cd web_app && flutter test",
+  "verification_instructions": "1. Run `cd web_app && flutter analyze` — must produce zero errors. 2. Run `flutter build web` — must complete without errors. 3. Manually verify the /connections route in a browser.",
+  "snapshot_or_generated_files": null,
+  "environment_constraints": "Windows workspace. All Flutter commands run from the web_app directory. The backend is deployed at https://campuscore-bfrq.onrender.com/api/v1 — no local backend needed for building/analyzing.",
+  "contribution_requirements": "Run `flutter analyze` before committing. Follow existing patterns: ConsumerWidget, FutureProvider.autoDispose, AppColors constants, Nunito font family, no hardcoded strings, no hardcoded hex values.",
+  "key_patterns": "1. Screens extend ConsumerWidget or ConsumerStatefulWidget. 2. Providers are FutureProvider.autoDispose at file scope; actions (POST/PATCH/DELETE) are performed inside ConsumerStatefulWidget methods using ref.read(apiClientProvider). 3. AppBar uses AppColors.navyDark. 4. Error states use a local _ErrorWidget with retry callback. 5. Loading states use skeleton widgets. 6. withValues(alpha:) replaces deprecated withOpacity(). 7. Responsive helpers: Responsive.isMobile(context), getPaddingEdgeInsets, getSpacing, getGridColumns. 8. Imports always use relative paths (../../../).",
+  "relevant_files": [
+    "web_app/lib/core/constants/api_constants.dart",
+    "web_app/lib/app/router/app_router.dart",
+    "web_app/lib/presentation/screens/courses/courses_screen.dart",
+    "web_app/lib/presentation/screens/community/community_screen.dart",
+    "web_app/lib/presentation/screens/profile/profile_screen.dart",
+    "web_app/lib/core/providers/auth_provider.dart",
+    "web_app/lib/core/network/api_client.dart",
+    "web_app/lib/core/utils/responsive.dart",
+    "web_app/lib/app/theme/app_theme.dart",
+    "web_app/lib/app/shell/app_shell.dart"
+  ],
+  "directory_structure": "web_app/lib/ contains: app/ (router, shell, theme), core/ (constants, network, providers, storage, utils), presentation/screens/<feature>/ (one dart file per screen). New screen goes in presentation/screens/connections/connections_screen.dart."
+}

@@ -1,6 +1,6 @@
-import { Injectable, Logger } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
-import { Keypair } from "@stellar/stellar-sdk";
+import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { Keypair } from '@stellar/stellar-sdk';
 
 @Injectable()
 export class BadgeContractService {
@@ -8,9 +8,9 @@ export class BadgeContractService {
   private contractId: string;
 
   constructor(private configService: ConfigService) {
-    this.contractId = this.configService.get("STELLAR_BADGE_CONTRACT_ID", "");
+    this.contractId = this.configService.get('STELLAR_BADGE_CONTRACT_ID', '');
     if (!this.contractId) {
-      this.logger.warn("STELLAR_BADGE_CONTRACT_ID not configured");
+      this.logger.warn('STELLAR_BADGE_CONTRACT_ID not configured');
     }
   }
 
@@ -36,9 +36,7 @@ export class BadgeContractService {
       // Placeholder: actual implementation would call Soroban contract
       // Mock return for now
       const mockTxHash = `mock-tx-${Date.now()}`;
-      this.logger.log(
-        `Mock badge mint (production would call Soroban): ${mockTxHash}`,
-      );
+      this.logger.log(`Mock badge mint (production would call Soroban): ${mockTxHash}`);
       return mockTxHash;
     } catch (error) {
       this.logger.error(`Error minting badge: ${error.message}`);
@@ -76,9 +74,7 @@ export class BadgeContractService {
     rpcUrl: string,
   ): Promise<boolean> {
     try {
-      this.logger.debug(
-        `Soroban call: badge.has_badge(${studentAddress}, "${badgeType}")`,
-      );
+      this.logger.debug(`Soroban call: badge.has_badge(${studentAddress}, "${badgeType}")`);
 
       // Placeholder
       return false;

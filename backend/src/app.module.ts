@@ -1,55 +1,53 @@
-import { Module } from "@nestjs/common";
-import { ConfigModule, ConfigService } from "@nestjs/config";
-import { TypeOrmModule } from "@nestjs/typeorm";
-import { ThrottlerModule } from "@nestjs/throttler";
-import { FirebaseModule } from "./config/firebase.module";
+import { Module } from '@nestjs/common';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { ThrottlerModule } from '@nestjs/throttler';
+import { FirebaseModule } from './config/firebase.module';
 
-import { AuthModule } from "./modules/auth/auth.module";
-import { UsersModule } from "./modules/users/users.module";
-import { DepartmentsModule } from "./modules/departments/departments.module";
-import { CoursesModule } from "./modules/courses/courses.module";
-import { ResourcesModule } from "./modules/resources/resources.module";
-import { CommunityModule } from "./modules/community/community.module";
-import { AiModule } from "./modules/ai/ai.module";
-import { ProgressModule } from "./modules/progress/progress.module";
-import { NotificationsModule } from "./modules/notifications/notifications.module";
-import { GamificationModule } from "./modules/gamification/gamification.module";
-import { StellarModule } from "./modules/stellar/stellar.module";
-import { AdminModule } from "./modules/admin/admin.module";
-import { ExamLockModule } from "./modules/exam-lock/exam-lock.module";
-import { ConnectionsModule } from "./modules/connections/connections.module";
-import { SearchModule } from "./modules/search/search.module";
-import { DiscussionsModule } from "./modules/discussions/discussions.module";
-import { GpaModule } from "./modules/gpa/gpa.module";
-import { LibraryModule } from "./modules/library/library.module";
-import { StudyGroupsModule } from "./modules/study-groups/study-groups.module";
+import { AuthModule } from './modules/auth/auth.module';
+import { UsersModule } from './modules/users/users.module';
+import { DepartmentsModule } from './modules/departments/departments.module';
+import { CoursesModule } from './modules/courses/courses.module';
+import { ResourcesModule } from './modules/resources/resources.module';
+import { CommunityModule } from './modules/community/community.module';
+import { AiModule } from './modules/ai/ai.module';
+import { ProgressModule } from './modules/progress/progress.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
+import { GamificationModule } from './modules/gamification/gamification.module';
+import { StellarModule } from './modules/stellar/stellar.module';
+import { AdminModule } from './modules/admin/admin.module';
+import { ExamLockModule } from './modules/exam-lock/exam-lock.module';
+import { ConnectionsModule } from './modules/connections/connections.module';
+import { SearchModule } from './modules/search/search.module';
+import { DiscussionsModule } from './modules/discussions/discussions.module';
+import { GpaModule } from './modules/gpa/gpa.module';
+import { LibraryModule } from './modules/library/library.module';
+import { StudyGroupsModule } from './modules/study-groups/study-groups.module';
 
 @Module({
   imports: [
     // Configuration — loads .env
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: ".env",
+      envFilePath: '.env',
     }),
 
     // PostgreSQL via TypeORM
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (config: ConfigService) => ({
-        type: "postgres",
-        host: config.get("DB_HOST"),
-        port: config.get<number>("DB_PORT"),
-        username: config.get("DB_USERNAME"),
-        password: config.get("DB_PASSWORD"),
-        database: config.get("DB_NAME"),
-        entities: [__dirname + "/**/*.entity{.ts,.js}"],
-        migrations: [__dirname + "/database/migrations/*{.ts,.js}"],
+        type: 'postgres',
+        host: config.get('DB_HOST'),
+        port: config.get<number>('DB_PORT'),
+        username: config.get('DB_USERNAME'),
+        password: config.get('DB_PASSWORD'),
+        database: config.get('DB_NAME'),
+        entities: [__dirname + '/**/*.entity{.ts,.js}'],
+        migrations: [__dirname + '/database/migrations/*{.ts,.js}'],
         synchronize: false,
-        logging: config.get("NODE_ENV") === "development",
+        logging: config.get('NODE_ENV') === 'development',
         // SSL required for Supabase in production
-        ssl: config.get("NODE_ENV") === "production"
-          ? { rejectUnauthorized: false }
-          : false,
+        ssl: config.get('NODE_ENV') === 'production' ? { rejectUnauthorized: false } : false,
         // Connection pool settings for production
         extra: {
           max: 10,
@@ -65,8 +63,8 @@ import { StudyGroupsModule } from "./modules/study-groups/study-groups.module";
       imports: [ConfigModule],
       useFactory: (config: ConfigService) => [
         {
-          ttl: config.get<number>("THROTTLE_TTL", 60),
-          limit: config.get<number>("THROTTLE_LIMIT", 100),
+          ttl: config.get<number>('THROTTLE_TTL', 60),
+          limit: config.get<number>('THROTTLE_LIMIT', 100),
         },
       ],
       inject: [ConfigService],

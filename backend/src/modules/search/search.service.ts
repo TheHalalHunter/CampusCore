@@ -1,9 +1,9 @@
-import { Injectable } from "@nestjs/common";
-import { InjectRepository } from "@nestjs/typeorm";
-import { Repository, ILike } from "typeorm";
-import { Course } from "../courses/entities/course.entity";
-import { Resource, ResourceStatus } from "../resources/entities/resource.entity";
-import { Question } from "../community/entities/question.entity";
+import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository, ILike } from 'typeorm';
+import { Course } from '../courses/entities/course.entity';
+import { Resource, ResourceStatus } from '../resources/entities/resource.entity';
+import { Question } from '../community/entities/question.entity';
 
 export interface SearchResults {
   courses: Course[];
@@ -23,11 +23,7 @@ export class SearchService {
     private readonly questionsRepo: Repository<Question>,
   ) {}
 
-  async search(
-    query: string,
-    departmentId?: string,
-    limit = 10,
-  ): Promise<SearchResults> {
+  async search(query: string, departmentId?: string, limit = 10): Promise<SearchResults> {
     const q = query.trim();
     if (!q) return { courses: [], resources: [], questions: [], total: 0 };
 
@@ -44,7 +40,7 @@ export class SearchService {
     const courses = await this.coursesRepo.find({
       where: courseWhere,
       take: limit,
-      order: { title: "ASC" },
+      order: { title: 'ASC' },
     });
 
     // Resources — match title, description (approved only)
@@ -55,7 +51,7 @@ export class SearchService {
     const resources = await this.resourcesRepo.find({
       where: resourceWhere,
       take: limit,
-      order: { downloadCount: "DESC" },
+      order: { downloadCount: 'DESC' },
     });
 
     // Questions — match title, body (not flagged)
@@ -66,7 +62,7 @@ export class SearchService {
     const questions = await this.questionsRepo.find({
       where: questionWhere,
       take: limit,
-      order: { createdAt: "DESC" },
+      order: { createdAt: 'DESC' },
     });
 
     return {

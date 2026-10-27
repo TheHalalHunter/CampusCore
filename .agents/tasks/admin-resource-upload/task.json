@@ -1,0 +1,7 @@
+{
+  "task_id": "task-admin-resource-upload",
+  "task_description": "Add resource upload capability to the CampusCore admin dashboard. Admins upload directly; resources are auto-approved (status=approved, isOfficial=true) — no moderation queue.",
+  "status": "pending",
+  "feature_order": ["FEAT-001", "FEAT-002"],
+  "blocked_reason": null
+}

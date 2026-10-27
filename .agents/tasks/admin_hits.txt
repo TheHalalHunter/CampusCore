@@ -1,0 +1,23 @@
+﻿community_moderation_screen.dart : 0
+admin_router.dart : 0
+admin_shell.dart : 0
+
+TOTAL ISSUE LINES: 341
+ERRORS: 247
+WARNINGS: 0
+INFOS: 91
+DATACONNECT-RELATED: 327
+NON-DATACONNECT ISSUES: 11
+
+--- NON-DATACONNECT ISSUE FILES ---
+lib\app\theme\admin_theme.dart:27:9
+lib\main.dart:15:5
+lib\main.dart:20:9
+lib\main.dart:21:9
+lib\presentation\screens\auth\admin_login_screen.dart:108:31
+lib\presentation\screens\exam_lock\exam_lock_screen.dart:264:9
+lib\presentation\screens\exam_lock\exam_lock_screen.dart:312:18
+lib\presentation\screens\gamification\gamification_screen.dart:425:7
+lib\presentation\screens\gamification\gamification_screen.dart:427:7
+lib\presentation\screens\gamification\gamification_screen.dart:429:7
+lib\presentation\screens\users\users_screen.dart:360:48

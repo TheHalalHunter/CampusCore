@@ -8,23 +8,23 @@ import {
   Query,
   UseGuards,
   ForbiddenException,
-} from "@nestjs/common";
-import { ApiTags, ApiBearerAuth, ApiOperation } from "@nestjs/swagger";
-import { CommunityService } from "./community.service";
-import { PostQuestionDto } from "./dto/post-question.dto";
-import { PostAnswerDto } from "./dto/post-answer.dto";
-import { ExamLockService } from "../exam-lock/exam-lock.service";
-import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
-import { RolesGuard } from "../../common/guards/roles.guard";
-import { Roles } from "../../common/decorators/roles.decorator";
-import { CurrentUser } from "../../common/decorators/current-user.decorator";
-import { UserRole } from "../users/enums/user-role.enum";
-import { User } from "../users/entities/user.entity";
+} from '@nestjs/common';
+import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+import { CommunityService } from './community.service';
+import { PostQuestionDto } from './dto/post-question.dto';
+import { PostAnswerDto } from './dto/post-answer.dto';
+import { ExamLockService } from '../exam-lock/exam-lock.service';
+import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { RolesGuard } from '../../common/guards/roles.guard';
+import { Roles } from '../../common/decorators/roles.decorator';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { UserRole } from '../users/enums/user-role.enum';
+import { User } from '../users/entities/user.entity';
 
-@ApiTags("Community")
+@ApiTags('Community')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
-@Controller("community")
+@Controller('community')
 export class CommunityController {
   constructor(
     private readonly service: CommunityService,
@@ -35,50 +35,54 @@ export class CommunityController {
     const locked = await this.examLock.areDiscussionsLocked(user.academicLevel);
     if (locked) {
       const details = await this.examLock.getActiveLockDetails(user.academicLevel);
-      const reason = details?.reason ? ` Reason: ${details.reason}` : "";
-      throw new ForbiddenException(
-        `Community Q&A is disabled during the exam period.${reason}`,
-      );
+      const reason = details?.reason ? ` Reason: ${details.reason}` : '';
+      throw new ForbiddenException(`Community Q&A is disabled during the exam period.${reason}`);
     }
   }
 
-  @Get("questions")
-  @ApiOperation({ summary: "Browse questions (filter by dept, course, level)" })
+  @Get('questions')
+  @ApiOperation({ summary: 'Browse questions (filter by dept, course, level)' })
   getQuestions(
-    @Query("departmentId") departmentId?: string,
-    @Query("courseId") courseId?: string,
-    @Query("level") level?: string,
-    @Query("page") page = 1,
-    @Query("limit") limit = 20,
+    @Query('departmentId') departmentId?: string,
+    @Query('courseId') courseId?: string,
+    @Query('level') level?: string,
+    @Query('page') page = 1,
+    @Query('limit') limit = 20,
   ) {
-    return this.service.findQuestions({ departmentId, courseId, level, page: +page, limit: +limit });
+    return this.service.findQuestions({
+      departmentId,
+      courseId,
+      level,
+      page: +page,
+      limit: +limit,
+    });
   }
 
-  @Get("questions/:id")
-  @ApiOperation({ summary: "Get a question with its answers" })
-  async getQuestion(@Param("id") id: string) {
+  @Get('questions/:id')
+  @ApiOperation({ summary: 'Get a question with its answers' })
+  async getQuestion(@Param('id') id: string) {
     const question = await this.service.findQuestion(id);
     const answers = await this.service.findAnswers(id);
     return { question, answers };
   }
 
-  @Post("questions")
-  @ApiOperation({ summary: "Post a new question" })
+  @Post('questions')
+  @ApiOperation({ summary: 'Post a new question' })
   async postQuestion(@CurrentUser() user: User, @Body() dto: PostQuestionDto) {
     await this.checkDiscussionsLock(user);
     // Auto-fill department and level from user if not provided
     const data = {
       ...dto,
-      departmentId:  dto.departmentId  || user.departmentId  || undefined,
-      academicLevel: dto.academicLevel || user.academicLevel  || undefined,
+      departmentId: dto.departmentId || user.departmentId || undefined,
+      academicLevel: dto.academicLevel || user.academicLevel || undefined,
     };
     return this.service.postQuestion(user.id, data);
   }
 
-  @Post("questions/:id/answers")
-  @ApiOperation({ summary: "Answer a question" })
+  @Post('questions/:id/answers')
+  @ApiOperation({ summary: 'Answer a question' })
   async postAnswer(
-    @Param("id") questionId: string,
+    @Param('id') questionId: string,
     @CurrentUser() user: User,
     @Body() dto: PostAnswerDto,
   ) {
@@ -86,68 +90,65 @@ export class CommunityController {
     return this.service.postAnswer(user.id, questionId, dto.body);
   }
 
-  @Patch("questions/:id/resolve")
-  @ApiOperation({ summary: "Mark question as resolved (author only)" })
-  resolve(@Param("id") id: string, @CurrentUser("id") userId: string) {
+  @Patch('questions/:id/resolve')
+  @ApiOperation({ summary: 'Mark question as resolved (author only)' })
+  resolve(@Param('id') id: string, @CurrentUser('id') userId: string) {
     return this.service.markResolved(id, userId);
   }
 
   @UseGuards(RolesGuard)
   @Roles(UserRole.MODERATOR, UserRole.ADMIN)
-  @Patch("answers/:id/verify")
+  @Patch('answers/:id/verify')
   @ApiOperation({
-    summary: "Verify an answer as correct (moderator/admin only)",
+    summary: 'Verify an answer as correct (moderator/admin only)',
   })
-  verifyAnswer(@Param("id") id: string) {
+  verifyAnswer(@Param('id') id: string) {
     return this.service.verifyAnswer(id);
   }
 
-  @Post("flag/:type/:id")
-  @ApiOperation({ summary: "Flag a question or answer for review" })
-  flag(@Param("type") type: "question" | "answer", @Param("id") id: string) {
+  @Post('flag/:type/:id')
+  @ApiOperation({ summary: 'Flag a question or answer for review' })
+  flag(@Param('type') type: 'question' | 'answer', @Param('id') id: string) {
     return this.service.flagContent(type, id);
   }
 
   @UseGuards(RolesGuard)
   @Roles(UserRole.ADMIN)
-  @Get("flagged")
-  @ApiOperation({ summary: "Get all flagged questions and answers (admin only)" })
+  @Get('flagged')
+  @ApiOperation({ summary: 'Get all flagged questions and answers (admin only)' })
   getFlagged() {
     return this.service.getFlaggedContent();
   }
 
   @UseGuards(RolesGuard)
   @Roles(UserRole.ADMIN)
-  @Patch("flagged/:type/:id/resolve")
-  @ApiOperation({ summary: "Unflag (resolve) a flagged question or answer (admin only)" })
-  resolveFlag(
-    @Param("type") type: "question" | "answer",
-    @Param("id") id: string,
-  ) {
+  @Patch('flagged/:type/:id/resolve')
+  @ApiOperation({ summary: 'Unflag (resolve) a flagged question or answer (admin only)' })
+  resolveFlag(@Param('type') type: 'question' | 'answer', @Param('id') id: string) {
     return this.service.unflagContent(type, id);
   }
 
-  @Post("questions/:id/upvote")
-  @ApiOperation({ summary: "Upvote a question" })
-  upvoteQuestion(@Param("id") id: string) {
+  @Post('questions/:id/upvote')
+  @ApiOperation({ summary: 'Upvote a question' })
+  upvoteQuestion(@Param('id') id: string) {
     return this.service.upvoteQuestion(id);
   }
 
-  @Post("questions/:id/downvote")
-  @ApiOperation({ summary: "Downvote a question" })
-  downvoteQuestion(@Param("id") id: string) {
+  @Post('questions/:id/downvote')
+  @ApiOperation({ summary: 'Downvote a question' })
+  downvoteQuestion(@Param('id') id: string) {
     return this.service.downvoteQuestion(id);
   }
 
-  @Post("answers/:id/upvote")
-  @ApiOperation({ summary: "Upvote an answer" })
-  upvoteAnswer(@Param("id") id: string) {
+  @Post('answers/:id/upvote')
+  @ApiOperation({ summary: 'Upvote an answer' })
+  upvoteAnswer(@Param('id') id: string) {
     return this.service.upvoteAnswer(id);
   }
 
-  @Post("answers/:id/downvote")
-  @ApiOperation({ summary: "Downvote an answer" })
-  downvoteAnswer(@Param("id") id: string) {
+  @Post('answers/:id/downvote')
+  @ApiOperation({ summary: 'Downvote an answer' })
+  downvoteAnswer(@Param('id') id: string) {
     return this.service.downvoteAnswer(id);
   }
 }

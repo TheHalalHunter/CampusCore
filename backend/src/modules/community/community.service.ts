@@ -3,14 +3,14 @@ import {
   NotFoundException,
   ForbiddenException,
   BadRequestException,
-} from "@nestjs/common";
-import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
-import { Question } from "./entities/question.entity";
-import { Answer } from "./entities/answer.entity";
-import { GamificationService } from "../gamification/gamification.service";
-import { NotificationsService } from "../notifications/notifications.service";
-import { NotificationType } from "../notifications/entities/notification.entity";
+} from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Question } from './entities/question.entity';
+import { Answer } from './entities/answer.entity';
+import { GamificationService } from '../gamification/gamification.service';
+import { NotificationsService } from '../notifications/notifications.service';
+import { NotificationType } from '../notifications/entities/notification.entity';
 
 @Injectable()
 export class CommunityService {
@@ -32,42 +32,40 @@ export class CommunityService {
     page?: number;
     limit?: number;
   }): Promise<{ questions: any[]; total: number }> {
-    const page  = filters.page  ?? 1;
+    const page = filters.page ?? 1;
     const limit = Math.min(filters.limit ?? 20, 50);
 
     const where: any = { isFlagged: false };
     if (filters.departmentId) where.departmentId = filters.departmentId;
-    if (filters.courseId)     where.courseId     = filters.courseId;
-    if (filters.level)        where.academicLevel = filters.level;
+    if (filters.courseId) where.courseId = filters.courseId;
+    if (filters.level) where.academicLevel = filters.level;
 
     const [rawQuestions, total] = await this.questionsRepo.findAndCount({
       where,
-      order: { createdAt: "DESC" },
+      order: { createdAt: 'DESC' },
       skip: (page - 1) * limit,
       take: limit,
     });
 
     // Fetch author names separately using the users repository
-    const authorIds = [...new Set(rawQuestions.map(q => q.authorId))];
+    const authorIds = [...new Set(rawQuestions.map((q) => q.authorId))];
     const authorMap: Record<string, { firstName: string; lastName: string }> = {};
 
     if (authorIds.length > 0) {
-      const users = await this.questionsRepo.manager
-        .getRepository("User")
-        .findByIds(authorIds);
+      const users = await this.questionsRepo.manager.getRepository('User').findByIds(authorIds);
 
       for (const u of users as any[]) {
-        const parts = ((u.fullName || u.full_name || "") as string).split(" ");
+        const parts = ((u.fullName || u.full_name || '') as string).split(' ');
         authorMap[u.id] = {
-          firstName: parts[0] || "Student",
-          lastName:  parts.slice(1).join(" ") || "",
+          firstName: parts[0] || 'Student',
+          lastName: parts.slice(1).join(' ') || '',
         };
       }
     }
 
-    const questions = rawQuestions.map(q => ({
+    const questions = rawQuestions.map((q) => ({
       ...q,
-      author: authorMap[q.authorId] ?? { firstName: "Student", lastName: "" },
+      author: authorMap[q.authorId] ?? { firstName: 'Student', lastName: '' },
     }));
 
     return { questions, total };
@@ -75,18 +73,15 @@ export class CommunityService {
 
   async findQuestion(id: string): Promise<Question> {
     const q = await this.questionsRepo.findOne({ where: { id } });
-    if (!q) throw new NotFoundException("Question not found");
+    if (!q) throw new NotFoundException('Question not found');
     return q;
   }
 
-  async postQuestion(
-    authorId: string,
-    data: Partial<Question>,
-  ): Promise<Question> {
+  async postQuestion(authorId: string, data: Partial<Question>): Promise<Question> {
     const question = this.questionsRepo.create({ ...data, authorId });
     const saved = await this.questionsRepo.save(question);
     // Award reputation for posting a question
-    await this.gamification.awardPoints(authorId, "QUESTION_POSTED");
+    await this.gamification.awardPoints(authorId, 'QUESTION_POSTED');
     await this.gamification.checkAndAwardBadges(authorId);
     return saved;
   }
@@ -96,27 +91,23 @@ export class CommunityService {
   findAnswers(questionId: string): Promise<Answer[]> {
     return this.answersRepo.find({
       where: { questionId, isFlagged: false },
-      order: { isVerified: "DESC", upvoteCount: "DESC" },
+      order: { isVerified: 'DESC', upvoteCount: 'DESC' },
     });
   }
 
-  async postAnswer(
-    authorId: string,
-    questionId: string,
-    body: string,
-  ): Promise<Answer> {
+  async postAnswer(authorId: string, questionId: string, body: string): Promise<Answer> {
     const question = await this.findQuestion(questionId);
     const answer = this.answersRepo.create({ authorId, questionId, body });
     const saved = await this.answersRepo.save(answer);
-    await this.questionsRepo.increment({ id: questionId }, "answerCount", 1);
+    await this.questionsRepo.increment({ id: questionId }, 'answerCount', 1);
     // Award reputation for posting an answer
-    await this.gamification.awardPoints(authorId, "ANSWER_POSTED");
+    await this.gamification.awardPoints(authorId, 'ANSWER_POSTED');
     await this.gamification.checkAndAwardBadges(authorId);
     // Notify the question author (not self)
     if (question.authorId !== authorId) {
       await this.notifications.create({
         userId: question.authorId,
-        title: "New answer on your question",
+        title: 'New answer on your question',
         body: `Someone answered: "${question.title}"`,
         type: NotificationType.QUESTION_ANSWERED,
         relatedId: questionId,
@@ -127,16 +118,16 @@ export class CommunityService {
 
   async verifyAnswer(answerId: string): Promise<Answer> {
     const answer = await this.answersRepo.findOne({ where: { id: answerId } });
-    if (!answer) throw new NotFoundException("Answer not found");
+    if (!answer) throw new NotFoundException('Answer not found');
     answer.isVerified = true;
     const saved = await this.answersRepo.save(answer);
     // Award helpful points and notify the answer author
-    await this.gamification.awardPoints(answer.authorId, "ANSWER_HELPFUL");
+    await this.gamification.awardPoints(answer.authorId, 'ANSWER_HELPFUL');
     await this.gamification.checkAndAwardBadges(answer.authorId);
     await this.notifications.create({
       userId: answer.authorId,
-      title: "Your answer was verified! ✅",
-      body: "A moderator marked your answer as the best answer.",
+      title: 'Your answer was verified! ✅',
+      body: 'A moderator marked your answer as the best answer.',
       type: NotificationType.ANSWER_VERIFIED,
       relatedId: answer.questionId,
     });
@@ -146,16 +137,14 @@ export class CommunityService {
   async markResolved(questionId: string, userId: string): Promise<Question> {
     const question = await this.findQuestion(questionId);
     if (question.authorId !== userId) {
-      throw new ForbiddenException(
-        "Only the question author can mark it as resolved",
-      );
+      throw new ForbiddenException('Only the question author can mark it as resolved');
     }
     question.isResolved = true;
     return this.questionsRepo.save(question);
   }
 
-  async flagContent(type: "question" | "answer", id: string): Promise<void> {
-    if (type === "question") {
+  async flagContent(type: 'question' | 'answer', id: string): Promise<void> {
+    if (type === 'question') {
       await this.questionsRepo.update(id, { isFlagged: true });
     } else {
       await this.answersRepo.update(id, { isFlagged: true });
@@ -166,21 +155,21 @@ export class CommunityService {
     const [questions, answers] = await Promise.all([
       this.questionsRepo.find({
         where: { isFlagged: true },
-        order: { createdAt: "DESC" },
+        order: { createdAt: 'DESC' },
       }),
       this.answersRepo.find({
         where: { isFlagged: true },
-        order: { createdAt: "DESC" },
+        order: { createdAt: 'DESC' },
       }),
     ]);
     return { questions, answers };
   }
 
-  async unflagContent(type: "question" | "answer", id: string): Promise<void> {
-    if (type !== "question" && type !== "answer") {
-      throw new BadRequestException("type must be question or answer");
+  async unflagContent(type: 'question' | 'answer', id: string): Promise<void> {
+    if (type !== 'question' && type !== 'answer') {
+      throw new BadRequestException('type must be question or answer');
     }
-    if (type === "question") {
+    if (type === 'question') {
       await this.questionsRepo.update(id, { isFlagged: false });
     } else {
       await this.answersRepo.update(id, { isFlagged: false });
@@ -190,7 +179,7 @@ export class CommunityService {
   // --- Upvotes ---
 
   async upvoteQuestion(id: string): Promise<{ upvoteCount: number }> {
-    await this.questionsRepo.increment({ id }, "upvoteCount", 1);
+    await this.questionsRepo.increment({ id }, 'upvoteCount', 1);
     const q = await this.questionsRepo.findOne({ where: { id } });
     return { upvoteCount: q?.upvoteCount ?? 0 };
   }
@@ -200,15 +189,15 @@ export class CommunityService {
     await this.questionsRepo
       .createQueryBuilder()
       .update()
-      .set({ upvoteCount: () => "GREATEST(upvote_count - 1, 0)" })
-      .where("id = :id", { id })
+      .set({ upvoteCount: () => 'GREATEST(upvote_count - 1, 0)' })
+      .where('id = :id', { id })
       .execute();
     const q = await this.questionsRepo.findOne({ where: { id } });
     return { upvoteCount: q?.upvoteCount ?? 0 };
   }
 
   async upvoteAnswer(id: string): Promise<{ upvoteCount: number }> {
-    await this.answersRepo.increment({ id }, "upvoteCount", 1);
+    await this.answersRepo.increment({ id }, 'upvoteCount', 1);
     const a = await this.answersRepo.findOne({ where: { id } });
     return { upvoteCount: a?.upvoteCount ?? 0 };
   }
@@ -217,8 +206,8 @@ export class CommunityService {
     await this.answersRepo
       .createQueryBuilder()
       .update()
-      .set({ upvoteCount: () => "GREATEST(upvote_count - 1, 0)" })
-      .where("id = :id", { id })
+      .set({ upvoteCount: () => 'GREATEST(upvote_count - 1, 0)' })
+      .where('id = :id', { id })
       .execute();
     const a = await this.answersRepo.findOne({ where: { id } });
     return { upvoteCount: a?.upvoteCount ?? 0 };

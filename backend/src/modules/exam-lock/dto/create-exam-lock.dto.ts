@@ -1,4 +1,4 @@
-import { IsString, IsDateString, IsBoolean, IsOptional } from "class-validator";
+import { IsString, IsDateString, IsBoolean, IsOptional } from 'class-validator';
 
 export class CreateExamLockDto {
   @IsString()

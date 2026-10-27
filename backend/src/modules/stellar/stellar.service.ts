@@ -1,9 +1,9 @@
-import { Injectable, Logger } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
-import { Keypair } from "@stellar/stellar-sdk";
-import { ReputationContractService } from "./contracts/reputation.contract";
-import { BadgeContractService } from "./contracts/badge.contract";
-import { ContributionContractService } from "./contracts/contribution.contract";
+import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { Keypair } from '@stellar/stellar-sdk';
+import { ReputationContractService } from './contracts/reputation.contract';
+import { BadgeContractService } from './contracts/badge.contract';
+import { ContributionContractService } from './contracts/contribution.contract';
 
 @Injectable()
 export class StellarService {
@@ -22,21 +22,19 @@ export class StellarService {
   }
 
   private initializeNetwork() {
-    const network = this.configService.get("STELLAR_NETWORK", "testnet");
-    const isTestnet = network === "testnet";
+    const network = this.configService.get('STELLAR_NETWORK', 'testnet');
+    const isTestnet = network === 'testnet';
 
     this.networkPassphrase = isTestnet
-      ? "Test SDF Network ; September 2015"
-      : "Public Global Stellar Network ; September 2015";
+      ? 'Test SDF Network ; September 2015'
+      : 'Public Global Stellar Network ; September 2015';
     this.rpcUrl = isTestnet
-      ? "https://soroban-testnet.stellar.org"
-      : "https://soroban-mainnet.stellar.org";
+      ? 'https://soroban-testnet.stellar.org'
+      : 'https://soroban-mainnet.stellar.org';
 
-    const backendSecret = this.configService.get("STELLAR_BACKEND_SECRET");
+    const backendSecret = this.configService.get('STELLAR_BACKEND_SECRET');
     if (!backendSecret) {
-      this.logger.warn(
-        "STELLAR_BACKEND_SECRET not set — Stellar operations will fail",
-      );
+      this.logger.warn('STELLAR_BACKEND_SECRET not set — Stellar operations will fail');
     } else {
       this.backendKeypair = Keypair.fromSecret(backendSecret);
       this.logger.log(
@@ -55,9 +53,7 @@ export class StellarService {
     reason: string,
   ): Promise<string> {
     try {
-      this.logger.debug(
-        `Awarding ${points} points to ${studentAddress} for: ${reason}`,
-      );
+      this.logger.debug(`Awarding ${points} points to ${studentAddress} for: ${reason}`);
       const txHash = await this.reputationContract.awardPoints(
         studentAddress,
         points,
@@ -69,10 +65,7 @@ export class StellarService {
       this.logger.log(`Awarded ${points} reputation points — Tx: ${txHash}`);
       return txHash;
     } catch (error) {
-      this.logger.error(
-        `Failed to award reputation: ${error.message}`,
-        error.stack,
-      );
+      this.logger.error(`Failed to award reputation: ${error.message}`, error.stack);
       throw error;
     }
   }
@@ -81,11 +74,7 @@ export class StellarService {
    * Mint a badge NFT to a student's wallet
    * Called by GamificationService when a badge is earned
    */
-  async mintBadge(
-    studentAddress: string,
-    badgeType: string,
-    metadataUri: string,
-  ): Promise<string> {
+  async mintBadge(studentAddress: string, badgeType: string, metadataUri: string): Promise<string> {
     try {
       this.logger.debug(`Minting badge ${badgeType} to ${studentAddress}`);
       const txHash = await this.badgeContract.mint(
@@ -114,9 +103,7 @@ export class StellarService {
     courseId: string,
   ): Promise<string> {
     try {
-      this.logger.debug(
-        `Recording contribution ${resourceHash} from ${studentAddress}`,
-      );
+      this.logger.debug(`Recording contribution ${resourceHash} from ${studentAddress}`);
       const txHash = await this.contributionContract.record(
         studentAddress,
         resourceHash,
@@ -128,10 +115,7 @@ export class StellarService {
       this.logger.log(`Recorded contribution — Tx: ${txHash}`);
       return txHash;
     } catch (error) {
-      this.logger.error(
-        `Failed to record contribution: ${error.message}`,
-        error.stack,
-      );
+      this.logger.error(`Failed to record contribution: ${error.message}`, error.stack);
       throw error;
     }
   }
@@ -141,10 +125,7 @@ export class StellarService {
    */
   async getReputationBalance(studentAddress: string): Promise<number> {
     try {
-      const balance = await this.reputationContract.getBalance(
-        studentAddress,
-        this.rpcUrl,
-      );
+      const balance = await this.reputationContract.getBalance(studentAddress, this.rpcUrl);
       return balance;
     } catch (error) {
       this.logger.error(`Failed to get reputation balance: ${error.message}`);
@@ -157,10 +138,7 @@ export class StellarService {
    */
   async getBadges(studentAddress: string): Promise<any[]> {
     try {
-      const badges = await this.badgeContract.getBadges(
-        studentAddress,
-        this.rpcUrl,
-      );
+      const badges = await this.badgeContract.getBadges(studentAddress, this.rpcUrl);
       return badges;
     } catch (error) {
       this.logger.error(`Failed to get badges: ${error.message}`);
@@ -173,10 +151,7 @@ export class StellarService {
    */
   async verifyContribution(resourceHash: string): Promise<boolean> {
     try {
-      const exists = await this.contributionContract.verify(
-        resourceHash,
-        this.rpcUrl,
-      );
+      const exists = await this.contributionContract.verify(resourceHash, this.rpcUrl);
       return exists;
     } catch (error) {
       this.logger.error(`Failed to verify contribution: ${error.message}`);

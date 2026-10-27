@@ -1,6 +1,6 @@
-import { Injectable, OnModuleInit, Logger } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
-import * as admin from "firebase-admin";
+import { Injectable, OnModuleInit, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import * as admin from 'firebase-admin';
 
 /**
  * Injectable wrapper around Firebase Admin SDK.
@@ -24,42 +24,40 @@ export class FirebaseAdminService implements OnModuleInit {
     let credential: admin.credential.Credential;
 
     // Strategy 1: full service account JSON (most reliable)
-    const saJson = this.config.get<string>("FIREBASE_SERVICE_ACCOUNT_JSON");
+    const saJson = this.config.get<string>('FIREBASE_SERVICE_ACCOUNT_JSON');
     if (saJson) {
       try {
         const sa = JSON.parse(saJson);
         credential = admin.credential.cert(sa);
-        this.logger.log("Firebase: using FIREBASE_SERVICE_ACCOUNT_JSON");
+        this.logger.log('Firebase: using FIREBASE_SERVICE_ACCOUNT_JSON');
       } catch (e) {
-        this.logger.error("FIREBASE_SERVICE_ACCOUNT_JSON is not valid JSON", e);
+        this.logger.error('FIREBASE_SERVICE_ACCOUNT_JSON is not valid JSON', e);
         return;
       }
     } else {
       // Strategy 2: individual vars
-      const projectId   = this.config.get<string>("FIREBASE_PROJECT_ID");
-      const clientEmail = this.config.get<string>("FIREBASE_CLIENT_EMAIL");
-      const rawKey      = this.config.get<string>("FIREBASE_PRIVATE_KEY") ?? "";
-      const privateKey  = rawKey.includes("\\n")
-        ? rawKey.replace(/\\n/g, "\n")
-        : rawKey;
+      const projectId = this.config.get<string>('FIREBASE_PROJECT_ID');
+      const clientEmail = this.config.get<string>('FIREBASE_CLIENT_EMAIL');
+      const rawKey = this.config.get<string>('FIREBASE_PRIVATE_KEY') ?? '';
+      const privateKey = rawKey.includes('\\n') ? rawKey.replace(/\\n/g, '\n') : rawKey;
 
       if (!projectId || !privateKey || !clientEmail) {
         this.logger.error(
-          "Firebase config incomplete — set FIREBASE_SERVICE_ACCOUNT_JSON or " +
-          "FIREBASE_PROJECT_ID + FIREBASE_PRIVATE_KEY + FIREBASE_CLIENT_EMAIL",
+          'Firebase config incomplete — set FIREBASE_SERVICE_ACCOUNT_JSON or ' +
+            'FIREBASE_PROJECT_ID + FIREBASE_PRIVATE_KEY + FIREBASE_CLIENT_EMAIL',
         );
         return;
       }
       credential = admin.credential.cert({ projectId, privateKey, clientEmail });
-      this.logger.log("Firebase: using individual FIREBASE_* vars");
+      this.logger.log('Firebase: using individual FIREBASE_* vars');
     }
 
     this.app = admin.initializeApp({
       credential,
-      storageBucket: this.config.get<string>("FIREBASE_STORAGE_BUCKET"),
+      storageBucket: this.config.get<string>('FIREBASE_STORAGE_BUCKET'),
     });
 
-    this.logger.log("Firebase Admin SDK initialized successfully");
+    this.logger.log('Firebase Admin SDK initialized successfully');
   }
 
   getApp(): admin.app.App {
@@ -68,14 +66,18 @@ export class FirebaseAdminService implements OnModuleInit {
 
   auth(): admin.auth.Auth {
     if (!this.app) {
-      this.logger.error("Firebase auth() called but SDK not initialized — FIREBASE_SERVICE_ACCOUNT_JSON or individual vars missing/invalid");
-      throw new Error("Firebase not initialized — check FIREBASE_SERVICE_ACCOUNT_JSON or individual FIREBASE_* vars in Railway");
+      this.logger.error(
+        'Firebase auth() called but SDK not initialized — FIREBASE_SERVICE_ACCOUNT_JSON or individual vars missing/invalid',
+      );
+      throw new Error(
+        'Firebase not initialized — check FIREBASE_SERVICE_ACCOUNT_JSON or individual FIREBASE_* vars in Railway',
+      );
     }
     return this.app.auth();
   }
 
   storage(): admin.storage.Storage {
-    if (!this.app) throw new Error("Firebase not initialized");
+    if (!this.app) throw new Error('Firebase not initialized');
     return this.app.storage();
   }
 }

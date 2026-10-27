@@ -1,16 +1,16 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, Index } from 'typeorm';
 
 export enum StellarTxType {
-  REPUTATION_AWARD  = 'reputation_award',
-  BADGE_MINT        = 'badge_mint',
+  REPUTATION_AWARD = 'reputation_award',
+  BADGE_MINT = 'badge_mint',
   CONTRIBUTION_PROOF = 'contribution_proof',
 }
 
 export enum StellarTxStatus {
-  PENDING   = 'pending',
+  PENDING = 'pending',
   SUBMITTED = 'submitted',
   CONFIRMED = 'confirmed',
-  FAILED    = 'failed',
+  FAILED = 'failed',
 }
 
 @Entity('stellar_transactions')

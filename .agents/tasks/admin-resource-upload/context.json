@@ -1,0 +1,29 @@
+{
+  "project_type": "NestJS backend + Flutter Web admin dashboard (monorepo under CampusCoreNew/)",
+  "language": "TypeScript (backend), Dart (Flutter)",
+  "build_system": "npm (backend), Flutter (admin_dashboard). Backend: `npm run build` compiles TS. Flutter: `flutter build web`",
+  "test_framework": "Backend has no test files discovered. Flutter: `flutter test` (no test files for moderation_screen). Linting is the primary verification.",
+  "build_command": "Backend: `cd backend && npm run build`. Flutter: `cd admin_dashboard && flutter build web --dart-define=API_BASE_URL=https://campuscore-bfrq.onrender.com/api/v1`",
+  "test_command": "Backend lint: `cd backend && npm run lint`. Flutter lint: `cd admin_dashboard && flutter analyze`",
+  "verification_instructions": "1. Run `cd backend && npm run lint` — zero errors. 2. Run `cd backend && npm run build` — TypeScript compiles. 3. Run `cd admin_dashboard && flutter pub get` — resolves. 4. Run `cd admin_dashboard && flutter analyze` — zero errors. 5. Run `cd admin_dashboard && flutter build web --dart-define=API_BASE_URL=https://campuscore-bfrq.onrender.com/api/v1` — build succeeds.",
+  "snapshot_or_generated_files": null,
+  "environment_constraints": "Admin dashboard is Flutter Web only (no Android/iOS). firebase_storage must be ^13.4.1 (NOT ^11.0.0 — that is incompatible with firebase_core: ^3.13.0 already in pubspec). file_picker withData:true is mandatory for web (no file path available). Backend uses ConfigService, never process.env. TypeORM repos, never raw SQL.",
+  "contribution_requirements": "Run `npm run lint` and `flutter analyze` before committing. Never commit .env files. Feature branches: feature/<sprint>/<short-description>.",
+  "key_patterns": "Backend: modules in backend/src/modules/<name>/, each with entity/service/controller/module/dto/. Controllers use @CurrentUser() to get the authenticated User. All responses wrapped in {success, data, message} via ResponseInterceptor. Flutter: all screens are ConsumerWidget or ConsumerStatefulWidget. API calls via adminApi singleton (AdminApiClient in lib/core/utils/api_client.dart). Colours from AdminColors. Dialogs are AlertDialog + StatefulWidget/ConsumerStatefulWidget — see _CourseFormDialog in courses_management_screen.dart as the canonical pattern. Providers: FutureProvider for reads, StateNotifierProvider for auth. FutureProvider.family for parameterised reads.",
+  "relevant_files": [
+    "backend/src/modules/resources/resources.service.ts",
+    "backend/src/modules/resources/resources.controller.ts",
+    "backend/src/modules/resources/resources.module.ts",
+    "backend/src/modules/resources/entities/resource.entity.ts",
+    "backend/src/modules/users/entities/user.entity.ts",
+    "backend/src/modules/users/enums/user-role.enum.ts",
+    "admin_dashboard/pubspec.yaml",
+    "admin_dashboard/lib/presentation/screens/resources/moderation_screen.dart",
+    "admin_dashboard/lib/core/utils/api_client.dart",
+    "admin_dashboard/lib/app/theme/admin_theme.dart",
+    "admin_dashboard/lib/firebase_options.dart",
+    "admin_dashboard/lib/core/providers/admin_departments_provider.dart",
+    "admin_dashboard/lib/presentation/screens/courses/courses_management_screen.dart"
+  ],
+  "directory_structure": "CampusCoreNew/backend/src/modules/ — NestJS feature modules. CampusCoreNew/admin_dashboard/lib/ — Flutter Web admin app. lib/core/utils/ — API client + responsive helper. lib/core/providers/ — shared Riverpod providers. lib/presentation/screens/ — one folder per screen. lib/app/theme/ — AdminColors + AdminTheme. lib/firebase_options.dart — Firebase project config (storageBucket already set)."
+}

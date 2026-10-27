@@ -1,0 +1,7 @@
+{
+  "task_id": "task-campuscore-remaining-features",
+  "task_description": "Build four remaining features for CampusCore: (1) Profile Picture Upload, (2) Study Groups (backend NestJS module + Flutter UI), (3) Recent Activity (local storage + home screen section), (4) Admin Answer Moderation screen.",
+  "status": "pending",
+  "feature_order": ["FEAT-001", "FEAT-002", "FEAT-003", "FEAT-004"],
+  "blocked_reason": null
+}

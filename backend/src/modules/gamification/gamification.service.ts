@@ -1,9 +1,9 @@
-import { Injectable, Logger } from "@nestjs/common";
-import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
-import { UserBadge, BadgeType } from "./entities/badge.entity";
-import { UsersService } from "../users/users.service";
-import { StellarService } from "../stellar/stellar.service";
+import { Injectable, Logger } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { UserBadge, BadgeType } from './entities/badge.entity';
+import { UsersService } from '../users/users.service';
+import { StellarService } from '../stellar/stellar.service';
 
 const REPUTATION_EVENTS = {
   UPLOAD_APPROVED: 10,
@@ -35,18 +35,10 @@ export class GamificationService {
       // Award on-chain reputation if Stellar address provided
       if (stellarAddress) {
         try {
-          await this.stellarService.awardReputationPoints(
-            stellarAddress,
-            points,
-            event,
-          );
-          this.logger.debug(
-            `Awarded ${points} reputation points on-chain for ${event}`,
-          );
+          await this.stellarService.awardReputationPoints(stellarAddress, points, event);
+          this.logger.debug(`Awarded ${points} reputation points on-chain for ${event}`);
         } catch (error) {
-          this.logger.error(
-            `Failed to award Stellar reputation: ${error.message}`,
-          );
+          this.logger.error(`Failed to award Stellar reputation: ${error.message}`);
           // Don't fail the transaction — log and continue
         }
       }
@@ -83,7 +75,7 @@ export class GamificationService {
   getUserBadges(userId: string): Promise<UserBadge[]> {
     return this.badgesRepo.find({
       where: { userId },
-      order: { earnedAt: "DESC" },
+      order: { earnedAt: 'DESC' },
     });
   }
 
@@ -94,11 +86,7 @@ export class GamificationService {
 
     // Fresh Scholar — awarded at registration (reputation 0+)
     if (!hasBadge(BadgeType.FRESH_SCHOLAR)) {
-      await this.awardBadge(
-        userId,
-        BadgeType.FRESH_SCHOLAR,
-        user.stellarAddress,
-      );
+      await this.awardBadge(userId, BadgeType.FRESH_SCHOLAR, user.stellarAddress);
     }
 
     // Bookworm — 50+ rep (active learner: downloads, views, progress)
@@ -108,20 +96,12 @@ export class GamificationService {
 
     // Community Helper — 75+ rep (sustained Q&A and community activity)
     if (user.reputationPoints >= 75 && !hasBadge(BadgeType.COMMUNITY_HELPER)) {
-      await this.awardBadge(
-        userId,
-        BadgeType.COMMUNITY_HELPER,
-        user.stellarAddress,
-      );
+      await this.awardBadge(userId, BadgeType.COMMUNITY_HELPER, user.stellarAddress);
     }
 
     // Top Contributor — 100+ rep
     if (user.reputationPoints >= 100 && !hasBadge(BadgeType.TOP_CONTRIBUTOR)) {
-      await this.awardBadge(
-        userId,
-        BadgeType.TOP_CONTRIBUTOR,
-        user.stellarAddress,
-      );
+      await this.awardBadge(userId, BadgeType.TOP_CONTRIBUTOR, user.stellarAddress);
     }
   }
 }

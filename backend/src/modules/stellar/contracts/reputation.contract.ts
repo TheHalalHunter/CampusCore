@@ -1,6 +1,6 @@
-import { Injectable, Logger } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
-import { Keypair } from "@stellar/stellar-sdk";
+import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { Keypair } from '@stellar/stellar-sdk';
 
 @Injectable()
 export class ReputationContractService {
@@ -8,12 +8,9 @@ export class ReputationContractService {
   private contractId: string;
 
   constructor(private configService: ConfigService) {
-    this.contractId = this.configService.get(
-      "STELLAR_REPUTATION_CONTRACT_ID",
-      "",
-    );
+    this.contractId = this.configService.get('STELLAR_REPUTATION_CONTRACT_ID', '');
     if (!this.contractId) {
-      this.logger.warn("STELLAR_REPUTATION_CONTRACT_ID not configured");
+      this.logger.warn('STELLAR_REPUTATION_CONTRACT_ID not configured');
     }
   }
 
@@ -47,9 +44,7 @@ export class ReputationContractService {
 
       // Mock return for now
       const mockTxHash = `mock-tx-${Date.now()}`;
-      this.logger.log(
-        `Mock reputation award (production would call Soroban): ${mockTxHash}`,
-      );
+      this.logger.log(`Mock reputation award (production would call Soroban): ${mockTxHash}`);
       return mockTxHash;
     } catch (error) {
       this.logger.error(`Error awarding points: ${error.message}`);
@@ -66,9 +61,7 @@ export class ReputationContractService {
     rpcUrl: string,
   ): Promise<number> {
     try {
-      this.logger.debug(
-        `Soroban call: reputation.get_balance(${studentAddress})`,
-      );
+      this.logger.debug(`Soroban call: reputation.get_balance(${studentAddress})`);
 
       // Placeholder: actual implementation would call Soroban contract
       // Mock return for now

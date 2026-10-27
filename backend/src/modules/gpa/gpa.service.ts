@@ -1,8 +1,8 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
-import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
-import { GpaSemester } from "./entities/gpa-semester.entity";
-import { SaveSemesterDto } from "./dto/save-semester.dto";
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { GpaSemester } from './entities/gpa-semester.entity';
+import { SaveSemesterDto } from './dto/save-semester.dto';
 
 @Injectable()
 export class GpaService {
@@ -15,15 +15,12 @@ export class GpaService {
   getUserSemesters(userId: string): Promise<GpaSemester[]> {
     return this.repo.find({
       where: { userId },
-      order: { academicLevel: "ASC", semester: "ASC" },
+      order: { academicLevel: 'ASC', semester: 'ASC' },
     });
   }
 
   /** Save or update a semester (upsert by userId + level + semester) */
-  async saveSemester(
-    userId: string,
-    dto: SaveSemesterDto,
-  ): Promise<GpaSemester> {
+  async saveSemester(userId: string, dto: SaveSemesterDto): Promise<GpaSemester> {
     const existing = await this.repo.findOne({
       where: {
         userId,
@@ -49,7 +46,7 @@ export class GpaService {
   /** Delete a saved semester */
   async deleteSemester(id: string, userId: string): Promise<void> {
     const semester = await this.repo.findOne({ where: { id, userId } });
-    if (!semester) throw new NotFoundException("Semester not found");
+    if (!semester) throw new NotFoundException('Semester not found');
     await this.repo.delete(id);
   }
 
@@ -62,7 +59,7 @@ export class GpaService {
   }> {
     const semesters = await this.getUserSemesters(userId);
     if (semesters.length === 0) {
-      return { cgpa: 0, totalUnits: 0, semesters: 0, gradeClass: "N/A" };
+      return { cgpa: 0, totalUnits: 0, semesters: 0, gradeClass: 'N/A' };
     }
 
     let weightedSum = 0;
@@ -86,10 +83,10 @@ export class GpaService {
   }
 
   private gradeClass(gpa: number): string {
-    if (gpa >= 4.5) return "First Class";
-    if (gpa >= 3.5) return "Second Class Upper";
-    if (gpa >= 2.4) return "Second Class Lower";
-    if (gpa >= 1.5) return "Third Class";
-    return "Fail";
+    if (gpa >= 4.5) return 'First Class';
+    if (gpa >= 3.5) return 'Second Class Upper';
+    if (gpa >= 2.4) return 'Second Class Lower';
+    if (gpa >= 1.5) return 'Third Class';
+    return 'Fail';
   }
 }

@@ -1,6 +1,6 @@
-import { Injectable, Logger } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
-import { Keypair } from "@stellar/stellar-sdk";
+import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { Keypair } from '@stellar/stellar-sdk';
 
 @Injectable()
 export class ContributionContractService {
@@ -8,12 +8,9 @@ export class ContributionContractService {
   private contractId: string;
 
   constructor(private configService: ConfigService) {
-    this.contractId = this.configService.get(
-      "STELLAR_CONTRIBUTION_CONTRACT_ID",
-      "",
-    );
+    this.contractId = this.configService.get('STELLAR_CONTRIBUTION_CONTRACT_ID', '');
     if (!this.contractId) {
-      this.logger.warn("STELLAR_CONTRIBUTION_CONTRACT_ID not configured");
+      this.logger.warn('STELLAR_CONTRIBUTION_CONTRACT_ID not configured');
     }
   }
 
@@ -40,9 +37,7 @@ export class ContributionContractService {
       // Placeholder: actual implementation would call Soroban contract
       // Mock return for now
       const mockTxHash = `mock-tx-${Date.now()}`;
-      this.logger.log(
-        `Mock contribution record (production would call Soroban): ${mockTxHash}`,
-      );
+      this.logger.log(`Mock contribution record (production would call Soroban): ${mockTxHash}`);
       return mockTxHash;
     } catch (error) {
       this.logger.error(`Error recording contribution: ${error.message}`);
@@ -78,9 +73,7 @@ export class ContributionContractService {
     rpcUrl: string,
   ): Promise<any[]> {
     try {
-      this.logger.debug(
-        `Soroban call: contribution.get_contributions(${studentAddress})`,
-      );
+      this.logger.debug(`Soroban call: contribution.get_contributions(${studentAddress})`);
 
       // Placeholder
       return [];

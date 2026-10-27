@@ -1,8 +1,8 @@
-import { Injectable } from "@nestjs/common";
-import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
-import { Progress } from "./entities/progress.entity";
-import { StudyStreak } from "./entities/study-streak.entity";
+import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Progress } from './entities/progress.entity';
+import { StudyStreak } from './entities/study-streak.entity';
 
 @Injectable()
 export class ProgressService {
@@ -25,8 +25,7 @@ export class ProgressService {
     const topics = await this.repo.find({ where: { userId, courseId } });
     const completedCount = topics.filter((t) => t.isCompleted).length;
     const totalCount = topics.length;
-    const percentage =
-      totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+    const percentage = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
     return { topics, completedCount, totalCount, percentage };
   }
 
@@ -61,20 +60,16 @@ export class ProgressService {
     return this.repo.save(progress);
   }
 
-  async getSemesterProgress(
-    userId: string,
-    courseIds: string[],
-  ): Promise<object> {
+  async getSemesterProgress(userId: string, courseIds: string[]): Promise<object> {
     const allProgress = await this.repo
-      .createQueryBuilder("p")
-      .where("p.userId = :userId", { userId })
-      .andWhere("p.courseId IN (:...courseIds)", { courseIds })
+      .createQueryBuilder('p')
+      .where('p.userId = :userId', { userId })
+      .andWhere('p.courseId IN (:...courseIds)', { courseIds })
       .getMany();
 
     const byCourse: Record<string, { completed: number; total: number }> = {};
     for (const p of allProgress) {
-      if (!byCourse[p.courseId])
-        byCourse[p.courseId] = { completed: 0, total: 0 };
+      if (!byCourse[p.courseId]) byCourse[p.courseId] = { completed: 0, total: 0 };
       byCourse[p.courseId].total++;
       if (p.isCompleted) byCourse[p.courseId].completed++;
     }
@@ -84,7 +79,7 @@ export class ProgressService {
   // ─── Study streak (private — never exposed on public profiles) ───────────────
 
   async recordStudyActivity(userId: string): Promise<StudyStreak> {
-    const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
+    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
     let streak = await this.streakRepo.findOne({ where: { userId } });
 
     if (!streak) {
@@ -105,7 +100,7 @@ export class ProgressService {
 
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
-    const yesterdayStr = yesterday.toISOString().split("T")[0];
+    const yesterdayStr = yesterday.toISOString().split('T')[0];
 
     if (streak.lastStudyDate === yesterdayStr) {
       // Consecutive day — increment streak
@@ -138,7 +133,7 @@ export class ProgressService {
         studiedToday: false,
       };
     }
-    const today = new Date().toISOString().split("T")[0];
+    const today = new Date().toISOString().split('T')[0];
     return {
       currentStreak: streak.currentStreak,
       longestStreak: streak.longestStreak,

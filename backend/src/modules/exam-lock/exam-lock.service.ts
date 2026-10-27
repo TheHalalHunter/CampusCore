@@ -1,8 +1,8 @@
-import { Injectable, Logger } from "@nestjs/common";
-import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
-import { ExamLock } from "./exam-lock.entity";
-import { CreateExamLockDto } from "./dto/create-exam-lock.dto";
+import { Injectable, Logger } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { ExamLock } from './exam-lock.entity';
+import { CreateExamLockDto } from './dto/create-exam-lock.dto';
 
 @Injectable()
 export class ExamLockService {
@@ -34,7 +34,7 @@ export class ExamLockService {
    */
   async findAll(): Promise<ExamLock[]> {
     return this.examLockRepo.find({
-      order: { startsAt: "DESC" },
+      order: { startsAt: 'DESC' },
     });
   }
 
@@ -44,11 +44,11 @@ export class ExamLockService {
   async getActiveExamLocks(): Promise<ExamLock[]> {
     const now = new Date();
     return this.examLockRepo
-      .createQueryBuilder("lock")
-      .where("lock.startsAt <= :now", { now })
-      .andWhere("lock.endsAt >= :now", { now })
-      .andWhere("lock.active = true")
-      .orderBy("lock.startsAt", "ASC")
+      .createQueryBuilder('lock')
+      .where('lock.startsAt <= :now', { now })
+      .andWhere('lock.endsAt >= :now', { now })
+      .andWhere('lock.active = true')
+      .orderBy('lock.startsAt', 'ASC')
       .getMany();
   }
 
