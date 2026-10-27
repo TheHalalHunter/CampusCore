@@ -1,7 +1,9 @@
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../app/theme/app_theme.dart';
 import '../../../core/providers/auth_provider.dart';
+import '../../../core/storage/supabase_storage.dart';
 import '../../../core/utils/responsive.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
@@ -54,6 +56,53 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     });
   }
 
+  Future<void> _pickAndUploadAvatar() async {
+    final user = ref.read(currentUserProvider);
+    if (user == null) return;
+
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['jpg', 'jpeg', 'png'],
+      withData: true,
+    );
+    if (result == null || result.files.isEmpty) return;
+
+    final file = result.files.first;
+    if (file.bytes == null) return;
+
+    final rawExt  = (file.extension ?? 'jpg').toLowerCase();
+    final ext     = rawExt == 'png' ? 'png' : 'jpg';
+    final mime    = ext == 'png' ? 'image/png' : 'image/jpeg';
+    final path    = 'avatars/${user.id}/${DateTime.now().millisecondsSinceEpoch}.$ext';
+
+    try {
+      final downloadUrl = await SupabaseStorageService.uploadFile(
+        bytes: file.bytes!,
+        path: path,
+        mimeType: mime,
+      );
+      final error = await ref.read(authProvider.notifier).updateAvatar(downloadUrl);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            error ?? 'Profile picture updated!',
+            style: const TextStyle(fontFamily: 'Nunito'),
+          ),
+          backgroundColor: error == null ? AppColors.success : AppColors.error,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Upload failed. Please try again.', style: TextStyle(fontFamily: 'Nunito')),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final user     = ref.watch(currentUserProvider);
@@ -92,17 +141,60 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     padding: EdgeInsets.all(isMobile ? 20 : 28),
                     child: Row(
                       children: [
-                        CircleAvatar(
-                          radius: isMobile ? 32 : 40,
-                          backgroundColor: AppColors.primary,
-                          child: Text(
-                            user?.initials ?? 'ST',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: isMobile ? 22 : 28,
-                              fontWeight: FontWeight.w800,
-                              fontFamily: 'Nunito',
-                            ),
+                        GestureDetector(
+                          onTap: _pickAndUploadAvatar,
+                          child: Stack(
+                            clipBehavior: Clip.none,
+                            children: [
+                              CircleAvatar(
+                                radius: isMobile ? 32 : 40,
+                                backgroundColor: AppColors.primary,
+                                child: user?.avatarUrl != null && user!.avatarUrl!.isNotEmpty
+                                    ? ClipOval(
+                                        child: Image.network(
+                                          user.avatarUrl!,
+                                          width:  (isMobile ? 32 : 40) * 2,
+                                          height: (isMobile ? 32 : 40) * 2,
+                                          fit: BoxFit.cover,
+                                          errorBuilder: (_, __, ___) => Text(
+                                            user.initials,
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: isMobile ? 22 : 28,
+                                              fontWeight: FontWeight.w800,
+                                              fontFamily: 'Nunito',
+                                            ),
+                                          ),
+                                        ),
+                                      )
+                                    : Text(
+                                        user?.initials ?? 'ST',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: isMobile ? 22 : 28,
+                                          fontWeight: FontWeight.w800,
+                                          fontFamily: 'Nunito',
+                                        ),
+                                      ),
+                              ),
+                              Positioned(
+                                bottom: 0,
+                                right: 0,
+                                child: Container(
+                                  width: 24,
+                                  height: 24,
+                                  decoration: const BoxDecoration(
+                                    color: AppColors.primary,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.camera_alt_outlined,
+                                    size: 14,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                         const SizedBox(width: 20),

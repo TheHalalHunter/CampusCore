@@ -1,0 +1,24 @@
+{
+  "id": "FEAT-001",
+  "type": "feat",
+  "description": "Profile Picture Upload — add camera/edit overlay on CircleAvatar in profile_screen.dart, pick image via file_picker (jpg/png only), upload to Supabase Storage at avatars/{userId}/{timestamp}.{ext}, PATCH /users/me with { avatar: downloadUrl }, update AppUser state immediately, display Image.network when avatarUrl is set, add updateAvatar method to AuthNotifier.",
+  "status": "completed",
+  "steps": [
+    "1. Add `updateAvatar(String avatarUrl)` method to AuthNotifier in `web_app/lib/core/providers/auth_provider.dart`. It calls PATCH /users/me via _api with body { 'avatar': avatarUrl }, parses the response into a new AppUser using AppUser.fromJson (the avatarUrl field already maps from json['avatarUrl'] ?? json['avatar']), saves the updated user to TokenStorage, and sets state = state.copyWith(user: updatedUser). No other changes to the file.",
+    "2. Modify the CircleAvatar widget inside the avatar card section of `web_app/lib/presentation/screens/profile/profile_screen.dart`. Replace the plain CircleAvatar with a Stack: bottom child is a CircleAvatar that shows Image.network(user.avatarUrl, fit: BoxFit.cover) wrapped in a ClipOval when user.avatarUrl is non-null/non-empty, else shows the initials text as before. Top child (Positioned, bottom-right) is a small circular container with a camera_alt_outlined icon (size 16, color white, background AppColors.primary). Wrap the entire Stack in a GestureDetector whose onTap calls _pickAndUploadAvatar().",
+    "3. Add `_pickAndUploadAvatar()` async method to `_ProfileScreenState` in `web_app/lib/presentation/screens/profile/profile_screen.dart`. Steps: (a) call FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['jpg','jpeg','png'], withData: true); if result is null return. (b) Determine extension and mimeType (image/jpeg or image/png). (c) Build storagePath = 'avatars/${user.id}/${DateTime.now().millisecondsSinceEpoch}.$ext'. (d) Call SupabaseStorageService.uploadFile(bytes: file.bytes!, path: storagePath, mimeType: mimeType) to get downloadUrl. (e) Call ref.read(authProvider.notifier).updateAvatar(downloadUrl). (f) Show a SnackBar on success (AppColors.success) or error (AppColors.error). Add required imports: file_picker, supabase_storage.",
+    "4. Verify `web_app` builds cleanly: run `flutter analyze` from the web_app directory. Fix any issues before moving on."
+  ],
+  "acceptance_criteria": [
+    "AuthNotifier has an updateAvatar method that calls PATCH /users/me with { 'avatar': url } and updates state",
+    "Profile screen CircleAvatar shows Image.network when user.avatarUrl is non-null, else initials",
+    "Camera icon overlay visible on avatar; tapping it opens file picker filtered to jpg/jpeg/png",
+    "After successful upload, the avatar in the UI updates without a page reload",
+    "`flutter analyze` in web_app reports no issues"
+  ],
+  "verification": [
+    "cd web_app && flutter analyze"
+  ],
+  "blocked_reason": null,
+  "findings": "Implemented cleanly. file_picker ^8.1.2 was already in pubspec.yaml so no dependency changes needed. SupabaseStorageService.uploadFile uses the 'Resources' bucket (not 'avatars') — avatars are stored under avatars/{userId}/{timestamp}.{ext} within that bucket. The Image.network errorBuilder falls back to initials if the URL fails to load. Fixed 3 pre-existing lint issues in auth_provider.dart (prefer_const_declarations, prefer_const_constructors x1) and profile_screen.dart (prefer_if_null_operators) as part of the analyze-clean requirement."
+}

@@ -193,7 +193,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       state = state.copyWith(isLoading: false, error: msg);
       return msg;
     } catch (e) {
-      final msg = 'Login failed. Please try again.';
+      const msg = 'Login failed. Please try again.';
       state = state.copyWith(isLoading: false, error: msg);
       return msg;
     }
@@ -286,10 +286,30 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
+  Future<String?> updateAvatar(String avatarUrl) async {
+    state = state.copyWith(isLoading: true, clearError: true);
+    try {
+      final resp = await _api.patch(ApiConstants.updateProfile, data: {'avatar': avatarUrl});
+      final respBody = resp.data as Map<String, dynamic>;
+      if (respBody['success'] != true) {
+        state = state.copyWith(isLoading: false, error: respBody['message']?.toString() ?? 'Avatar update failed');
+        return respBody['message']?.toString() ?? 'Avatar update failed';
+      }
+      final data = respBody['data'] as Map<String, dynamic>? ?? {};
+      final updated = AppUser.fromJson({...state.user!.toJson(), ...data});
+      await TokenStorage.saveUser(jsonEncode(updated.toJson()));
+      state = state.copyWith(user: updated, isLoading: false);
+      return null;
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: 'Avatar update failed. Please try again.');
+      return 'Avatar update failed. Please try again.';
+    }
+  }
+
   Future<void> signOut() async {
     await FirebaseAuth.instance.signOut();
     await TokenStorage.clear();
-    state = AuthState(initialized: true);
+    state = const AuthState(initialized: true);
   }
 
   String _firebaseMsg(String code) {
