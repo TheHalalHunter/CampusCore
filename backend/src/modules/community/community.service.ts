@@ -35,36 +35,30 @@ export class CommunityService {
     const page  = filters.page  ?? 1;
     const limit = Math.min(filters.limit ?? 20, 50);
 
-    const qb = this.questionsRepo
-      .createQueryBuilder("q")
-      .leftJoin("users", "u", "u.id::text = q.author_id::text")
-      .addSelect(["u.id", "u.full_name"])
-      .where("q.is_flagged = false")
-      .orderBy("q.created_at", "DESC")
-      .skip((page - 1) * limit)
-      .take(limit);
+    const where: any = { isFlagged: false };
+    if (filters.departmentId) where.departmentId = filters.departmentId;
+    if (filters.courseId)     where.courseId     = filters.courseId;
+    if (filters.level)        where.academicLevel = filters.level;
 
-    if (filters.departmentId) qb.andWhere("q.department_id = :dId", { dId: filters.departmentId });
-    if (filters.courseId)     qb.andWhere("q.course_id = :cId",     { cId: filters.courseId });
-    if (filters.level)        qb.andWhere("q.academic_level = :lvl", { lvl: filters.level });
+    const [rawQuestions, total] = await this.questionsRepo.findAndCount({
+      where,
+      order: { createdAt: "DESC" },
+      skip: (page - 1) * limit,
+      take: limit,
+    });
 
-    const [rawQuestions, total] = await qb.getManyAndCount();
-
-    // Fetch author names in one query
+    // Fetch author names separately using the users repository
     const authorIds = [...new Set(rawQuestions.map(q => q.authorId))];
-    let authorMap: Record<string, { firstName: string; lastName: string }> = {};
+    const authorMap: Record<string, { firstName: string; lastName: string }> = {};
 
     if (authorIds.length > 0) {
-      const authors = await this.questionsRepo.manager
-        .createQueryBuilder()
-        .select(["u.id", "u.full_name"])
-        .from("users", "u")
-        .where("u.id IN (:...ids)", { ids: authorIds })
-        .getRawMany();
+      const users = await this.questionsRepo.manager
+        .getRepository("User")
+        .findByIds(authorIds);
 
-      for (const a of authors) {
-        const parts = (a.u_full_name || "").split(" ");
-        authorMap[a.u_id] = {
+      for (const u of users as any[]) {
+        const parts = ((u.fullName || u.full_name || "") as string).split(" ");
+        authorMap[u.id] = {
           firstName: parts[0] || "Student",
           lastName:  parts.slice(1).join(" ") || "",
         };
