@@ -250,3 +250,10 @@ CREATE TRIGGER trg_questions_updated_at   BEFORE UPDATE ON questions    FOR EACH
 CREATE TRIGGER trg_answers_updated_at     BEFORE UPDATE ON answers      FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 CREATE TRIGGER trg_progress_updated_at    BEFORE UPDATE ON progress     FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 CREATE TRIGGER trg_gpa_records_updated_at BEFORE UPDATE ON gpa_records  FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+-- Study Groups
+CREATE TABLE IF NOT EXISTS study_groups (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), name varchar(200) NOT NULL, description text, department_id uuid REFERENCES departments(id) ON DELETE CASCADE, created_by uuid REFERENCES users(id) ON DELETE CASCADE, max_members int DEFAULT 50, is_active boolean DEFAULT true, created_at timestamptz DEFAULT now());
+CREATE TABLE IF NOT EXISTS study_group_members (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), group_id uuid NOT NULL REFERENCES study_groups(id) ON DELETE CASCADE, user_id uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE, joined_at timestamptz DEFAULT now(), UNIQUE(group_id, user_id));
+CREATE INDEX IF NOT EXISTS idx_study_groups_department ON study_groups(department_id);
+CREATE INDEX IF NOT EXISTS idx_study_group_members_group ON study_group_members(group_id);
+CREATE INDEX IF NOT EXISTS idx_study_group_members_user ON study_group_members(user_id);

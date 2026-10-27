@@ -22,6 +22,7 @@ import { SearchModule } from "./modules/search/search.module";
 import { DiscussionsModule } from "./modules/discussions/discussions.module";
 import { GpaModule } from "./modules/gpa/gpa.module";
 import { LibraryModule } from "./modules/library/library.module";
+import { StudyGroupsModule } from "./modules/study-groups/study-groups.module";
 
 @Module({
   imports: [
@@ -93,6 +94,7 @@ import { LibraryModule } from "./modules/library/library.module";
     DiscussionsModule,
     GpaModule,
     LibraryModule,
+    StudyGroupsModule,
   ],
 })
 export class AppModule {}

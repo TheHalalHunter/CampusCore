@@ -17,6 +17,7 @@ import '../../presentation/screens/connections/connections_screen.dart';
 import '../../presentation/screens/notifications/notifications_screen.dart';
 import '../../presentation/screens/leaderboard/leaderboard_screen.dart';
 import '../../presentation/screens/library/library_screen.dart';
+import '../../presentation/screens/study_groups/study_groups_screen.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   final notifier = _AuthChangeNotifier(ref);
@@ -82,6 +83,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             path: '/library',
             name: 'library',
             builder: (_, __) => const LibraryScreen(),
+          ),
+          GoRoute(
+            path: '/study-groups',
+            name: 'study-groups',
+            builder: (_, __) => const StudyGroupsScreen(),
           ),
         ],
       ),

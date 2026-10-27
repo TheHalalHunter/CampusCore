@@ -65,4 +65,10 @@ class ApiConstants {
   // Personal Library
   static const String library = '/library';
   static String libraryRemove(String resourceId) => '/library/$resourceId';
+
+  // Study Groups
+  static const String studyGroups = '/study-groups';
+  static const String studyGroupsMy = '/study-groups/my';
+  static String joinStudyGroup(String id) => '/study-groups/$id/join';
+  static String leaveStudyGroup(String id) => '/study-groups/$id/leave';
 }
