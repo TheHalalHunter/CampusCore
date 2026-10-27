@@ -24,6 +24,7 @@ class AdminTheme {
       colorScheme: ColorScheme.fromSeed(
         seedColor: AdminColors.primary,
         brightness: Brightness.light,
+        // ignore: deprecated_member_use
         background: AdminColors.background,
         surface: AdminColors.surface,
       ),

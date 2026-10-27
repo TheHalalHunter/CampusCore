@@ -153,7 +153,7 @@ class _AiNotifier extends StateNotifier<List<_Message>> {
     final body = resp.data as Map<String, dynamic>;
     final questions = body['data'] as List? ?? [];
     if (questions.isEmpty) {
-      state = [...state, _Message(text: 'Could not generate quiz questions. Try a different topic.', type: _MsgType.error)];
+      state = [...state, const _Message(text: 'Could not generate quiz questions. Try a different topic.', type: _MsgType.error)];
       return;
     }
     final sb = StringBuffer('Here are 5 quiz questions on $topic:\n\n');
@@ -176,7 +176,7 @@ class _AiNotifier extends StateNotifier<List<_Message>> {
     final body = resp.data as Map<String, dynamic>;
     final cards = body['data'] as List? ?? [];
     if (cards.isEmpty) {
-      state = [...state, _Message(text: 'Could not generate flashcards. Try a different topic.', type: _MsgType.error)];
+      state = [...state, const _Message(text: 'Could not generate flashcards. Try a different topic.', type: _MsgType.error)];
       return;
     }
     final sb = StringBuffer('Here are ${cards.length} flashcards for $topic:\n\n');
@@ -197,7 +197,7 @@ class _AiNotifier extends StateNotifier<List<_Message>> {
     final body = resp.data as Map<String, dynamic>;
     final topics = body['data'] as List? ?? [];
     if (topics.isEmpty) {
-      state = [...state, _Message(text: 'Could not predict topics. Try a more specific course name.', type: _MsgType.error)];
+      state = [...state, const _Message(text: 'Could not predict topics. Try a more specific course name.', type: _MsgType.error)];
       return;
     }
     final sb = StringBuffer('Likely exam topics for $courseTitle:\n\n');

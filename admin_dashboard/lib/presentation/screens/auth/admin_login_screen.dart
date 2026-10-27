@@ -103,7 +103,7 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
                                   _emailCtrl.text,
                                   _passwordCtrl.text,
                                 );
-                            if (!mounted) return;
+                            if (!context.mounted) return;
                             if (err == null) {
                               context.go(AdminRoutes.dashboard);
                             }

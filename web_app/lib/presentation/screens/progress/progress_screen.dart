@@ -328,7 +328,7 @@ class _CgpaCard extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 8),
-                      Text(
+                      const Text(
                         'Cumulative GPA (CGPA)',
                         style: TextStyle(
                           color: AppColors.textHint,
@@ -457,8 +457,8 @@ class _SemesterCard extends StatelessWidget {
                 const Divider(height: 1),
                 const SizedBox(height: 8),
                 // Header row
-                Row(
-                  children: const [
+                const Row(
+                  children: [
                     Expanded(
                         flex: 4,
                         child: Text('Course',
@@ -569,7 +569,7 @@ class _SemesterCard extends StatelessWidget {
                         ),
                       );
                     })
-                    .toList(),
+                    ,
               ],
             ),
         ],
@@ -903,10 +903,10 @@ class _GpaCalculatorTabState extends ConsumerState<_GpaCalculatorTab> {
                   const SizedBox(height: 8),
 
                   // Course rows header
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 4),
                     child: Row(
-                      children: const [
+                      children: [
                         Expanded(
                           flex: 4,
                           child: Text(
@@ -1130,9 +1130,9 @@ class _GpaBottomBar extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Text(
+                    const Text(
                       'GPA: ',
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontFamily: 'Nunito',
                           fontSize: 13,
                           color: AppColors.textHint),

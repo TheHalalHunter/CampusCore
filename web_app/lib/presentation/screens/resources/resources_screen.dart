@@ -431,7 +431,7 @@ class _UploadDialogState extends ConsumerState<_UploadDialog> {
                           loading: () => const LinearProgressIndicator(),
                           error: (_, __) => const Text('Could not load courses', style: TextStyle(color: AppColors.error)),
                           data: (courses) => DropdownButtonFormField<String>(
-                            value: _selectedCourseId,
+                            initialValue: _selectedCourseId,
                             decoration: const InputDecoration(labelText: 'Course *', prefixIcon: Icon(Icons.school_outlined)),
                             hint: courses.isEmpty
                                 ? const Text('No courses found', style: TextStyle(fontFamily: 'Nunito'))
@@ -456,7 +456,7 @@ class _UploadDialogState extends ConsumerState<_UploadDialog> {
 
                         // Type
                         DropdownButtonFormField<String>(
-                          value: _selectedType,
+                          initialValue: _selectedType,
                           decoration: const InputDecoration(labelText: 'Resource Type *', prefixIcon: Icon(Icons.category_outlined)),
                           items: _resourceTypes.entries.map((e) => DropdownMenuItem(
                             value: e.key,
@@ -661,7 +661,7 @@ class _ResourceRow extends ConsumerWidget {
                     if (resType.isNotEmpty)
                       _Tag(label: _typeLabel(resType), color: AppColors.cyan),
                     if (status == 'pending')
-                      _Tag(label: 'Under Review', color: AppColors.warning),
+                      const _Tag(label: 'Under Review', color: AppColors.warning),
                   ],
                 ),
               ],

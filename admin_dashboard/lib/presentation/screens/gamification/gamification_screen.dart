@@ -421,12 +421,13 @@ class _RankBadge extends StatelessWidget {
     Color color;
     if (rank == 1) {
       color = const Color(0xFFFFD700);
-    } else if (rank == 2)
+    } else if (rank == 2) {
       color = const Color(0xFFC0C0C0);
-    else if (rank == 3)
+    } else if (rank == 3) {
       color = const Color(0xFFCD7F32);
-    else
+    } else {
       color = AdminColors.grey600;
+    }
 
     return Container(
       width: 28,

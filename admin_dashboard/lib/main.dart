@@ -12,17 +12,17 @@ void main() async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await Supabase.initialize(
     url: 'https://oflxgcsaxzauivbywmwl.supabase.co',
-    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9mbHhnY3NheHphdWl2Ynl3bXdsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU1MTE1MDEsImV4cCI6MjEwMTA4NzUwMX0.VsnSm-uuVv_4P2fNK5_7fL6LHmVmt90AGtTCwoD0Pxc',
+    publishableKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9mbHhnY3NheHphdWl2Ynl3bXdsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU1MTE1MDEsImV4cCI6MjEwMTA4NzUwMX0.VsnSm-uuVv_4P2fNK5_7fL6LHmVmt90AGtTCwoD0Pxc',
   );
   runApp(const ProviderScope(child: CampusCoreAdminApp()));
 
   // Keep Render backend alive — ping every 10 minutes to prevent cold starts
-  const _pingUrl = 'https://campuscore-bfrq.onrender.com/api/v1/departments';
-  final _pinger = Dio(BaseOptions(
+  const pingUrl = 'https://campuscore-bfrq.onrender.com/api/v1/departments';
+  final pinger = Dio(BaseOptions(
     connectTimeout: const Duration(seconds: 10),
     receiveTimeout: const Duration(seconds: 10),
   ));
   Timer.periodic(const Duration(minutes: 10), (_) async {
-    try { await _pinger.get(_pingUrl); } catch (_) {}
+    try { await pinger.get(pingUrl); } catch (_) {}
   });
 }

@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 import '../../../app/theme/app_theme.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/network/api_client.dart';
@@ -198,7 +197,7 @@ class _TabButton extends StatelessWidget {
               topRight: !isLeft ? const Radius.circular(20) : Radius.zero,
             ),
             border: selected
-                ? Border(
+                ? const Border(
                     bottom: BorderSide(color: AppColors.primary, width: 2.5),
                   )
                 : null,
@@ -449,13 +448,13 @@ class _SignInFormState extends ConsumerState<_SignInForm> {
             const SizedBox(height: 12),
 
             // ── Divider ───────────────────────────────────────────────
-            Row(children: [
-              const Expanded(child: Divider(color: AppColors.border)),
+            const Row(children: [
+              Expanded(child: Divider(color: AppColors.border)),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
+                padding: EdgeInsets.symmetric(horizontal: 12),
                 child: Text('or', style: TextStyle(color: AppColors.textHint, fontSize: 12, fontFamily: 'Nunito')),
               ),
-              const Expanded(child: Divider(color: AppColors.border)),
+              Expanded(child: Divider(color: AppColors.border)),
             ]),
             const SizedBox(height: 12),
 
@@ -681,7 +680,7 @@ class _SignUpFormState extends ConsumerState<_SignUpForm> {
               ),
               error: (_, __) => const SizedBox.shrink(),
               data: (list) => DropdownButtonFormField<String>(
-                value: _selectedDeptId,
+                initialValue: _selectedDeptId,
                 decoration: const InputDecoration(
                   labelText: 'Department *',
                   prefixIcon: Icon(Icons.apartment_outlined),
@@ -709,7 +708,7 @@ class _SignUpFormState extends ConsumerState<_SignUpForm> {
 
             // Academic level
             DropdownButtonFormField<String>(
-              value: _selectedLevel,
+              initialValue: _selectedLevel,
               decoration: const InputDecoration(
                 labelText: 'Academic Level *',
                 prefixIcon: Icon(Icons.school_outlined),
@@ -791,13 +790,13 @@ class _SignUpFormState extends ConsumerState<_SignUpForm> {
             const SizedBox(height: 12),
 
             // ── Divider ───────────────────────────────────────────────
-            Row(children: [
-              const Expanded(child: Divider(color: AppColors.border)),
+            const Row(children: [
+              Expanded(child: Divider(color: AppColors.border)),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
+                padding: EdgeInsets.symmetric(horizontal: 12),
                 child: Text('or', style: TextStyle(color: AppColors.textHint, fontSize: 12, fontFamily: 'Nunito')),
               ),
-              const Expanded(child: Divider(color: AppColors.border)),
+              Expanded(child: Divider(color: AppColors.border)),
             ]),
             const SizedBox(height: 12),
 

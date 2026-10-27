@@ -261,7 +261,7 @@ class _ExamLockScreenState extends ConsumerState<ExamLockScreen> {
 
 class CreateLockDialog extends StatefulWidget {
   final VoidCallback onCreated;
-  const CreateLockDialog({required this.onCreated});
+  const CreateLockDialog({super.key, required this.onCreated});
 
   @override
   State<CreateLockDialog> createState() => _CreateLockDialogState();
@@ -308,6 +308,7 @@ class _CreateLockDialogState extends State<CreateLockDialog> {
         firstDate: DateTime.now(),
         lastDate: DateTime.now().add(const Duration(days: 365)));
     if (date == null) return null;
+    if (!ctx.mounted) return null;
     final time = await showTimePicker(
         context: ctx, initialTime: TimeOfDay.fromDateTime(initial));
     if (time == null) return null;

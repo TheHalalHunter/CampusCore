@@ -330,6 +330,7 @@ class _UsersScreenState extends ConsumerState<UsersScreen> {
       ref.invalidate(adminUsersProvider);
     } catch (_) {
       if (mounted) {
+        // ignore: use_build_context_synchronously
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Action failed. Please try again.')),
         );
@@ -356,7 +357,7 @@ class _UsersScreenState extends ConsumerState<UsersScreen> {
                         );
                         ref.invalidate(adminUsersProvider);
                       } catch (_) {
-                        if (mounted) {
+                        if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
                                 content: Text('Role change failed.')),

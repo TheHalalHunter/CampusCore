@@ -70,7 +70,7 @@ class CoursesScreen extends ConsumerWidget {
               ),
               data: (courses) {
                 if (courses.isEmpty) {
-                  return _EmptyWidget(
+                  return const _EmptyWidget(
                     icon: Icons.school_outlined,
                     message: 'No courses found for your department yet.',
                   );
