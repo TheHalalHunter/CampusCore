@@ -8,6 +8,7 @@ import '../../../core/constants/api_constants.dart';
 // ── Providers ─────────────────────────────────────────────────────────────────
 
 final cgpaProvider = FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
+  await Future.delayed(const Duration(milliseconds: 500));
   final api = ref.read(apiClientProvider);
   final resp = await api.get(ApiConstants.gpaCgpa);
   final data = resp.data['data'];
@@ -17,6 +18,7 @@ final cgpaProvider = FutureProvider.autoDispose<Map<String, dynamic>>((ref) asyn
 
 final semestersProvider =
     FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
+  await Future.delayed(const Duration(milliseconds: 500));
   final api = ref.read(apiClientProvider);
   final resp = await api.get(ApiConstants.gpaSemesters);
   final data = resp.data['data'];

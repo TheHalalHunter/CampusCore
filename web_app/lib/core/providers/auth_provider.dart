@@ -111,7 +111,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   Future<void> _init() async {
     try {
-      await _doInit().timeout(const Duration(seconds: 10));
+      await _doInit().timeout(const Duration(seconds: 5));
     } catch (_) {
       // timeout or unexpected error — mark initialized so dependents don't wait forever
     }

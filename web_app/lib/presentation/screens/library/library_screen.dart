@@ -9,6 +9,7 @@ import '../../../core/utils/responsive.dart';
 // ── Provider ──────────────────────────────────────────────────────────────────
 final libraryProvider =
     FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
+  await Future.delayed(const Duration(milliseconds: 500));
   final api  = ref.read(apiClientProvider);
   final resp = await api.get(ApiConstants.library);
   final data = resp.data['data'];

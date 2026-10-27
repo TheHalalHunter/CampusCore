@@ -8,6 +8,7 @@ import '../../../core/providers/auth_provider.dart';
 // ── Provider ──────────────────────────────────────────────────────────────────
 final leaderboardProvider =
     FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
+  await Future.delayed(const Duration(milliseconds: 500));
   final api  = ref.read(apiClientProvider);
   final resp = await api.get(ApiConstants.leaderboard);
   final data = resp.data['data'];

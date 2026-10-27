@@ -8,9 +8,22 @@ import '../../../core/providers/auth_provider.dart';
 
 // ── Provider ──────────────────────────────────────────────────────────────────
 final questionsProvider = FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
+  // Wait for auth to initialize rather than throwing immediately.
+  // This avoids a jarring Retry flash on cold loads where auth settles asynchronously.
   final authState = ref.read(authProvider);
   if (!authState.initialized) {
-    throw Exception('Auth not yet initialized. Please wait a moment and retry.');
+    // Wait up to 5 seconds for auth to initialize
+    await Future.delayed(const Duration(milliseconds: 500));
+    final retried = ref.read(authProvider);
+    if (!retried.initialized) {
+      // Poll briefly — up to 9 more half-second intervals (4.5s total)
+      for (int i = 0; i < 9; i++) {
+        await Future.delayed(const Duration(milliseconds: 500));
+        final s = ref.read(authProvider);
+        if (s.initialized) break;
+        if (i == 8) throw Exception('Auth initialization timed out. Please refresh.');
+      }
+    }
   }
 
   final api  = ref.read(apiClientProvider);
