@@ -110,20 +110,29 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   Future<void> _init() async {
-    // Try restoring from storage
     try {
-      final token    = await TokenStorage.getAccessToken();
-      final userJson = await TokenStorage.getUser();
+      await _doInit().timeout(const Duration(seconds: 10));
+    } catch (_) {
+      // timeout or unexpected error — mark initialized so dependents don't wait forever
+    }
+    // Always ensure initialized is set, even if _doInit threw or timed out
+    if (!state.initialized) {
+      state = state.copyWith(initialized: true, clearUser: true);
+    }
+  }
 
-      if (token != null && token.isNotEmpty && userJson != null) {
-        final user = AppUser.fromJson(jsonDecode(userJson) as Map<String, dynamic>);
-        state = AuthState(user: user, initialized: true);
+  Future<void> _doInit() async {
+    final token    = await TokenStorage.getAccessToken();
+    final userJson = await TokenStorage.getUser();
 
-        // Refresh user data from API in background
-        _refreshUser();
-        return;
-      }
-    } catch (_) {}
+    if (token != null && token.isNotEmpty && userJson != null) {
+      final user = AppUser.fromJson(jsonDecode(userJson) as Map<String, dynamic>);
+      state = AuthState(user: user, initialized: true);
+
+      // Refresh user data from API in background
+      _refreshUser();
+      return;
+    }
 
     state = state.copyWith(initialized: true, clearUser: true);
   }

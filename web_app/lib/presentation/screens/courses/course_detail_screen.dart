@@ -5,13 +5,12 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../app/theme/app_theme.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/constants/api_constants.dart';
-import '../../../core/providers/auth_provider.dart';
 
 // ── Providers ─────────────────────────────────────────────────────────────────
 
 final courseDetailProvider = FutureProvider.autoDispose
     .family<Map<String, dynamic>, String>((ref, courseId) async {
-  final api  = ref.watch(apiClientProvider);
+  final api  = ref.read(apiClientProvider);
   final resp = await api.get('${ApiConstants.courses}/$courseId');
   final data = resp.data['data'] ?? resp.data;
   return data as Map<String, dynamic>;
@@ -19,7 +18,7 @@ final courseDetailProvider = FutureProvider.autoDispose
 
 final courseResourcesProvider = FutureProvider.autoDispose
     .family<List<Map<String, dynamic>>, String>((ref, courseId) async {
-  final api  = ref.watch(apiClientProvider);
+  final api  = ref.read(apiClientProvider);
   final resp = await api.get(ApiConstants.resources, params: {
     'courseId': courseId,
     'status':   'approved',

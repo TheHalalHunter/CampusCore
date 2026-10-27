@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:dio/dio.dart';
 import '../../../app/theme/app_theme.dart';
 import '../../../core/utils/responsive.dart';
 import '../../../core/providers/auth_provider.dart';
@@ -12,27 +13,42 @@ import '../../../core/constants/api_constants.dart';
 final homeDashboardProvider = FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
   final api  = ref.read(apiClientProvider);
   final user = ref.read(currentUserProvider);
+
+  // Core calls — errors propagate so the error UI fires
+  final coursesFuture   = api.get(ApiConstants.courses,
+      params: user?.departmentId != null ? {'departmentId': user!.departmentId} : null);
+  final resourcesFuture = api.get(ApiConstants.resources);
+  final questionsFuture = api.get(ApiConstants.questions, params: {'limit': '3'});
+
+  // Run all four concurrently; GPA failure is isolated so it doesn't kill the others
+  final coreResults = await Future.wait([coursesFuture, resourcesFuture, questionsFuture]);
+
+  // GPA is optional — new users get 404; catch and default to null
+  Response? gpaResp;
   try {
-    final results = await Future.wait([
-      api.get(ApiConstants.courses, params: user?.departmentId != null ? {'departmentId': user!.departmentId} : null),
-      api.get(ApiConstants.resources),
-      api.get(ApiConstants.questions, params: {'limit': '3'}),
-      api.get(ApiConstants.gpaCgpa),
-    ]);
-    final courses   = (results[0].data['data'] as List?) ?? [];
-    final resources = (results[1].data['data'] as List?) ?? [];
-    final questions = (results[2].data['data'] as List?) ?? [];
-    final cgpaData  = results[3].data['data'];
-    final cgpa      = ((cgpaData is Map ? cgpaData['cgpa'] : null) ?? 0.0);
-    return {
-      'courses':    courses,
-      'resources':  resources,
-      'questions':  questions,
-      'cgpa':       (cgpa is num ? cgpa.toDouble() : 0.0).toStringAsFixed(2),
-    };
+    gpaResp = await api.get(ApiConstants.gpaCgpa);
   } catch (_) {
-    return {'courses': <dynamic>[], 'resources': <dynamic>[], 'questions': <dynamic>[], 'cgpa': '0.00'};
+    gpaResp = null;
   }
+
+  final courses   = (coreResults[0].data['data'] as List?) ?? [];
+  final resources = (coreResults[1].data['data'] as List?) ?? [];
+  final questions = (coreResults[2].data['data'] as List?) ?? [];
+  dynamic cgpaData;
+  if (gpaResp != null) {
+    final gpaBody = gpaResp.data;
+    if (gpaBody is Map) {
+      cgpaData = gpaBody['data'];
+    }
+  }
+  final cgpa = (cgpaData is Map ? cgpaData['cgpa'] : null) ?? 0.0;
+
+  return {
+    'courses':   courses,
+    'resources': resources,
+    'questions': questions,
+    'cgpa':      (cgpa is num ? cgpa.toDouble() : 0.0).toStringAsFixed(2),
+  };
 });
 
 // -- Screen -------------------------------------------------------------------
@@ -81,7 +97,7 @@ class HomeScreen extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '$greeting',
+                    greeting,
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: isMobile ? 20 : 26,
@@ -106,7 +122,10 @@ class HomeScreen extends ConsumerWidget {
             // Stats row
             dashAsync.when(
               loading: () => _buildStatsSkeleton(isMobile, spacing),
-              error: (_, __) => const SizedBox.shrink(),
+              error: (_, __) => _ErrorBanner(
+                message: 'Could not load dashboard data.',
+                onRetry: () => ref.invalidate(homeDashboardProvider),
+              ),
               data: (data) {
                 final courses   = (data['courses']   as List).length;
                 final resources = (data['resources'] as List).length;
@@ -140,7 +159,10 @@ class HomeScreen extends ConsumerWidget {
             const SizedBox(height: 12),
             dashAsync.when(
               loading: () => _buildQuestionsSkeleton(),
-              error: (_, __) => const SizedBox.shrink(),
+              error: (_, __) => _ErrorBanner(
+                message: 'Could not load questions.',
+                onRetry: () => ref.invalidate(homeDashboardProvider),
+              ),
               data: (data) {
                 final questions = data['questions'] as List;
                 if (questions.isEmpty) {
@@ -170,7 +192,10 @@ class HomeScreen extends ConsumerWidget {
             const SizedBox(height: 12),
             dashAsync.when(
               loading: () => _buildCoursesSkeleton(isMobile, spacing),
-              error: (_, __) => const SizedBox.shrink(),
+              error: (_, __) => _ErrorBanner(
+                message: 'Could not load courses.',
+                onRetry: () => ref.invalidate(homeDashboardProvider),
+              ),
               data: (data) {
                 final courses = data['courses'] as List;
                 if (courses.isEmpty) {
@@ -564,6 +589,36 @@ class _QuickAction extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _ErrorBanner extends StatelessWidget {
+  final String message;
+  final VoidCallback onRetry;
+  const _ErrorBanner({required this.message, required this.onRetry});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        children: [
+          Text(
+            message,
+            style: const TextStyle(
+              color: AppColors.textSecondary,
+              fontFamily: 'Nunito',
+            ),
+          ),
+          const SizedBox(height: 8),
+          TextButton.icon(
+            onPressed: onRetry,
+            icon: const Icon(Icons.refresh, size: 16),
+            label: const Text('Retry', style: TextStyle(fontFamily: 'Nunito')),
+          ),
+        ],
       ),
     );
   }

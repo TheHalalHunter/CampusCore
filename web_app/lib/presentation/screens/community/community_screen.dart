@@ -8,13 +8,12 @@ import '../../../core/providers/auth_provider.dart';
 
 // ── Provider ──────────────────────────────────────────────────────────────────
 final questionsProvider = FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
-  // Wait until auth is initialized; avoid firing unauthenticated requests.
-  // Return empty list (not an error) so the screen shows the loading skeleton
-  // rather than the Retry widget while Firebase finishes async init.
-  final authState = ref.watch(authProvider);
-  if (!authState.initialized) return [];
+  final authState = ref.read(authProvider);
+  if (!authState.initialized) {
+    throw Exception('Auth not yet initialized. Please wait a moment and retry.');
+  }
 
-  final api  = ref.watch(apiClientProvider);
+  final api  = ref.read(apiClientProvider);
   final resp = await api.get(ApiConstants.questions, params: {'limit': 30});
   final data = resp.data['data'] ?? resp.data;
   // Handle shaped response: { questions: [...], total: N }
@@ -45,6 +44,14 @@ class CommunityScreen extends ConsumerWidget {
     final questionsAsync = ref.watch(questionsProvider);
     final isMobile       = Responsive.isMobile(context);
     final padding        = Responsive.getPaddingEdgeInsets(context);
+
+    // Once auth finishes initializing, reload questions so they aren't stuck
+    // in an error state from the initial "not yet initialized" throw.
+    ref.listen<AuthState>(authProvider, (previous, next) {
+      if (next.initialized && !(previous?.initialized ?? false)) {
+        ref.invalidate(questionsProvider);
+      }
+    });
 
     return Scaffold(
       backgroundColor: AppColors.background,
