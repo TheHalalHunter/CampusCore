@@ -8,6 +8,7 @@ import '../../../core/utils/responsive.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/constants/api_constants.dart';
+import '../../../core/storage/activity_storage.dart';
 
 // -- Provider -----------------------------------------------------------------
 final homeDashboardProvider = FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
@@ -49,6 +50,12 @@ final homeDashboardProvider = FutureProvider.autoDispose<Map<String, dynamic>>((
     'questions': questions,
     'cgpa':      (cgpa is num ? cgpa.toDouble() : 0.0).toStringAsFixed(2),
   };
+});
+
+// Local-only recent activity (resources + questions viewed by this user).
+final recentActivityProvider =
+    FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
+  return ActivityStorage.getRecentActivity();
 });
 
 // -- Screen -------------------------------------------------------------------
@@ -148,6 +155,74 @@ class HomeScreen extends ConsumerWidget {
                 _QuickAction(icon: Icons.auto_awesome_outlined, label: 'AI Assistant',    color: AppColors.primaryLight, onTap: () => context.go('/ai')),
                 _QuickAction(icon: Icons.school_outlined,       label: 'Browse Courses',  color: AppColors.success,      onTap: () => context.go('/courses')),
               ],
+            ),
+            SizedBox(height: spacing + 4),
+
+            // Recent Activity
+            _SectionHeader(
+              title: 'Recent Activity',
+              onViewAll: () {},
+            ),
+            const SizedBox(height: 12),
+            ref.watch(recentActivityProvider).when(
+              loading: () => _buildActivitySkeleton(),
+              error: (_, __) => _ErrorBanner(
+                message: 'Could not load recent activity.',
+                onRetry: () => ref.invalidate(recentActivityProvider),
+              ),
+              data: (items) {
+                if (items.isEmpty) {
+                  return const _EmptyState(
+                    icon: Icons.access_time_outlined,
+                    text: 'No recent activity yet.',
+                  );
+                }
+                return Column(
+                  children: items.take(3).map((item) {
+                    final isResource = item['itemType'] == 'resource';
+                    final title = item['title']?.toString() ??
+                        (isResource ? 'Resource' : 'Question');
+                    final subtitle =
+                        isResource ? (item['type']?.toString() ?? 'Resource') : 'Question';
+                    return Card(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      child: ListTile(
+                        leading: Icon(
+                          isResource
+                              ? Icons.description_outlined
+                              : Icons.forum_outlined,
+                          color:
+                              isResource ? AppColors.primary : AppColors.cyan,
+                        ),
+                        title: Text(
+                          title,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontFamily: 'Nunito',
+                            fontSize: 13,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                        subtitle: Text(
+                          subtitle,
+                          style: const TextStyle(
+                            color: AppColors.textHint,
+                            fontSize: 12,
+                            fontFamily: 'Nunito',
+                          ),
+                        ),
+                        onTap: () => context.go(
+                          isResource
+                              ? '/resources'
+                              : '/community/${item['id']}',
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                );
+              },
             ),
             SizedBox(height: spacing + 4),
 
@@ -279,6 +354,36 @@ class HomeScreen extends ConsumerWidget {
             Container(width: double.infinity, height: 14, color: AppColors.surfaceAlt),
             const SizedBox(height: 8),
             Container(width: 100, height: 11, color: AppColors.surfaceAlt),
+          ],
+        ),
+      )),
+    );
+  }
+
+  Widget _buildActivitySkeleton() {
+    return Column(
+      children: List.generate(3, (_) => Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Row(
+          children: [
+            Container(width: 24, height: 24, color: AppColors.surfaceAlt),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(width: double.infinity, height: 13, color: AppColors.surfaceAlt),
+                  const SizedBox(height: 6),
+                  Container(width: 80, height: 10, color: AppColors.surfaceAlt),
+                ],
+              ),
+            ),
           ],
         ),
       )),

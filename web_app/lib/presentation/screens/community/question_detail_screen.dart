@@ -5,6 +5,7 @@ import '../../../app/theme/app_theme.dart';
 import '../../../core/constants/api_constants.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/providers/auth_provider.dart';
+import '../../../core/storage/activity_storage.dart';
 import '../../../core/utils/responsive.dart';
 
 // ── Provider ──────────────────────────────────────────────────────────────────
@@ -229,6 +230,11 @@ class _QuestionDetailScreenState
           ),
         ),
         data: (question) {
+          // Record the view (fire-and-forget) for the home Recent Activity list.
+          ActivityStorage.addQuestionView(
+            id: widget.questionId,
+            title: question['title']?.toString() ?? '',
+          );
           final currentUser = ref.read(currentUserProvider);
           return _QuestionDetailBody(
             question:       question,

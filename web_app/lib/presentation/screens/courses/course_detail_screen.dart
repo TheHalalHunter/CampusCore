@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../app/theme/app_theme.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/constants/api_constants.dart';
+import '../../../core/storage/activity_storage.dart';
 
 // ── Providers ─────────────────────────────────────────────────────────────────
 
@@ -393,6 +394,12 @@ class _ResourceTile extends StatelessWidget {
                 icon: const Icon(Icons.download_outlined, color: AppColors.primary),
                 tooltip: 'Download',
                 onPressed: () async {
+                  // Record the view (fire-and-forget) before opening the file.
+                  ActivityStorage.addResourceView(
+                    id: resource['id']?.toString() ?? '',
+                    title: title,
+                    type: type ?? 'other',
+                  );
                   final uri = Uri.parse(fileUrl);
                   if (await canLaunchUrl(uri)) {
                     await launchUrl(uri, mode: LaunchMode.externalApplication);
