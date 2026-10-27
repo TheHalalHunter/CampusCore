@@ -12,6 +12,7 @@ import '../../presentation/screens/settings/settings_screen.dart';
 import '../../presentation/screens/exam_lock/exam_lock_screen.dart';
 import '../../presentation/screens/courses/courses_management_screen.dart';
 import '../../presentation/screens/gamification/gamification_screen.dart';
+import '../../presentation/screens/community/community_moderation_screen.dart';
 import '../../presentation/shell/admin_shell.dart';
 
 final adminRouterProvider = Provider<GoRouter>((ref) {
@@ -45,6 +46,9 @@ final adminRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(
               path: AdminRoutes.moderation,
               builder: (_, __) => const ModerationScreen()),
+          GoRoute(
+              path: AdminRoutes.community,
+              builder: (_, __) => const CommunityModerationScreen()),
           GoRoute(
               path: AdminRoutes.departments,
               builder: (_, __) => const DepartmentsScreen()),
@@ -80,4 +84,5 @@ class AdminRoutes {
   static const String examLock = '/exam-lock';
   static const String courses = '/courses';
   static const String gamification = '/gamification';
+  static const String community = '/community';
 }

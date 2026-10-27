@@ -66,6 +66,10 @@ class _AdminSidebar extends StatelessWidget {
         label: 'Moderation',
         route: AdminRoutes.moderation),
     _NavItem(
+        icon: Icons.forum_outlined,
+        label: 'Community',
+        route: AdminRoutes.community),
+    _NavItem(
         icon: Icons.school_outlined,
         label: 'Departments',
         route: AdminRoutes.departments),
