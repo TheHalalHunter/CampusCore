@@ -122,10 +122,17 @@ class _AiNotifier extends StateNotifier<List<_Message>> {
   }
 
   Future<void> _explain(String concept) async {
-    // Build conversation history from current messages (exclude welcome, last 6 exchanges)
-    final history = state
-        .where((m) => m != _kWelcome)
-        .take(12) // last 12 messages = 6 exchanges
+    // Build conversation history — send last 10 messages BEFORE current user message
+    // state already has the current user message appended (line 104 in send()),
+    // so we exclude the last item to avoid sending it twice as both history and concept
+    final allMessages = state.where((m) => m != _kWelcome).toList();
+    final historyMessages = allMessages.length > 1
+        ? allMessages.sublist(0, allMessages.length - 1) // exclude current user msg
+        : <_Message>[];
+    final recentMessages = historyMessages.length > 10
+        ? historyMessages.sublist(historyMessages.length - 10)
+        : historyMessages;
+    final history = recentMessages
         .map((m) => {
               'role': m.type == _MsgType.user ? 'user' : 'assistant',
               'content': m.text,
