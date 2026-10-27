@@ -9,6 +9,7 @@ import '../../presentation/screens/courses/courses_screen.dart';
 import '../../presentation/screens/courses/course_detail_screen.dart';
 import '../../presentation/screens/resources/resources_screen.dart';
 import '../../presentation/screens/community/community_screen.dart';
+import '../../presentation/screens/community/question_detail_screen.dart';
 import '../../presentation/screens/progress/progress_screen.dart';
 import '../../presentation/screens/ai/ai_screen.dart';
 import '../../presentation/screens/profile/profile_screen.dart';
@@ -52,6 +53,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(path: '/resources', name: 'resources', builder: (_, __) => const ResourcesScreen()),
           GoRoute(path: '/community', name: 'community', builder: (_, __) => const CommunityScreen()),
+          GoRoute(
+            path: '/community/:id',
+            name: 'question-detail',
+            builder: (_, state) => QuestionDetailScreen(
+              questionId: state.pathParameters['id']!,
+            ),
+          ),
           GoRoute(path: '/progress',  name: 'progress',  builder: (_, __) => const ProgressScreen()),
           GoRoute(path: '/ai',        name: 'ai',        builder: (_, __) => const AiScreen()),
           GoRoute(path: '/profile',   name: 'profile',   builder: (_, __) => const ProfileScreen()),

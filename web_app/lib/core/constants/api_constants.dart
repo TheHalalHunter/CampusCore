@@ -20,8 +20,14 @@ class ApiConstants {
   // Community / Q&A
   static const String questions    = '/community/questions';
   static const String postQuestion = '/community/questions';
-  static String questionAnswers(String id) => '/community/questions/$id/answers';
-  static String postAnswer(String id)      => '/community/questions/$id/answers';
+  static String questionAnswers(String id)  => '/community/questions/$id/answers';
+  static String postAnswer(String id)       => '/community/questions/$id/answers';
+  static String questionDetail(String id)   => '/community/questions/$id';
+  static String upvoteQuestion(String id)   => '/community/questions/$id/upvote';
+  static String downvoteQuestion(String id) => '/community/questions/$id/downvote';
+  static String upvoteAnswer(String id)     => '/community/answers/$id/upvote';
+  static String downvoteAnswer(String id)   => '/community/answers/$id/downvote';
+  static String resolveQuestion(String id)  => '/community/questions/$id/resolve';
 
   // Progress / GPA
   static const String gpa      = '/gpa';

@@ -213,7 +213,19 @@ class _CgpaOverviewTab extends ConsumerWidget {
                                       ApiConstants.deleteSemester(id));
                                   ref.invalidate(semestersProvider);
                                   ref.invalidate(cgpaProvider);
-                                } catch (_) {}
+                                } catch (e) {
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          'Could not delete semester: $e',
+                                          style: const TextStyle(fontFamily: 'Nunito'),
+                                        ),
+                                        backgroundColor: AppColors.error,
+                                      ),
+                                    );
+                                  }
+                                }
                               },
                             ))
                         .toList(),

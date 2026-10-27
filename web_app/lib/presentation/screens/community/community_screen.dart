@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../app/theme/app_theme.dart';
 import '../../../core/utils/responsive.dart';
 import '../../../core/network/api_client.dart';
@@ -10,20 +11,20 @@ import '../../../core/providers/auth_provider.dart';
 final questionsProvider = FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
   // Wait for auth to initialize rather than throwing immediately.
   // This avoids a jarring Retry flash on cold loads where auth settles asynchronously.
+  bool cancelled = false;
+  ref.onDispose(() => cancelled = true);
+
   final authState = ref.read(authProvider);
   if (!authState.initialized) {
-    // Wait up to 5 seconds for auth to initialize
-    await Future.delayed(const Duration(milliseconds: 500));
-    final retried = ref.read(authProvider);
-    if (!retried.initialized) {
-      // Poll briefly — up to 9 more half-second intervals (4.5s total)
-      for (int i = 0; i < 9; i++) {
-        await Future.delayed(const Duration(milliseconds: 500));
-        final s = ref.read(authProvider);
-        if (s.initialized) break;
-        if (i == 8) throw Exception('Auth initialization timed out. Please refresh.');
-      }
+    // Poll at 500 ms intervals — up to 10 attempts = 5 s total ceiling.
+    for (int i = 0; i < 10; i++) {
+      await Future.delayed(const Duration(milliseconds: 500));
+      if (cancelled) return [];          // provider was disposed mid-poll; abort cleanly
+      final s = ref.read(authProvider);
+      if (s.initialized) break;
+      if (i == 9) throw Exception('Auth initialization timed out. Please refresh.');
     }
+    if (cancelled) return [];
   }
 
   final api  = ref.read(apiClientProvider);
@@ -150,8 +151,13 @@ class CommunityScreen extends ConsumerWidget {
                     physics: const NeverScrollableScrollPhysics(),
                     itemCount: questions.length,
                     separatorBuilder: (_, __) => const Divider(height: 1),
-                    itemBuilder: (context, index) =>
-                        _QuestionTile(question: questions[index], isMobile: isMobile),
+                    itemBuilder: (context, index) => InkWell(
+                      onTap: () {
+                        final id = questions[index]['id']?.toString();
+                        if (id != null && id.isNotEmpty) context.go('/community/$id');
+                      },
+                      child: _QuestionTile(question: questions[index], isMobile: isMobile),
+                    ),
                   ),
                 );
               },
