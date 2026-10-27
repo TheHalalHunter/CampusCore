@@ -122,7 +122,20 @@ class _AiNotifier extends StateNotifier<List<_Message>> {
   }
 
   Future<void> _explain(String concept) async {
-    final resp = await _api.post(ApiConstants.aiExplain, data: {'concept': concept});
+    // Build conversation history from current messages (exclude welcome, last 6 exchanges)
+    final history = state
+        .where((m) => m != _kWelcome)
+        .take(12) // last 12 messages = 6 exchanges
+        .map((m) => {
+              'role': m.type == _MsgType.user ? 'user' : 'assistant',
+              'content': m.text,
+            })
+        .toList();
+
+    final resp = await _api.post(ApiConstants.aiExplain, data: {
+      'concept': concept,
+      if (history.isNotEmpty) 'history': history,
+    });
     final body = resp.data as Map<String, dynamic>;
     final text = body['data']?.toString() ?? body['message']?.toString() ?? 'No response.';
     state = [...state, _Message(text: text, type: _MsgType.ai, toolLabel: 'Explanation')];

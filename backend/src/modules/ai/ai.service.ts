@@ -64,10 +64,23 @@ export class AiService {
   private async generate(
     userPrompt: string,
     systemPrompt?: string,
+    history?: Array<{ role: string; content: string }>,
   ): Promise<string> {
     const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [];
     if (systemPrompt) {
       messages.push({ role: "system", content: systemPrompt });
+    }
+    // Add conversation history (last 6 messages max to stay within token limits)
+    if (history && history.length > 0) {
+      const recent = history.slice(-6);
+      for (const msg of recent) {
+        if (msg.role === "user" || msg.role === "assistant") {
+          messages.push({
+            role: msg.role as "user" | "assistant",
+            content: msg.content,
+          });
+        }
+      }
     }
     messages.push({ role: "user", content: userPrompt });
 
@@ -112,6 +125,7 @@ export class AiService {
     userId: string,
     concept: string,
     courseContext?: string,
+    history?: Array<{ role: string; content: string }>,
   ): Promise<string> {
     if (this.detectExamCheat(concept)) {
       throw new BadRequestException(
@@ -123,7 +137,7 @@ export class AiService {
       ? `You are an academic tutor helping a Nigerian university student studying ${courseContext}. Explain concepts clearly in simple English. Be educational and concise. Do NOT use markdown formatting, asterisks, or hash symbols in your response.`
       : `You are an academic tutor helping a Nigerian university student. Explain concepts clearly in simple English. Do NOT use markdown formatting, asterisks, or hash symbols in your response.`;
 
-    const result = await this.generate(`Please explain: ${concept}`, system);
+    const result = await this.generate(`Please explain: ${concept}`, system, history);
     await this.logUsage(userId, AiAction.EXPLAIN, concept, courseContext);
     return result;
   }

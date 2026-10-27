@@ -42,9 +42,10 @@ export class AiController {
     @CurrentUser() user: User,
     @Body("concept") concept: string,
     @Body("courseContext") courseContext?: string,
+    @Body("history") history?: Array<{ role: string; content: string }>,
   ) {
     await this.checkLock(user);
-    return this.service.explain(user.id, concept, courseContext);
+    return this.service.explain(user.id, concept, courseContext, history);
   }
 
   @Post("quiz")
