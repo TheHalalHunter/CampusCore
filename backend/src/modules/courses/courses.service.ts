@@ -41,4 +41,9 @@ export class CoursesService {
     Object.assign(course, data);
     return this.repo.save(course);
   }
+
+  async remove(id: string): Promise<void> {
+    const course = await this.findOne(id);
+    await this.repo.remove(course);
+  }
 }

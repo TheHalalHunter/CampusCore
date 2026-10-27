@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Patch,
+  Delete,
   Param,
   Body,
   Query,
@@ -68,5 +69,13 @@ export class CoursesController {
   @ApiOperation({ summary: "Update a course (admin only)" })
   update(@Param("id") id: string, @Body() body: any) {
     return this.service.update(id, body);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @Delete(":id")
+  @ApiOperation({ summary: "Delete a course (admin only)" })
+  remove(@Param("id") id: string) {
+    return this.service.remove(id);
   }
 }

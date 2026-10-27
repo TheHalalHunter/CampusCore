@@ -289,6 +289,17 @@ class _CoursesManagementScreenState
                                                       _showEditDialog(
                                                           context, c),
                                                 ),
+                                                IconButton(
+                                                  icon: const Icon(
+                                                      Icons.delete_outline,
+                                                      size: 16,
+                                                      color:
+                                                          AdminColors.error),
+                                                  tooltip: 'Delete',
+                                                  onPressed: () =>
+                                                      _confirmDelete(
+                                                          context, ref, c),
+                                                ),
                                               ],
                                             )),
                                           ]))
@@ -338,6 +349,58 @@ class _CoursesManagementScreenState
         departmentId: _selectedDeptId!,
         existing: course,
         onSaved: () => ref.invalidate(adminCoursesProvider(_selectedDeptId!)),
+      ),
+    );
+  }
+
+  void _confirmDelete(BuildContext context, WidgetRef ref, AdminCourseModel course) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Course',
+            style: TextStyle(fontWeight: FontWeight.w700)),
+        content: Text(
+          'Are you sure you want to delete "${course.title}" (${course.courseCode})? '
+          'This will also delete all resources attached to this course.',
+          style: const TextStyle(color: AdminColors.grey600),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AdminColors.error,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () async {
+              Navigator.pop(ctx);
+              try {
+                await adminApi.delete('/courses/${course.id}');
+                ref.invalidate(adminCoursesProvider(_selectedDeptId!));
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Course deleted successfully'),
+                      backgroundColor: AdminColors.success,
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Failed to delete: $e'),
+                      backgroundColor: AdminColors.error,
+                    ),
+                  );
+                }
+              }
+            },
+            child: const Text('Delete'),
+          ),
+        ],
       ),
     );
   }
