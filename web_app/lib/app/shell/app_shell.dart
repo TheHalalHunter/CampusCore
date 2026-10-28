@@ -31,7 +31,14 @@ class _AppShellState extends ConsumerState<AppShell> {
     (label: 'Profile',       route: '/profile',        icon: Icons.person_outlined),
   ];
 
-  /// Derive selected index from the current route — survives browser refresh.
+  // Primary nav items shown in bottom bar (mobile)
+  final List<({String label, String route, IconData icon})> _bottomNavItems = [
+    (label: 'Home',      route: '/',          icon: Icons.home_outlined),
+    (label: 'Courses',   route: '/courses',   icon: Icons.school_outlined),
+    (label: 'Community', route: '/community', icon: Icons.people_outlined),
+    (label: 'AI Assist', route: '/ai',        icon: Icons.auto_awesome_outlined),
+    (label: 'Profile',   route: '/profile',   icon: Icons.person_outlined),
+  ];
   int _indexFromLocation(String location) {
     for (int i = _navItems.length - 1; i >= 0; i--) {
       if (_navItems[i].route == '/'
@@ -43,18 +50,36 @@ class _AppShellState extends ConsumerState<AppShell> {
     return 0;
   }
 
+  int _bottomIndexFromLocation(String location) {
+    for (int i = _bottomNavItems.length - 1; i >= 0; i--) {
+      if (_bottomNavItems[i].route == '/'
+          ? location == '/'
+          : location.startsWith(_bottomNavItems[i].route)) {
+        return i;
+      }
+    }
+    return -1; // -1 means current page is not in bottom nav
+  }
+
   @override
   Widget build(BuildContext context) {
     final isMobile  = Responsive.isMobile(context);
     final isTablet  = Responsive.isTablet(context);
-    final location  = GoRouterState.of(context).matchedLocation;
-    final selIndex  = _indexFromLocation(location);
-    final user      = ref.watch(currentUserProvider);
+    final location       = GoRouterState.of(context).matchedLocation;
+    final selIndex       = _indexFromLocation(location);
+    final bottomSelIndex = _bottomIndexFromLocation(location);
+    final user           = ref.watch(currentUserProvider);
 
     if (isMobile) {
       return Scaffold(
         appBar: AppBar(
           backgroundColor: AppColors.navyDark,
+          leading: Builder(
+            builder: (ctx) => IconButton(
+              icon: const Icon(Icons.menu, color: Colors.white),
+              onPressed: () => Scaffold.of(ctx).openDrawer(),
+            ),
+          ),
           title: RichText(
             text: const TextSpan(children: [
               TextSpan(
@@ -131,31 +156,96 @@ class _AppShellState extends ConsumerState<AppShell> {
           ],
         ),
         body: widget.child,
-        bottomNavigationBar: Container(
-          decoration: const BoxDecoration(
-            color: AppColors.navyDark,
-            border: Border(top: BorderSide(color: AppColors.navyMid, width: 1)),
-          ),
-          child: BottomNavigationBar(
-            currentIndex: selIndex,
-            type: BottomNavigationBarType.fixed,
-            backgroundColor: AppColors.navyDark,
-            selectedItemColor: AppColors.cyanBright,
-            unselectedItemColor: AppColors.textOnDarkSub,
-            selectedLabelStyle: const TextStyle(
-              fontFamily: 'Nunito', fontWeight: FontWeight.w700, fontSize: 10,
+        drawer: Drawer(
+          backgroundColor: AppColors.navyMid,
+          child: SafeArea(
+            child: Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  color: AppColors.navyDark,
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 36, height: 36,
+                        decoration: BoxDecoration(
+                          gradient: AppColors.primaryGradient,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Center(
+                          child: Text('C', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w800, fontFamily: 'Nunito')),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      const Text('CampusCore', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w800, fontFamily: 'Nunito')),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: ListView(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                    children: _navItems.map((item) {
+                      final isSelected = location == item.route ||
+                          (item.route != '/' && location.startsWith(item.route));
+                      return ListTile(
+                        leading: Icon(item.icon,
+                            color: isSelected ? AppColors.cyanBright : AppColors.textOnDarkSub,
+                            size: 20),
+                        title: Text(item.label,
+                            style: TextStyle(
+                              color: isSelected ? Colors.white : AppColors.textOnDarkSub,
+                              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                              fontFamily: 'Nunito', fontSize: 14,
+                            )),
+                        selected: isSelected,
+                        selectedTileColor: AppColors.primary.withValues(alpha: 0.2),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        onTap: () {
+                          Navigator.pop(context);
+                          context.go(item.route);
+                        },
+                      );
+                    }).toList(),
+                  ),
+                ),
+                const Divider(color: Color(0x33FFFFFF), height: 1),
+                ListTile(
+                  leading: CircleAvatar(
+                    radius: 14,
+                    backgroundColor: AppColors.primaryLight,
+                    child: Text(user?.initials ?? 'ST',
+                        style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w700)),
+                  ),
+                  title: Text(user?.fullName ?? 'Student',
+                      style: const TextStyle(color: Colors.white, fontSize: 13, fontFamily: 'Nunito', fontWeight: FontWeight.w600)),
+                  subtitle: Text(user?.email ?? '',
+                      style: const TextStyle(color: AppColors.textOnDarkSub, fontSize: 11, fontFamily: 'Nunito'),
+                      overflow: TextOverflow.ellipsis),
+                  trailing: IconButton(
+                    icon: const Icon(Icons.logout_outlined, color: AppColors.textOnDarkSub, size: 18),
+                    onPressed: () {
+                      Navigator.pop(context);
+                      _confirmSignOut(context);
+                    },
+                  ),
+                ),
+              ],
             ),
-            unselectedLabelStyle: const TextStyle(
-              fontFamily: 'Nunito', fontSize: 10,
-            ),
-            items: _navItems
-                .map((item) => BottomNavigationBarItem(
-                      icon: Icon(item.icon, size: 20),
-                      label: item.label,
-                    ))
-                .toList(),
-            onTap: (index) => context.go(_navItems[index].route),
           ),
+        ),
+        bottomNavigationBar: BottomNavigationBar(
+          currentIndex: bottomSelIndex < 0 ? 0 : bottomSelIndex,
+          type: BottomNavigationBarType.fixed,
+          backgroundColor: AppColors.navyDark,
+          selectedItemColor: AppColors.cyanBright,
+          unselectedItemColor: AppColors.textOnDarkSub,
+          selectedLabelStyle: const TextStyle(fontFamily: 'Nunito', fontWeight: FontWeight.w700, fontSize: 10),
+          unselectedLabelStyle: const TextStyle(fontFamily: 'Nunito', fontSize: 10),
+          items: _bottomNavItems.map((item) => BottomNavigationBarItem(
+            icon: Icon(item.icon, size: 22),
+            label: item.label,
+          )).toList(),
+          onTap: (index) => context.go(_bottomNavItems[index].route),
         ),
       );
     }
