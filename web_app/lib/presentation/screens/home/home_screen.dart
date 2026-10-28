@@ -15,32 +15,39 @@ final homeDashboardProvider = FutureProvider.autoDispose<Map<String, dynamic>>((
   final api  = ref.read(apiClientProvider);
   final user = ref.read(currentUserProvider);
 
-  // Core calls — errors propagate so the error UI fires
-  final coursesFuture   = api.get(ApiConstants.courses,
-      params: user?.departmentId != null ? {'departmentId': user!.departmentId} : null);
-  final resourcesFuture = api.get(ApiConstants.resources);
-  final questionsFuture = api.get(ApiConstants.questions, params: {'limit': '3'});
+  // Run all calls independently — one failure doesn't kill the whole dashboard
+  Response? coursesResp, resourcesResp, questionsResp, gpaResp;
 
-  // Run all four concurrently; GPA failure is isolated so it doesn't kill the others
-  final coreResults = await Future.wait([coursesFuture, resourcesFuture, questionsFuture]);
+  await Future.wait([
+    api.get(ApiConstants.courses,
+        params: user?.departmentId != null ? {'departmentId': user!.departmentId} : null)
+        .then((r) => coursesResp = r).catchError((_) {}),
+    api.get(ApiConstants.resources)
+        .then((r) => resourcesResp = r).catchError((_) {}),
+    api.get(ApiConstants.questions, params: {'limit': '3'})
+        .then((r) => questionsResp = r).catchError((_) {}),
+    api.get(ApiConstants.gpaCgpa)
+        .then((r) => gpaResp = r).catchError((_) {}),
+  ]);
 
-  // GPA is optional — new users get 404; catch and default to null
-  Response? gpaResp;
-  try {
-    gpaResp = await api.get(ApiConstants.gpaCgpa);
-  } catch (_) {
-    gpaResp = null;
+  final courses   = coursesResp   != null ? ((coursesResp!.data['data']   as List?) ?? []) : [];
+  final resources = resourcesResp != null ? ((resourcesResp!.data['data'] as List?) ?? []) : [];
+
+  // questions returns { questions: [...], total: N }
+  List questions = [];
+  if (questionsResp != null) {
+    final qData = questionsResp!.data['data'];
+    if (qData is Map && qData['questions'] is List) {
+      questions = (qData['questions'] as List).take(3).toList();
+    } else if (qData is List) {
+      questions = qData.take(3).toList();
+    }
   }
 
-  final courses   = (coreResults[0].data['data'] as List?) ?? [];
-  final resources = (coreResults[1].data['data'] as List?) ?? [];
-  final questions = (coreResults[2].data['data'] as List?) ?? [];
   dynamic cgpaData;
   if (gpaResp != null) {
-    final gpaBody = gpaResp.data;
-    if (gpaBody is Map) {
-      cgpaData = gpaBody['data'];
-    }
+    final gpaBody = gpaResp!.data;
+    if (gpaBody is Map) cgpaData = gpaBody['data'];
   }
   final cgpa = (cgpaData is Map ? cgpaData['cgpa'] : null) ?? 0.0;
 
