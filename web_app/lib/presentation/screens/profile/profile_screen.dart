@@ -18,6 +18,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   final _firstNameCtrl = TextEditingController();
   final _lastNameCtrl  = TextEditingController();
   final _phoneCtrl     = TextEditingController();
+  String? _selectedLevel;
+  final _levels = ['100L', '200L', '300L', '400L', '500L'];
   bool _editing  = false;
   bool _saving   = false;
   String? _successMsg;
@@ -29,6 +31,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     _firstNameCtrl.text = user?.firstName ?? '';
     _lastNameCtrl.text  = user?.lastName  ?? '';
     _phoneCtrl.text     = user?.phone     ?? '';
+    _selectedLevel      = user?.level != null ? '${user!.level}L' : null;
   }
 
   @override
@@ -47,6 +50,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       firstName: _firstNameCtrl.text.trim(),
       lastName:  _lastNameCtrl.text.trim(),
       phone:     _phoneCtrl.text.trim(),
+      academicLevel: _selectedLevel,
     );
 
     setState(() {
@@ -311,6 +315,21 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                               prefixIcon: Icon(Icons.phone_outlined),
                             ),
                           ),
+                          const SizedBox(height: 16),
+
+                          // Academic Level
+                          DropdownButtonFormField<String>(
+                            value: _selectedLevel,
+                            decoration: const InputDecoration(
+                              labelText: 'Academic Level',
+                              prefixIcon: Icon(Icons.school_outlined),
+                            ),
+                            items: _levels.map((l) => DropdownMenuItem(
+                              value: l,
+                              child: Text(l, style: const TextStyle(fontFamily: 'Nunito')),
+                            )).toList(),
+                            onChanged: _editing ? (v) => setState(() => _selectedLevel = v) : null,
+                          ),
 
                           // Error
                           if (authState.error != null) ...[
@@ -374,6 +393,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                             _firstNameCtrl.text = u?.firstName ?? '';
                                             _lastNameCtrl.text  = u?.lastName  ?? '';
                                             _phoneCtrl.text     = u?.phone     ?? '';
+                                            _selectedLevel      = u?.level != null ? '${u!.level}L' : null;
                                             setState(() => _editing = false);
                                           },
                                     child: const Text('Cancel'),

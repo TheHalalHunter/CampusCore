@@ -261,6 +261,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     required String firstName,
     required String lastName,
     String? phone,
+    String? academicLevel,
   }) async {
     state = state.copyWith(isLoading: true, clearError: true);
     try {
@@ -268,6 +269,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
         'fullName': '$firstName $lastName',
       };
       if (phone != null && phone.isNotEmpty) body['phone'] = phone;
+      if (academicLevel != null && academicLevel.isNotEmpty) {
+        // Strip the 'L' suffix — backend stores '100', '200' etc or '100L'
+        body['academicLevel'] = academicLevel;
+      }
 
       final resp = await _api.patch(ApiConstants.updateProfile, data: body);
       final respBody = resp.data as Map<String, dynamic>;
