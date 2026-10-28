@@ -132,10 +132,17 @@ export class AiService {
     }
 
     const system = courseContext
-      ? `You are an academic tutor helping a Nigerian university student studying ${courseContext}. Explain concepts clearly in simple English. Be educational and concise. Do NOT use markdown formatting, asterisks, or hash symbols in your response.`
-      : `You are an academic tutor helping a Nigerian university student. Explain concepts clearly in simple English. Do NOT use markdown formatting, asterisks, or hash symbols in your response.`;
+      ? `You are an academic tutor helping a Nigerian university student studying ${courseContext}. 
+You are in an ongoing conversation — use the conversation history to understand context.
+If the student asks for "more", "continue", "elaborate", or similar follow-ups, expand on your PREVIOUS response, do NOT explain the word itself.
+Explain concepts clearly in simple English. Be educational and concise. Do NOT use markdown formatting, asterisks, or hash symbols in your response.`
+      : `You are an academic tutor helping a Nigerian university student.
+You are in an ongoing conversation — use the conversation history to understand context.
+If the student asks for "more", "continue", "elaborate", or similar follow-ups, expand on your PREVIOUS response, do NOT explain the word itself.
+Explain concepts clearly in simple English. Do NOT use markdown formatting, asterisks, or hash symbols in your response.`;
 
     const result = await this.generate(`Please explain: ${concept}`, system, history);
+    this.logger.log(`explain: concept="${concept}" history_len=${history?.length ?? 0}`);
     await this.logUsage(userId, AiAction.EXPLAIN, concept, courseContext);
     return result;
   }
