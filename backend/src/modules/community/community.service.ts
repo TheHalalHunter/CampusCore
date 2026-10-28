@@ -35,7 +35,7 @@ export class CommunityService {
     const page = filters.page ?? 1;
     const limit = Math.min(filters.limit ?? 20, 50);
 
-    const where: any = { isFlagged: false };
+    const where: any = {};
     if (filters.departmentId) where.departmentId = filters.departmentId;
     if (filters.courseId) where.courseId = filters.courseId;
     if (filters.level) where.academicLevel = filters.level;
@@ -90,8 +90,8 @@ export class CommunityService {
 
   findAnswers(questionId: string): Promise<Answer[]> {
     return this.answersRepo.find({
-      where: { questionId, isFlagged: false },
-      order: { isVerified: 'DESC', upvoteCount: 'DESC' },
+      where: { questionId },
+      order: { upvoteCount: 'DESC', createdAt: 'ASC' },
     });
   }
 

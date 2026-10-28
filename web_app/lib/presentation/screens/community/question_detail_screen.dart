@@ -310,9 +310,7 @@ class _QuestionDetailBody extends StatelessWidget {
         .cast<Map<String, dynamic>>()
         .toList()
       ..sort((a, b) {
-        final aVerified = a['isVerified'] == true ? 1 : 0;
-        final bVerified = b['isVerified'] == true ? 1 : 0;
-        if (bVerified != aVerified) return bVerified - aVerified;
+        // Sort by upvotes only — no moderation ordering
         final aUp = a['upvoteCount'] as int? ?? a['upvotes'] as int? ?? 0;
         final bUp = b['upvoteCount'] as int? ?? b['upvotes'] as int? ?? 0;
         return bUp - aUp;
@@ -629,7 +627,6 @@ class _AnswerCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final body       = answer['body']?.toString()        ?? '';
-    final isVerified = answer['isVerified'] == true;
     final upvotes    = answer['upvoteCount'] as int?     ??
                        answer['upvotes']     as int?     ?? 0;
     final answerId   = answer['id']?.toString()          ?? '';
@@ -643,19 +640,14 @@ class _AnswerCard extends StatelessWidget {
     return Card(
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: BorderSide(
-          color: isVerified
-              ? AppColors.success.withValues(alpha: 0.5)
-              : AppColors.border,
-          width: isVerified ? 1.5 : 0.8,
-        ),
+        side: const BorderSide(color: AppColors.border, width: 0.8),
       ),
       child: Padding(
         padding: EdgeInsets.all(isMobile ? 12 : 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header: author + verified badge
+            // Header: author info
             Row(
               children: [
                 CircleAvatar(
@@ -698,34 +690,6 @@ class _AnswerCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                if (isVerified)
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: AppColors.success.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(6),
-                      border: Border.all(
-                          color: AppColors.success.withValues(alpha: 0.4)),
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.verified_outlined,
-                            size: 12, color: AppColors.success),
-                        SizedBox(width: 4),
-                        Text(
-                          'Verified',
-                          style: TextStyle(
-                            color: AppColors.success,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                            fontFamily: 'Nunito',
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
               ],
             ),
 
