@@ -260,7 +260,7 @@ class _NotificationsList extends ConsumerWidget {
       child: notifAsync.when(
         loading: () => const _NotificationSkeleton(),
         error: (e, _) => _ErrorState(
-          message: 'Could not load notifications.',
+          message: 'Could not load your notifications. Check your connection and try again.',
           onRetry: () {
             ref.invalidate(notificationsProvider);
             ref.invalidate(notifUnreadCountProvider);

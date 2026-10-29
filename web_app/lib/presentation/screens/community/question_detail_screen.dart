@@ -92,7 +92,7 @@ class _QuestionDetailScreenState
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'Could not resolve: $e',
+              'Could not mark as resolved. Please try again.',
               style: const TextStyle(fontFamily: 'Nunito'),
             ),
             backgroundColor: AppColors.error,
@@ -131,7 +131,7 @@ class _QuestionDetailScreenState
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'Failed to post answer: $e',
+              'Could not post your answer. Check your connection and try again.',
               style: const TextStyle(fontFamily: 'Nunito'),
             ),
             backgroundColor: AppColors.error,
@@ -216,8 +216,8 @@ class _QuestionDetailScreenState
                   color: AppColors.error, size: 48),
               const SizedBox(height: 12),
               const Text(
-                'Could not load question.',
-                style: TextStyle(fontFamily: 'Nunito'),
+                'Could not load this question. Check your connection and try again.',
+                style: TextStyle(fontFamily: 'Nunito', color: AppColors.textSecondary, fontSize: 14),
               ),
               const SizedBox(height: 16),
               ElevatedButton.icon(

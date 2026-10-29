@@ -110,8 +110,32 @@ class _UsersScreenState extends ConsumerState<UsersScreen> {
             child: usersAsync.when(
               loading: () =>
                   const Center(child: CircularProgressIndicator()),
-              error: (_, __) => const Center(
-                  child: Text('Could not load users. Please try again.')),
+              error: (_, __) => Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.error_outline,
+                        size: 48, color: AdminColors.error),
+                    const SizedBox(height: 12),
+                    const Text(
+                      'Could not load users. Please try again.',
+                      style: TextStyle(
+                        color: AdminColors.error,
+                        fontFamily: 'Nunito',
+                        fontSize: 14,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 16),
+                    TextButton.icon(
+                      onPressed: () => ref.invalidate(adminUsersProvider),
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('Retry',
+                          style: TextStyle(fontFamily: 'Nunito')),
+                    ),
+                  ],
+                ),
+              ),
               data: (users) {
                 final filtered = users.where((u) {
                   final matchSearch = _searchQuery.isEmpty ||
@@ -332,7 +356,7 @@ class _UsersScreenState extends ConsumerState<UsersScreen> {
       if (mounted) {
         // ignore: use_build_context_synchronously
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Action failed. Please try again.')),
+          const SnackBar(content: Text('Could not update user status. Please try again.')),
         );
       }
     }
@@ -360,7 +384,7 @@ class _UsersScreenState extends ConsumerState<UsersScreen> {
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
-                                content: Text('Role change failed.')),
+                                content: Text('Could not change role. Please try again.')),
                           );
                         }
                       }

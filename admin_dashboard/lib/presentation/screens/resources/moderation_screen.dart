@@ -65,17 +65,11 @@ class PendingResource {
 
 final pendingResourcesProvider =
     FutureProvider<List<PendingResource>>((ref) async {
-  try {
-    final response = await adminApi.get('/resources/moderation/pending');
-    final data = (response.data['data'] ?? response.data) as List;
-    return data
-        .map((r) => PendingResource.fromJson(r as Map<String, dynamic>))
-        .toList();
-  } catch (e) {
-    // ignore: avoid_print
-    print('pendingResourcesProvider error: $e');
-    return [];
-  }
+  final response = await adminApi.get('/resources/moderation/pending');
+  final data = (response.data['data'] ?? response.data) as List;
+  return data
+      .map((r) => PendingResource.fromJson(r as Map<String, dynamic>))
+      .toList();
 });
 
 /// FutureProvider.family for courses by departmentId (used inside the upload dialog).
@@ -163,8 +157,32 @@ class ModerationScreen extends ConsumerWidget {
             child: pendingAsync.when(
               loading: () =>
                   const Center(child: CircularProgressIndicator()),
-              error: (_, __) => const Center(
-                  child: Text('Could not load pending resources.')),
+              error: (_, __) => Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.error_outline,
+                        size: 48, color: AdminColors.error),
+                    const SizedBox(height: 12),
+                    const Text(
+                      'Could not load pending submissions. Check your connection and try again.',
+                      style: TextStyle(
+                        color: AdminColors.error,
+                        fontFamily: 'Nunito',
+                        fontSize: 14,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 16),
+                    TextButton.icon(
+                      onPressed: () => ref.invalidate(pendingResourcesProvider),
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('Retry',
+                          style: TextStyle(fontFamily: 'Nunito')),
+                    ),
+                  ],
+                ),
+              ),
               data: (resources) {
                 if (resources.isEmpty) {
                   return const Center(
@@ -212,7 +230,7 @@ class ModerationScreen extends ConsumerWidget {
                       } catch (e) {
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                            content: Text('Error: $e'),
+                            content: const Text('Could not submit review. Please try again.'),
                             backgroundColor: AdminColors.error,
                           ));
                         }
@@ -367,8 +385,8 @@ class _UploadResourceDialogState
           _uploadProgress = null;
           _submitting = false;
         });
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Upload failed: $e'),
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Upload failed. Check your connection and try again.'),
           backgroundColor: AdminColors.error,
         ));
       }

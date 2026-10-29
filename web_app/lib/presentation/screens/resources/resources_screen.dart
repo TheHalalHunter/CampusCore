@@ -113,7 +113,7 @@ class ResourcesScreen extends ConsumerWidget {
                     const SizedBox(height: 40),
                     const Icon(Icons.error_outline, color: AppColors.error, size: 48),
                     const SizedBox(height: 12),
-                    const Text('Could not load resources.'),
+                    const Text('Could not load resources. Check your connection and try again.'),
                     const SizedBox(height: 16),
                     ElevatedButton.icon(
                       onPressed: () => ref.invalidate(resourcesProvider),
@@ -301,12 +301,8 @@ class _UploadDialogState extends ConsumerState<_UploadDialog> {
         );
       }
     } catch (e) {
-      // Surface the full error so we can diagnose Firebase Storage vs backend issues
-      String msg = e.toString();
-      if (msg.contains('firebase_storage') || msg.contains('storage/')) {
-        msg = 'Firebase Storage error: $msg\n\nMake sure Firebase Storage rules allow writes.';
-      }
-      setState(() { _uploading = false; _error = msg; });
+      // Surface a friendly error — avoid exposing internal paths or storage details
+      setState(() { _uploading = false; _error = 'Upload failed. Please check your connection and try again. If the problem persists, contact support.'; });
     }
   }
 
@@ -720,7 +716,7 @@ class _ResourceRow extends ConsumerWidget {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Could not save: $e',
+            content: Text('Could not save to library. Please try again.',
                 style: const TextStyle(fontFamily: 'Nunito')),
             backgroundColor: AppColors.error,
           ),

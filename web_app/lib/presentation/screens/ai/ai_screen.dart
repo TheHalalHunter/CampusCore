@@ -112,9 +112,23 @@ class _AiNotifier extends StateNotifier<List<_Message>> {
         case _AiMode.predictTopics: await _predictTopics(input.trim()); break;
       }
     } catch (e) {
-      final msg = e.toString().contains('403')
-          ? 'AI is currently disabled during an exam period.'
-          : 'Could not reach AI. Check your connection and try again.';
+      final raw = e.toString();
+      final String msg;
+      if (raw.contains('403')) {
+        msg = 'The AI assistant is disabled during an active exam period. It will be available again when the exam lock is lifted.';
+      } else if (raw.contains('429')) {
+        msg = 'You have sent too many requests. Please wait a moment before trying again.';
+      } else if (raw.contains('503') || raw.contains('502') || raw.contains('504')) {
+        msg = 'The AI server is temporarily unavailable. Please try again in a few minutes.';
+      } else if (raw.contains('SocketException') ||
+                 raw.contains('NetworkException') ||
+                 raw.contains('connection') ||
+                 raw.contains('timeout') ||
+                 raw.contains('XMLHttpRequest')) {
+        msg = 'Could not reach the AI assistant. Check your internet connection and try again.';
+      } else {
+        msg = 'The AI assistant could not respond. Please try again.';
+      }
       state = [...state, _Message(text: msg, type: _MsgType.error)];
     } finally {
       _loading = false;

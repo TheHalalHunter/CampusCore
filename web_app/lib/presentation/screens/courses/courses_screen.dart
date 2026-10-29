@@ -65,7 +65,7 @@ class CoursesScreen extends ConsumerWidget {
                 children: List.generate(6, (_) => const _SkeletonCourseCard()),
               ),
               error: (e, _) => _ErrorWidget(
-                message: 'Could not load courses.',
+                message: 'Could not load your courses. Check your connection and try again.',
                 onRetry: () => ref.invalidate(coursesProvider),
               ),
               data: (courses) {

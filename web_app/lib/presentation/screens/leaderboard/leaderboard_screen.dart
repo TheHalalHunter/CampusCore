@@ -42,7 +42,7 @@ class LeaderboardScreen extends ConsumerWidget {
               const Icon(Icons.leaderboard_outlined,
                   size: 64, color: AppColors.border),
               const SizedBox(height: 16),
-              const Text('Could not load leaderboard',
+              const Text('Could not load the leaderboard. Check your connection and try again.',
                   style: TextStyle(
                       color: AppColors.textSecondary, fontFamily: 'Nunito')),
               const SizedBox(height: 16),

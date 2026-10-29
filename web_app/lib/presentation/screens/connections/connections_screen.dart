@@ -399,7 +399,7 @@ class _MyConnectionsTab extends ConsumerWidget {
     return connectionsAsync.when(
       loading: () => const _ConnectionSkeleton(),
       error: (e, _) => _ConnErrorWidget(
-        message: 'Could not load connections.',
+        message: 'Could not load your connections. Check your connection and try again.',
         onRetry: () => ref.invalidate(connectionsProvider),
       ),
       data: (connections) {
@@ -479,7 +479,7 @@ class _RequestsTab extends ConsumerWidget {
           receivedAsync.when(
             loading: () => const _ConnectionSkeleton(count: 3),
             error: (e, _) => _ConnErrorWidget(
-              message: 'Could not load received requests.',
+              message: 'Could not load received requests. Check your connection and try again.',
               onRetry: () => ref.invalidate(pendingReceivedProvider),
             ),
             data: (received) {
@@ -532,7 +532,7 @@ class _RequestsTab extends ConsumerWidget {
           sentAsync.when(
             loading: () => const _ConnectionSkeleton(count: 3),
             error: (e, _) => _ConnErrorWidget(
-              message: 'Could not load sent requests.',
+              message: 'Could not load sent requests. Check your connection and try again.',
               onRetry: () => ref.invalidate(pendingSentProvider),
             ),
             data: (sent) {
@@ -663,7 +663,7 @@ class _FindStudentsTab extends ConsumerWidget {
                     child: CircularProgressIndicator(strokeWidth: 2),
                   ),
                   error: (e, _) => _ConnErrorWidget(
-                    message: 'Could not search. Please try again.',
+                    message: 'Could not search for students. Check your connection and try again.',
                     onRetry: () => ref.invalidate(_findStudentsProvider(searchQuery)),
                   ),
                   data: (students) {

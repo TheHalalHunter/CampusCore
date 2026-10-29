@@ -115,7 +115,9 @@ class CommunityScreen extends ConsumerWidget {
                     const SizedBox(height: 40),
                     const Icon(Icons.error_outline, color: AppColors.error, size: 48),
                     const SizedBox(height: 12),
-                    const Text('Could not load questions.'),
+                    const Text('Could not load questions. Check your connection and try again.',
+                      style: TextStyle(color: AppColors.textSecondary, fontFamily: 'Nunito'),
+                    ),
                     const SizedBox(height: 16),
                     ElevatedButton.icon(
                       onPressed: () => ref.invalidate(questionsProvider),
@@ -230,7 +232,7 @@ class _AskQuestionDialogState extends ConsumerState<_AskQuestionDialog> {
         );
       }
     } catch (e) {
-      setState(() { _posting = false; _error = 'Could not post: ${e.toString()}'; });
+      setState(() { _posting = false; _error = 'Could not post your question. Check your connection and try again.'; });
     }
   }
 

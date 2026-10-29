@@ -44,7 +44,7 @@ class LibraryScreen extends ConsumerWidget {
               const Icon(Icons.bookmark_border_outlined,
                   size: 64, color: AppColors.border),
               const SizedBox(height: 16),
-              const Text('Could not load your library.',
+              const Text('Could not load your library. Check your connection and try again.',
                   style: TextStyle(
                       color: AppColors.textSecondary, fontFamily: 'Nunito')),
               const SizedBox(height: 16),
@@ -331,7 +331,7 @@ class _LibraryItemRow extends ConsumerWidget {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to remove: $e',
+            content: Text('Could not remove this resource. Please try again.',
                 style: const TextStyle(fontFamily: 'Nunito')),
             backgroundColor: AppColors.error,
           ),

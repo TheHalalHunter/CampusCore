@@ -320,15 +320,17 @@ class AuthNotifier extends StateNotifier<AuthState> {
   String _firebaseMsg(String code) {
     switch (code) {
       case 'user-not-found':
+        return 'No account found with this email. Check the email or sign up.';
       case 'wrong-password':
       case 'invalid-credential':
-        return 'Invalid email or password.';
+      case 'INVALID_LOGIN_CREDENTIALS':
+        return 'Incorrect password. Please try again or reset your password.';
       case 'user-disabled':
-        return 'Your account has been disabled.';
+        return 'This account has been disabled. Contact support for help.';
       case 'too-many-requests':
-        return 'Too many attempts. Please wait and try again.';
+        return 'Too many failed attempts. Please wait a few minutes before trying again.';
       case 'network-request-failed':
-        return 'Network error. Check your connection.';
+        return 'No internet connection. Check your network and try again.';
       default:
         return 'Login failed ($code). Please try again.';
     }

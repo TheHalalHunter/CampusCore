@@ -204,9 +204,9 @@ class _StudyGroupsScreenState extends ConsumerState<StudyGroupsScreen> {
   String _extractError(Object e) {
     final str = e.toString();
     if (str.contains('409')) return 'You are already a member of this group';
-    if (str.contains('403')) return 'Group is full or inactive';
-    if (str.contains('404')) return 'Group not found';
-    return 'An error occurred. Please try again.';
+    if (str.contains('403')) return 'This group is full or no longer active.';
+    if (str.contains('404')) return 'This group no longer exists.';
+    return 'Something went wrong. Please try again.';
   }
 
   @override
@@ -324,7 +324,7 @@ class _GroupListTab extends StatelessWidget {
                 size: 48, color: AppColors.border),
             const SizedBox(height: 12),
             const Text(
-              'Could not load study groups.',
+              'Could not load study groups. Check your connection and try again.',
               style: TextStyle(
                   color: AppColors.textSecondary, fontFamily: 'Nunito'),
             ),

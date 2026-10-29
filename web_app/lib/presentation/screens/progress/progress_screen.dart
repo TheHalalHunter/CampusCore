@@ -162,7 +162,7 @@ class _CgpaOverviewTab extends ConsumerWidget {
               cgpaAsync.when(
                 loading: () => const _LoadingCard(),
                 error: (_, __) => _ErrorCard(
-                  message: 'Could not load CGPA.',
+                  message: 'Could not load your CGPA. Check your connection and try again.',
                   onRetry: () => ref.invalidate(cgpaProvider),
                 ),
                 data: (data) {
@@ -190,7 +190,7 @@ class _CgpaOverviewTab extends ConsumerWidget {
               semAsync.when(
                 loading: () => const _LoadingCard(),
                 error: (_, __) => _ErrorCard(
-                  message: 'Could not load semesters.',
+                  message: 'Could not load your saved semesters. Check your connection and try again.',
                   onRetry: () => ref.invalidate(semestersProvider),
                 ),
                 data: (semesters) {
@@ -218,7 +218,7 @@ class _CgpaOverviewTab extends ConsumerWidget {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
                                         content: Text(
-                                          'Could not delete semester: $e',
+                                          'Could not delete the semester. Please try again.',
                                           style: const TextStyle(fontFamily: 'Nunito'),
                                         ),
                                         backgroundColor: AppColors.error,

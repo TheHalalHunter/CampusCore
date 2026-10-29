@@ -137,7 +137,7 @@ class HomeScreen extends ConsumerWidget {
             dashAsync.when(
               loading: () => _buildStatsSkeleton(isMobile, spacing),
               error: (_, __) => _ErrorBanner(
-                message: 'Could not load dashboard data.',
+                message: 'Could not load your dashboard. Check your connection and try again.',
                 onRetry: () => ref.invalidate(homeDashboardProvider),
               ),
               data: (data) {
@@ -174,7 +174,7 @@ class HomeScreen extends ConsumerWidget {
             ref.watch(recentActivityProvider).when(
               loading: () => _buildActivitySkeleton(),
               error: (_, __) => _ErrorBanner(
-                message: 'Could not load recent activity.',
+                message: 'Could not load recent activity. Check your connection and try again.',
                 onRetry: () => ref.invalidate(recentActivityProvider),
               ),
               data: (items) {
@@ -242,7 +242,7 @@ class HomeScreen extends ConsumerWidget {
             dashAsync.when(
               loading: () => _buildQuestionsSkeleton(),
               error: (_, __) => _ErrorBanner(
-                message: 'Could not load questions.',
+                message: 'Could not load recent questions. Check your connection and try again.',
                 onRetry: () => ref.invalidate(homeDashboardProvider),
               ),
               data: (data) {
@@ -275,7 +275,7 @@ class HomeScreen extends ConsumerWidget {
             dashAsync.when(
               loading: () => _buildCoursesSkeleton(isMobile, spacing),
               error: (_, __) => _ErrorBanner(
-                message: 'Could not load courses.',
+                message: 'Could not load your courses. Check your connection and try again.',
                 onRetry: () => ref.invalidate(homeDashboardProvider),
               ),
               data: (data) {

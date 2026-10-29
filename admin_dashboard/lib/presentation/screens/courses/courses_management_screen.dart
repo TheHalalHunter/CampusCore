@@ -55,28 +55,20 @@ class AdminCourseModel {
 
 final adminDepartmentsProvider =
     FutureProvider<List<Map<String, dynamic>>>((ref) async {
-  try {
-    final response = await adminApi.get('/departments');
-    final data = (response.data['data'] ?? response.data) as List;
-    return data.cast<Map<String, dynamic>>();
-  } catch (_) {
-    return [];
-  }
+  final response = await adminApi.get('/departments');
+  final data = (response.data['data'] ?? response.data) as List;
+  return data.cast<Map<String, dynamic>>();
 });
 
 final adminCoursesProvider =
     FutureProvider.family<List<AdminCourseModel>, String>(
         (ref, departmentId) async {
-  try {
-    final response =
-        await adminApi.get('/courses', params: {'departmentId': departmentId});
-    final data = (response.data['data'] ?? response.data) as List;
-    return data
-        .map((c) => AdminCourseModel.fromJson(c as Map<String, dynamic>))
-        .toList();
-  } catch (_) {
-    return [];
-  }
+  final response =
+      await adminApi.get('/courses', params: {'departmentId': departmentId});
+  final data = (response.data['data'] ?? response.data) as List;
+  return data
+      .map((c) => AdminCourseModel.fromJson(c as Map<String, dynamic>))
+      .toList();
 });
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
@@ -145,7 +137,13 @@ class _CoursesManagementScreenState
           // Department picker
           deptsAsync.when(
             loading: () => const LinearProgressIndicator(),
-            error: (_, __) => const SizedBox.shrink(),
+            error: (_, __) => const Padding(
+              padding: EdgeInsets.symmetric(vertical: 8),
+              child: Text(
+                'Could not load departments. Please refresh the page.',
+                style: TextStyle(color: AdminColors.error, fontSize: 13, fontFamily: 'Nunito'),
+              ),
+            ),
             data: (depts) => DropdownButtonFormField<String>(
               initialValue: _selectedDeptId,
               decoration: InputDecoration(
@@ -207,8 +205,32 @@ class _CoursesManagementScreenState
               child: ref.watch(adminCoursesProvider(_selectedDeptId!)).when(
                     loading: () =>
                         const Center(child: CircularProgressIndicator()),
-                    error: (_, __) =>
-                        const Center(child: Text('Could not load courses.')),
+                    error: (_, __) => Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.error_outline,
+                              size: 48, color: AdminColors.error),
+                          const SizedBox(height: 12),
+                          const Text(
+                            'Could not load courses. Check your connection and try again.',
+                            style: TextStyle(
+                              color: AdminColors.error,
+                              fontFamily: 'Nunito',
+                              fontSize: 14,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 16),
+                          TextButton.icon(
+                            onPressed: () => ref.invalidate(adminCoursesProvider(_selectedDeptId!)),
+                            icon: const Icon(Icons.refresh),
+                            label: const Text('Retry',
+                                style: TextStyle(fontFamily: 'Nunito')),
+                          ),
+                        ],
+                      ),
+                    ),
                     data: (courses) {
                       final filtered = _levelFilter == 'All'
                           ? courses
@@ -391,7 +413,7 @@ class _CoursesManagementScreenState
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text('Failed to delete: $e'),
+                      content: const Text('Could not delete the course. Please try again.'),
                       backgroundColor: AdminColors.error,
                     ),
                   );
@@ -553,7 +575,7 @@ class _CourseFormDialogState extends State<_CourseFormDialog> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text('Error: $e'), backgroundColor: AdminColors.error));
+            content: const Text('Could not save the course. Please try again.'), backgroundColor: AdminColors.error));
       }
     } finally {
       if (mounted) setState(() => _submitting = false);

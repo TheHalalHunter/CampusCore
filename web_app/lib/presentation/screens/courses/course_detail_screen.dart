@@ -105,7 +105,7 @@ class _CourseDetailScreenState extends ConsumerState<CourseDetailScreen>
             children: [
               const Icon(Icons.error_outline, color: AppColors.error, size: 48),
               const SizedBox(height: 12),
-              const Text('Could not load course details.'),
+              const Text('Could not load this course. Check your connection and try again.'),
               const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: () => ref.invalidate(courseDetailProvider(widget.courseId)),
@@ -302,7 +302,7 @@ class _ResourcesTab extends StatelessWidget {
           children: [
             const Icon(Icons.error_outline, color: AppColors.error, size: 48),
             const SizedBox(height: 12),
-            const Text('Could not load resources.'),
+            const Text('Could not load resources for this course. Check your connection and try again.'),
             const SizedBox(height: 16),
             ElevatedButton(onPressed: onRefresh, child: const Text('Retry')),
           ],
