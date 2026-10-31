@@ -119,8 +119,7 @@ final _publicProfileProvider =
     FutureProvider.family<UserModel?, String>((ref, userId) async {
   try {
     final api = ref.read(apiClientProvider);
-    final response = await api
-        .get('${ApiConstants.me.replaceAll('/me', '')}/$userId/profile');
+    final response = await api.get(ApiConstants.userProfile(userId));
     final data = response.data['data'] ?? response.data;
     return UserModel.fromJson(data as Map<String, dynamic>);
   } catch (_) {

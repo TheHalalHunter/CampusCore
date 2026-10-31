@@ -1,9 +1,9 @@
 import 'dart:typed_data';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:file_picker/file_picker.dart';
 import '../../core/network/api_client.dart';
 import '../../core/constants/api_constants.dart';
+import '../../core/storage/supabase_storage.dart';
 
 // ─── State ────────────────────────────────────────────────────────────────────
 
@@ -47,13 +47,14 @@ class UploadState {
 
 // ─── Provider ─────────────────────────────────────────────────────────────────
 
-final uploadProvider = NotifierProvider<UploadNotifier, UploadState>(UploadNotifier.new);
+final uploadProvider =
+    NotifierProvider<UploadNotifier, UploadState>(UploadNotifier.new);
 
 class UploadNotifier extends Notifier<UploadState> {
   @override
   UploadState build() => const UploadState();
 
-  /// Open file picker and store selected file.
+  /// Open file picker and store the selected file.
   Future<void> pickFile() async {
     try {
       final result = await FilePicker.platform.pickFiles(
@@ -83,7 +84,7 @@ class UploadNotifier extends Notifier<UploadState> {
     state = state.copyWith(clearFile: true);
   }
 
-  /// Upload file to Firebase Storage then submit metadata to backend.
+  /// Upload file to Supabase Storage, then submit metadata to backend.
   Future<bool> upload({
     required String title,
     required String description,
@@ -91,46 +92,28 @@ class UploadNotifier extends Notifier<UploadState> {
     required String courseId,
     String? academicYear,
   }) async {
-    if (state.fileBytes == null && state.filePath == null) return false;
+    if (state.fileBytes == null) return false;
 
     state = state.copyWith(isUploading: true, progress: 0, clearError: true);
 
     try {
-      // 1. Upload to Firebase Storage
+      // 1. Upload to Supabase Storage
       final fileName = state.fileName ?? 'resource.pdf';
-      final storageRef = FirebaseStorage.instance
-          .ref()
-          .child('resources')
-          .child(courseId)
-          .child('${DateTime.now().millisecondsSinceEpoch}_$fileName');
+      final storagePath =
+          '$courseId/${DateTime.now().millisecondsSinceEpoch}_$fileName';
 
-      UploadTask uploadTask;
-      if (state.fileBytes != null) {
-        uploadTask = storageRef.putData(
-          state.fileBytes!,
-          SettableMetadata(contentType: _contentType(fileName)),
-        );
-      } else {
-        // Web fallback — file bytes should always be available on web
-        state = state.copyWith(
-          isUploading: false,
-          error: 'File data not available. Please try again.',
-        );
-        return false;
-      }
+      // Show indeterminate progress while uploading
+      state = state.copyWith(progress: 0.3);
 
-      // Track upload progress
-      uploadTask.snapshotEvents.listen((snapshot) {
-        final progress = snapshot.bytesTransferred / snapshot.totalBytes;
-        state = state.copyWith(progress: progress);
-      });
+      final downloadUrl = await SupabaseStorageService.uploadFile(
+        bytes: state.fileBytes!,
+        path: storagePath,
+        mimeType: _contentType(fileName),
+      );
 
-      final snapshot = await uploadTask;
-      final downloadUrl = await snapshot.ref.getDownloadURL();
+      state = state.copyWith(progress: 0.7);
 
-      state = state.copyWith(progress: 0.9);
-
-      // 2. Submit to backend
+      // 2. Submit metadata to backend
       final api = ref.read(apiClientProvider);
       await api.post(ApiConstants.resources, data: {
         'title': title,
@@ -161,10 +144,14 @@ class UploadNotifier extends Notifier<UploadState> {
   String _contentType(String fileName) {
     final ext = fileName.split('.').last.toLowerCase();
     switch (ext) {
-      case 'pdf': return 'application/pdf';
-      case 'docx': return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
-      case 'pptx': return 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
-      default: return 'application/octet-stream';
+      case 'pdf':
+        return 'application/pdf';
+      case 'docx':
+        return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+      case 'pptx':
+        return 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
+      default:
+        return 'application/octet-stream';
     }
   }
 }

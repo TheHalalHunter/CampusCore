@@ -4,6 +4,10 @@ import 'package:go_router/go_router.dart';
 import '../../../app/theme/app_theme.dart';
 import '../../../app/router/app_router.dart';
 import '../../providers/connections_provider.dart';
+import '../../providers/user_provider.dart';
+import '../../../core/network/api_client.dart';
+import '../../../core/constants/api_constants.dart';
+import '../../../data/models/user_model.dart';
 
 class ConnectionsScreen extends ConsumerWidget {
   const ConnectionsScreen({super.key});
@@ -123,40 +127,73 @@ class _ConnectionTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final otherUserId = connection.requesterId == connection.receiverId
+    final currentUserId = ref.watch(currentUserProvider).valueOrNull?.id ?? '';
+    final otherUserId = connection.requesterId == currentUserId
         ? connection.receiverId
         : connection.requesterId;
 
+    final profileAsync = ref.watch(_userProfileProvider(otherUserId));
+
     return Card(
       child: ListTile(
-        leading: CircleAvatar(
-          backgroundColor: AppColors.primary.withValues(alpha: 0.15),
-          child: const Icon(Icons.person_outline, color: AppColors.primary),
+        leading: profileAsync.when(
+          data: (user) => CircleAvatar(
+            backgroundColor: AppColors.primary.withValues(alpha: 0.15),
+            backgroundImage:
+                user?.avatar != null ? NetworkImage(user!.avatar!) : null,
+            child: user?.avatar == null
+                ? Text(
+                    (user?.firstName ?? 'U').substring(0, 1).toUpperCase(),
+                    style: const TextStyle(
+                        color: AppColors.primary, fontWeight: FontWeight.w700),
+                  )
+                : null,
+          ),
+          loading: () => const CircleAvatar(
+            backgroundColor: AppColors.grey200,
+            child: Icon(Icons.person_outline, color: AppColors.textHint),
+          ),
+          error: (_, __) => const CircleAvatar(
+            backgroundColor: AppColors.primary,
+            child: Icon(Icons.person_outline, color: Colors.white),
+          ),
         ),
-        title:
-            const Text('User', style: TextStyle(fontWeight: FontWeight.w600)),
-        subtitle: Text('Connected • ${_timeAgo(connection.createdAt)}',
-            style:
-                const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+        title: profileAsync.when(
+          data: (user) => Text(
+            user?.fullName ?? 'Student',
+            style: const TextStyle(fontWeight: FontWeight.w600),
+          ),
+          loading: () => Container(
+              width: 100, height: 14, color: AppColors.grey200),
+          error: (_, __) => const Text('Student',
+              style: TextStyle(fontWeight: FontWeight.w600)),
+        ),
+        subtitle: Text(
+          'Connected · ${_timeAgo(connection.createdAt)}',
+          style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+        ),
         trailing: Row(mainAxisSize: MainAxisSize.min, children: [
           TextButton(
             onPressed: () =>
-                context.push('${AppRoutes.publicProfile}/$otherUserId'),
+                context.push('${AppRoutes.profile}/$otherUserId'),
             child: const Text('View'),
           ),
           IconButton(
             icon: const Icon(Icons.person_remove_outlined,
                 size: 18, color: AppColors.error),
             tooltip: 'Remove',
-            onPressed: () => _remove(context, ref, connection),
+            onPressed: () => _remove(context, ref, connection, currentUserId),
           ),
         ]),
       ),
     );
   }
 
-  Future<void> _remove(
-      BuildContext ctx, WidgetRef ref, ConnectionModel c) async {
+  Future<void> _remove(BuildContext ctx, WidgetRef ref, ConnectionModel c,
+      String currentUserId) async {
+    final otherUserId = c.requesterId == currentUserId
+        ? c.receiverId
+        : c.requesterId;
     final confirm = await showDialog<bool>(
       context: ctx,
       builder: (_) => AlertDialog(
@@ -176,7 +213,7 @@ class _ConnectionTile extends ConsumerWidget {
     if (confirm != true) return;
     await ref
         .read(connectionActionsProvider.notifier)
-        .removeConnection(c.id, c.requesterId);
+        .removeConnection(c.id, otherUserId);
   }
 
   String _timeAgo(DateTime dt) {
@@ -186,6 +223,20 @@ class _ConnectionTile extends ConsumerWidget {
     return 'just now';
   }
 }
+
+// Provider to fetch another user's public profile
+final _userProfileProvider =
+    FutureProvider.family<UserModel?, String>((ref, userId) async {
+  if (userId.isEmpty) return null;
+  try {
+    final api = ref.read(apiClientProvider);
+    final response = await api.get(ApiConstants.userProfile(userId));
+    final data = response.data['data'] ?? response.data;
+    return UserModel.fromJson(data as Map<String, dynamic>);
+  } catch (_) {
+    return null;
+  }
+});
 
 // ─── Pending request tile ─────────────────────────────────────────────────────
 

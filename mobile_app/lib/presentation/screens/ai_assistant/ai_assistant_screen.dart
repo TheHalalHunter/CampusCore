@@ -381,7 +381,7 @@ class _ExplainTabState extends ConsumerState<_ExplainTab> {
           if (state.content.isNotEmpty)
             _AiResultCard(
               content: state.content,
-              onClear: () => ref.read(explainProvider.notifier).clear(),
+              onClear: () => ref.read(explainProvider.notifier).clearHistory(),
             ),
         ],
       ),

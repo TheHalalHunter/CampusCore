@@ -140,11 +140,22 @@ class MainShell extends StatelessWidget {
   final Widget child;
   const MainShell({super.key, required this.child});
 
+  int _selectedIndex(BuildContext context) {
+    final location = GoRouterState.of(context).matchedLocation;
+    if (location.startsWith(AppRoutes.courses)) return 1;
+    if (location.startsWith(AppRoutes.community)) return 2;
+    if (location.startsWith(AppRoutes.library)) return 3;
+    if (location.startsWith(AppRoutes.profile)) return 4;
+    return 0;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final selectedIndex = _selectedIndex(context);
     return Scaffold(
       body: child,
       bottomNavigationBar: NavigationBar(
+        selectedIndex: selectedIndex,
         onDestinationSelected: (index) {
           switch (index) {
             case 0: context.go(AppRoutes.home); break;

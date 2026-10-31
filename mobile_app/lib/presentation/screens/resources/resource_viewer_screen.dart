@@ -5,7 +5,6 @@ import '../../../app/theme/app_theme.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/constants/api_constants.dart';
 import '../../../data/models/resource_model.dart';
-import '../../providers/resources_provider.dart';
 
 class ResourceViewerScreen extends ConsumerStatefulWidget {
   final String resourceId;
@@ -52,13 +51,6 @@ class _ResourceViewerScreenState extends ConsumerState<ResourceViewerScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final resourceAsync = ref.watch(resourcesByCourseProvider('').select(
-      (list) => list.whenData(
-        (resources) =>
-            resources.where((r) => r.id == widget.resourceId).firstOrNull,
-      ),
-    ));
-
     // Fetch the specific resource directly
     final specificAsync = ref.watch(_resourceByIdProvider(widget.resourceId));
 

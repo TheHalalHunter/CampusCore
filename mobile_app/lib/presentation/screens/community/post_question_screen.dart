@@ -113,17 +113,9 @@ class _PostQuestionScreenState extends ConsumerState<PostQuestionScreen> {
                 maxLines: 6,
                 decoration: const InputDecoration(
                   hintText:
-                      'Describe your question in detail. Include what you already know and what you\'ve tried...',
+                      'Describe your question in detail. Include what you already know and what you\'ve tried... (optional)',
                 ),
-                validator: (v) {
-                  if (v == null || v.trim().isEmpty) {
-                    return 'Please provide details for your question';
-                  }
-                  if (v.trim().length < 20) {
-                    return 'Please provide more detail (at least 20 characters)';
-                  }
-                  return null;
-                },
+                // body is optional — backend marks it @IsOptional()
               ),
               const SizedBox(height: 16),
 

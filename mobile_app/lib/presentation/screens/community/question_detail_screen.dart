@@ -6,7 +6,6 @@ import '../../../core/constants/api_constants.dart';
 import '../../../data/models/question_model.dart';
 import '../../providers/community_provider.dart';
 import '../../providers/discussions_provider.dart';
-
 class QuestionDetailScreen extends ConsumerStatefulWidget {
   final String questionId;
   const QuestionDetailScreen({super.key, required this.questionId});
@@ -28,25 +27,7 @@ class _QuestionDetailScreenState extends ConsumerState<QuestionDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final answersAsync = ref.watch(answersProvider(widget.questionId));
-    final allQuestionsAsync = ref.watch(allQuestionsProvider);
-
-    // Find the question from the cache
-    final question = allQuestionsAsync.value?.firstWhere(
-      (q) => q.id == widget.questionId,
-      orElse: () => QuestionModel(
-        id: widget.questionId,
-        title: 'Question',
-        body: '',
-        authorId: '',
-        upvoteCount: 0,
-        answerCount: 0,
-        isResolved: false,
-        isFlagged: false,
-        tags: [],
-        createdAt: DateTime.now(),
-      ),
-    );
+    final detailAsync = ref.watch(questionDetailProvider(widget.questionId));
 
     return Scaffold(
       appBar: AppBar(
@@ -62,100 +43,89 @@ class _QuestionDetailScreenState extends ConsumerState<QuestionDetailScreen> {
       body: Column(
         children: [
           Expanded(
-            child: RefreshIndicator(
-              onRefresh: () async =>
-                  ref.invalidate(answersProvider(widget.questionId)),
-              color: AppColors.primary,
-              child: ListView(
-                padding: const EdgeInsets.all(16),
-                children: [
-                  // Question card
-                  if (question != null) _QuestionCard(question: question),
-                  const SizedBox(height: 20),
-
-                  // Answers header
-                  answersAsync.when(
-                    data: (answers) => Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Text(
-                              '${answers.length} Answer${answers.length != 1 ? 's' : ''}',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w700,
-                                fontSize: 16,
-                                color: AppColors.textPrimary,
-                              ),
+            child: detailAsync.when(
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (_, __) => const Center(
+                  child: Text('Could not load question.',
+                      style: TextStyle(color: AppColors.textSecondary))),
+              data: (detail) {
+                if (detail == null) {
+                  return const Center(child: Text('Question not found.'));
+                }
+                final answers = detail.answers;
+                return RefreshIndicator(
+                  onRefresh: () async =>
+                      ref.invalidate(questionDetailProvider(widget.questionId)),
+                  color: AppColors.primary,
+                  child: ListView(
+                    padding: const EdgeInsets.all(16),
+                    children: [
+                      _QuestionCard(question: detail.question),
+                      const SizedBox(height: 20),
+                      Row(
+                        children: [
+                          Text(
+                            '${answers.length} Answer${answers.length != 1 ? 's' : ''}',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 16,
+                              color: AppColors.textPrimary,
                             ),
-                            if (answers.any((a) => a.isVerified)) ...[
-                              const SizedBox(width: 8),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 8, vertical: 3),
-                                decoration: BoxDecoration(
-                                  color:
-                                      AppColors.success.withValues(alpha: 0.1),
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                child: const Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(Icons.verified,
-                                        size: 12, color: AppColors.success),
-                                    SizedBox(width: 4),
-                                    Text(
-                                      'Verified answer',
+                          ),
+                          if (answers.any((a) => a.isVerified)) ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: AppColors.success.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.verified,
+                                      size: 12, color: AppColors.success),
+                                  SizedBox(width: 4),
+                                  Text('Verified answer',
                                       style: TextStyle(
-                                        color: AppColors.success,
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                                          color: AppColors.success,
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w600)),
+                                ],
                               ),
-                            ],
+                            ),
                           ],
-                        ),
-                        const SizedBox(height: 12),
-                        if (answers.isEmpty)
-                          Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.all(20),
-                            decoration: BoxDecoration(
-                              color: AppColors.surfaceAlt,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: AppColors.border),
-                            ),
-                            child: const Column(
-                              children: [
-                                Icon(Icons.question_answer_outlined,
-                                    size: 36, color: AppColors.textHint),
-                                SizedBox(height: 8),
-                                Text(
-                                  'No answers yet. Be the first to help!',
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      if (answers.isEmpty)
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            color: AppColors.surfaceAlt,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: AppColors.border),
+                          ),
+                          child: const Column(
+                            children: [
+                              Icon(Icons.question_answer_outlined,
+                                  size: 36, color: AppColors.textHint),
+                              SizedBox(height: 8),
+                              Text('No answers yet. Be the first to help!',
                                   style: TextStyle(
-                                    color: AppColors.textSecondary,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          )
-                        else
-                          ..._buildSortedAnswers(answers, widget.questionId),
-                      ],
-                    ),
-                    loading: () =>
-                        const Center(child: CircularProgressIndicator()),
-                    error: (_, __) => const Text(
-                      'Could not load answers.',
-                      style: TextStyle(color: AppColors.textSecondary),
-                    ),
+                                      color: AppColors.textSecondary,
+                                      fontWeight: FontWeight.w500)),
+                            ],
+                          ),
+                        )
+                      else
+                        ..._buildSortedAnswers(answers, widget.questionId),
+                    ],
                   ),
-                ],
-              ),
+                );
+              },
             ),
           ),
 
@@ -279,8 +249,7 @@ class _QuestionDetailScreenState extends ConsumerState<QuestionDetailScreen> {
               Navigator.pop(context);
               try {
                 final api = ref.read(apiClientProvider);
-                await api.post(
-                    '${ApiConstants.questions.replaceAll('/questions', '')}/flag/question/${widget.questionId}');
+                await api.post(ApiConstants.flagQuestion(widget.questionId));
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                     content: Text('Question flagged for review.'),
@@ -583,8 +552,7 @@ class _AnswerCard extends ConsumerWidget {
                 onTap: () async {
                   try {
                     final api = ref.read(apiClientProvider);
-                    await api.post(
-                        '${ApiConstants.questions.replaceAll('/questions', '')}/flag/answer/${answer.id}');
+                    await api.post(ApiConstants.flagAnswer(answer.id));
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                         content: Text('Answer flagged for review.'),

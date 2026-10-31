@@ -19,9 +19,7 @@ class _UploadResourceScreenState extends ConsumerState<UploadResourceScreen> {
   final _descCtrl = TextEditingController();
   String _selectedType = 'lecture_note';
   String? _selectedCourseId;
-  String? _selectedCourseName;
   String? _academicYear;
-  final bool _isUploading = false;
 
   final _resourceTypes = [
     {
@@ -221,8 +219,6 @@ class _UploadResourceScreenState extends ConsumerState<UploadResourceScreen> {
                   onChanged: (val) {
                     setState(() {
                       _selectedCourseId = val;
-                      _selectedCourseName =
-                          courses.firstWhere((c) => c.id == val).title;
                     });
                   },
                   validator: (v) => v == null ? 'Please select a course' : null,

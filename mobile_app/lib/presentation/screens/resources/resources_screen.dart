@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../app/theme/app_theme.dart';
 import '../../../app/router/app_router.dart';
 import '../../../data/models/resource_model.dart';
-import '../../providers/resources_provider.dart';
+import '../../providers/offline_resources_provider.dart';
 import '../../providers/library_provider.dart';
 import '../../widgets/common/error_view.dart';
 import '../../widgets/common/offline_banner.dart';
@@ -32,7 +32,7 @@ class _ResourcesScreenState extends ConsumerState<ResourcesScreen> {
   @override
   Widget build(BuildContext context) {
     final resourcesAsync =
-        ref.watch(resourcesByCourseProvider(widget.courseId));
+        ref.watch(offlineResourcesProvider(widget.courseId));
 
     return Scaffold(
       appBar: AppBar(
@@ -101,7 +101,7 @@ class _ResourcesScreenState extends ConsumerState<ResourcesScreen> {
                 error: (e, _) => ErrorView(
                   message: 'Could not load resources. Check your connection.',
                   onRetry: () => ref
-                      .invalidate(resourcesByCourseProvider(widget.courseId)),
+                      .invalidate(offlineResourcesProvider(widget.courseId)),
                 ),
                 data: (resources) {
                   final filtered = _typeFilter == 'all'
@@ -133,7 +133,7 @@ class _ResourcesScreenState extends ConsumerState<ResourcesScreen> {
 
                   return RefreshIndicator(
                     onRefresh: () async => ref
-                        .invalidate(resourcesByCourseProvider(widget.courseId)),
+                        .invalidate(offlineResourcesProvider(widget.courseId)),
                     color: AppColors.primary,
                     child: ListView.separated(
                       padding: const EdgeInsets.all(16),

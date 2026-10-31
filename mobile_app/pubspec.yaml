@@ -24,9 +24,11 @@ dependencies:
   # Firebase
   firebase_core: ^3.13.0
   firebase_auth: ^5.5.0
-  firebase_storage: ^12.4.0
   firebase_messaging: ^15.2.0
   google_sign_in: ^6.2.0
+
+  # Supabase (file storage)
+  supabase_flutter: ^2.5.2
 
   # Local storage & offline
   hive_flutter: ^1.1.0
@@ -74,13 +76,13 @@ flutter:
   # flutter pub run flutter_launcher_icons
   assets:
     - assets/icons/
-  # fonts:   # Uncomment after adding Nunito font files to assets/fonts/
-  #   - family: Nunito
-  #     fonts:
-  #       - asset: assets/fonts/Nunito-Regular.ttf
-  #       - asset: assets/fonts/Nunito-Medium.ttf
-  #         weight: 500
-  #       - asset: assets/fonts/Nunito-SemiBold.ttf
-  #         weight: 600
-  #       - asset: assets/fonts/Nunito-Bold.ttf
-  #         weight: 700
+  fonts:
+    - family: Nunito
+      fonts:
+        - asset: assets/fonts/Nunito-Regular.ttf
+        - asset: assets/fonts/Nunito-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Nunito-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Nunito-Bold.ttf
+          weight: 700

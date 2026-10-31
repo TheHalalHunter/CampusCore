@@ -7,6 +7,7 @@ import '../../providers/user_provider.dart';
 import '../../providers/courses_provider.dart';
 import '../../providers/notifications_provider.dart';
 import '../../providers/department_provider.dart';
+import '../../providers/community_provider.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -106,7 +107,7 @@ class HomeScreen extends ConsumerWidget {
                         const SizedBox(height: 4),
                         Text(
                           user != null
-                              ? '${user.displayLevel} • Fisheries & Aquaculture'
+                              ? '${user.displayLevel} • ${ref.watch(primaryDepartmentProvider).value?.name ?? 'Loading...'}'
                               : 'Ready to learn something new today?',
                           style: const TextStyle(
                             color: AppColors.textSecondary,
@@ -191,7 +192,7 @@ class HomeScreen extends ConsumerWidget {
                     onAction: () => context.go(AppRoutes.community),
                   ),
                   const SizedBox(height: 12),
-                  _DiscussionPreviewList(),
+                  _RecentQuestionsList(ref: ref),
                   const SizedBox(height: 40),
                 ],
               ),
@@ -433,48 +434,68 @@ class _QuickAction extends StatelessWidget {
   }
 }
 
-class _DiscussionPreviewList extends StatelessWidget {
+// ─── Real Questions Preview ───────────────────────────────────────────────────
+
+class _RecentQuestionsList extends StatelessWidget {
+  final WidgetRef ref;
+  const _RecentQuestionsList({required this.ref});
+
   @override
   Widget build(BuildContext context) {
-    final items = [
-      {
-        'q': 'What is the optimal protein level for catfish juveniles?',
-        'answers': '4'
-      },
-      {
-        'q': 'Can someone explain the nitrogen cycle in aquaculture?',
-        'answers': '7'
-      },
-    ];
-    return Column(
-      children: items
-          .map((item) => Card(
-                margin: const EdgeInsets.only(bottom: 8),
-                child: ListTile(
-                  leading: const CircleAvatar(
-                    backgroundColor: AppColors.accent,
-                    child: Icon(Icons.question_answer,
-                        color: Colors.white, size: 18),
-                  ),
-                  title: Text(
-                    item['q']!,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
+    final questionsAsync = ref.watch(
+      allQuestionsProvider,
+    );
+    return questionsAsync.when(
+      data: (questions) {
+        if (questions.isEmpty) {
+          return const _EmptyState(
+            icon: Icons.forum_outlined,
+            message: 'No community questions yet. Be the first to ask!',
+          );
+        }
+        final preview = questions.take(3).toList();
+        return Column(
+          children: preview
+              .map((q) => Card(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    child: ListTile(
+                      leading: const CircleAvatar(
+                        backgroundColor: AppColors.accent,
+                        child: Icon(Icons.question_answer,
+                            color: Colors.white, size: 18),
+                      ),
+                      title: Text(
+                        q.title,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      subtitle: Text(
+                        '${q.answerCount} answer${q.answerCount != 1 ? 's' : ''} · ${q.timeAgo}',
+                        style: const TextStyle(
+                            color: AppColors.textSecondary, fontSize: 12),
+                      ),
+                      onTap: () => context.push(
+                          '${AppRoutes.community}/questions/${q.id}'),
                     ),
-                  ),
-                  subtitle: Text(
-                    '${item['answers']} answers',
-                    style: const TextStyle(
-                        color: AppColors.textSecondary, fontSize: 12),
-                  ),
-                  onTap: () => context.go(AppRoutes.community),
-                ),
-              ))
-          .toList(),
+                  ))
+              .toList(),
+        );
+      },
+      loading: () => Column(
+        children: List.generate(
+          3,
+          (_) => const Padding(
+            padding: EdgeInsets.only(bottom: 8),
+            child: _ShimmerBox(width: double.infinity, height: 72, radius: 16),
+          ),
+        ),
+      ),
+      error: (_, __) => const SizedBox.shrink(),
     );
   }
 }

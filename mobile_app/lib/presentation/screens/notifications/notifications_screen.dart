@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../app/theme/app_theme.dart';
 import '../../../core/network/api_client.dart';
+import '../../../core/constants/api_constants.dart';
 import '../../../data/models/notification_model.dart';
 import '../../providers/notifications_provider.dart';
 
@@ -172,7 +173,7 @@ class MarkReadNotifier extends Notifier<void> {
   Future<void> markRead(String id) async {
     try {
       final api = ref.read(apiClientProvider);
-      await api.patch('/notifications/$id/read');
+      await api.patch(ApiConstants.markNotificationRead(id));
     } catch (_) {}
   }
 }
@@ -187,7 +188,7 @@ class MarkAllReadNotifier extends Notifier<void> {
   Future<void> markAll() async {
     try {
       final api = ref.read(apiClientProvider);
-      await api.patch('/notifications/read-all');
+      await api.patch(ApiConstants.notificationsReadAll);
     } catch (_) {}
   }
 }

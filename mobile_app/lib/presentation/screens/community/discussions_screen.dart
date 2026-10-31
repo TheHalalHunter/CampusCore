@@ -10,25 +10,27 @@ class DiscussionsScreen extends ConsumerStatefulWidget {
   const DiscussionsScreen({super.key});
 
   @override
-  ConsumerState<DiscussionsScreen> createState() => _DiscussionsScreenState();
+  ConsumerState<DiscussionsScreen> createState() => DiscussionsScreenState();
 }
 
-class _DiscussionsScreenState extends ConsumerState<DiscussionsScreen> {
+class DiscussionsScreenState extends ConsumerState<DiscussionsScreen> {
   String? _selectedLevel;
   final _levels = [null, '100L', '200L', '300L', '400L', '500L'];
+
+  void showCreateSheet() => _showCreateSheet(context);
 
   @override
   Widget build(BuildContext context) {
     final threadsAsync = ref.watch(threadsProvider(_selectedLevel));
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Discussions'),
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(48),
+    return Column(
+      children: [
+        // Level filter chips
+        Container(
+          color: AppColors.surface,
           child: SingleChildScrollView(
             scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+            padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
             child: Row(
               children: _levels.map((level) {
                 final label = level ?? 'All Levels';
@@ -53,45 +55,66 @@ class _DiscussionsScreenState extends ConsumerState<DiscussionsScreen> {
             ),
           ),
         ),
-      ),
-      body: threadsAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (_, __) =>
-            const Center(child: Text('Could not load discussions.')),
-        data: (threads) {
-          if (threads.isEmpty) {
-            return const Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.forum_outlined,
-                      size: 56, color: AppColors.grey400),
-                  SizedBox(height: 16),
-                  Text('No discussions yet',
-                      style:
-                          TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
-                  SizedBox(height: 8),
-                  Text('Be the first to start a conversation.',
-                      style: TextStyle(color: AppColors.textSecondary)),
-                ],
-              ),
-            );
-          }
-          return ListView.separated(
-            padding: const EdgeInsets.all(16),
-            itemCount: threads.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 8),
-            itemBuilder: (_, i) => _ThreadCard(thread: threads[i]),
-          );
-        },
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _showCreateSheet(context),
-        icon: const Icon(Icons.add),
-        label: const Text('New Thread'),
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
-      ),
+        const Divider(height: 1),
+        // Threads list
+        Expanded(
+          child: threadsAsync.when(
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (_, __) =>
+                const Center(child: Text('Could not load discussions.')),
+            data: (threads) {
+              if (threads.isEmpty) {
+                return Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(32),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 80,
+                          height: 80,
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withValues(alpha: 0.08),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.forum_outlined,
+                              size: 40, color: AppColors.primary),
+                        ),
+                        const SizedBox(height: 20),
+                        const Text('No discussions yet',
+                            style: TextStyle(
+                                fontWeight: FontWeight.w700, fontSize: 16)),
+                        const SizedBox(height: 8),
+                        const Text('Be the first to start a conversation.',
+                            textAlign: TextAlign.center,
+                            style:
+                                TextStyle(color: AppColors.textSecondary)),
+                        const SizedBox(height: 24),
+                        ElevatedButton.icon(
+                          onPressed: () => _showCreateSheet(context),
+                          icon: const Icon(Icons.add, size: 18),
+                          label: const Text('New Thread'),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }
+              return RefreshIndicator(
+                onRefresh: () async =>
+                    ref.invalidate(threadsProvider(_selectedLevel)),
+                color: AppColors.primary,
+                child: ListView.separated(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: threads.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 8),
+                  itemBuilder: (_, i) => _ThreadCard(thread: threads[i]),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 

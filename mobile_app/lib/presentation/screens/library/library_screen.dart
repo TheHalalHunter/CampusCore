@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../app/theme/app_theme.dart';
 import '../../../app/router/app_router.dart';
+import '../../../core/network/api_client.dart';
+import '../../../core/constants/api_constants.dart';
 import '../../../data/models/resource_model.dart';
 import '../../providers/library_provider.dart';
 
@@ -56,23 +58,31 @@ class _SavedTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final resources = ref.watch(personalLibraryProvider);
+    final resourcesAsync = ref.watch(personalLibraryProvider);
 
-    if (resources.isEmpty) {
-      return _EmptyLibrary(
-        icon: Icons.bookmark_outline,
-        title: 'No saved resources yet',
-        subtitle:
-            'Browse courses and save resources to access them quickly here.',
-        actionLabel: 'Browse Courses',
-        onAction: () => context.go(AppRoutes.courses),
-      );
-    }
-    return ListView.separated(
-      padding: const EdgeInsets.all(16),
-      itemCount: resources.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 8),
-      itemBuilder: (_, i) => _LibraryResourceCard(resource: resources[i]),
+    return resourcesAsync.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (_, __) => const Center(
+          child: Text('Could not load library.',
+              style: TextStyle(color: AppColors.textSecondary))),
+      data: (resources) {
+        if (resources.isEmpty) {
+          return _EmptyLibrary(
+            icon: Icons.bookmark_outline,
+            title: 'No saved resources yet',
+            subtitle:
+                'Browse courses and save resources to access them quickly here.',
+            actionLabel: 'Browse Courses',
+            onAction: () => context.go(AppRoutes.courses),
+          );
+        }
+        return ListView.separated(
+          padding: const EdgeInsets.all(16),
+          itemCount: resources.length,
+          separatorBuilder: (_, __) => const SizedBox(height: 8),
+          itemBuilder: (_, i) => _LibraryResourceCard(resource: resources[i]),
+        );
+      },
     );
   }
 }
@@ -230,27 +240,37 @@ class _BookmarkCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 8),
-      child: ListTile(
-        leading: const Icon(Icons.bookmark, color: AppColors.primary),
-        title: Text(
-          'Resource $resourceId',
-          style: const TextStyle(
-            fontWeight: FontWeight.w600,
-            color: AppColors.textPrimary,
-          ),
-          overflow: TextOverflow.ellipsis,
-        ),
-        trailing: IconButton(
-          icon: const Icon(Icons.bookmark, color: AppColors.primary, size: 20),
-          onPressed: () =>
-              ref.read(bookmarkProvider.notifier).toggle(resourceId),
+    final resourceAsync = ref.watch(_resourceByIdProvider(resourceId));
+
+    return resourceAsync.when(
+      loading: () => Card(
+        margin: const EdgeInsets.only(bottom: 8),
+        child: ListTile(
+          leading: const Icon(Icons.bookmark, color: AppColors.primary),
+          title: Container(width: 120, height: 14, color: AppColors.grey200),
         ),
       ),
+      error: (_, __) => const SizedBox.shrink(),
+      data: (resource) {
+        if (resource == null) return const SizedBox.shrink();
+        return _LibraryResourceCard(resource: resource);
+      },
     );
   }
 }
+
+// Provider to fetch a single resource by ID (shared with resource_viewer_screen)
+final _resourceByIdProvider =
+    FutureProvider.family<dynamic, String>((ref, id) async {
+  try {
+    final api = ref.read(apiClientProvider);
+    final response = await api.get('${ApiConstants.resources}/$id');
+    final data = response.data['data'] ?? response.data;
+    return data;
+  } catch (_) {
+    return null;
+  }
+});
 
 // ─── Empty State ──────────────────────────────────────────────────────────────
 

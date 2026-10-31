@@ -68,6 +68,11 @@ class Flashcard {
 final explainProvider = NotifierProvider<ExplainNotifier, AiResponse>(ExplainNotifier.new);
 
 class ExplainNotifier extends Notifier<AiResponse> {
+  /// In-memory conversation history for multi-turn context.
+  /// Each entry is either {'role': 'user', 'content': ...} or
+  /// {'role': 'assistant', 'content': ...}. Capped at 20 entries (10 turns).
+  final List<Map<String, dynamic>> _conversationHistory = [];
+
   @override
   AiResponse build() => const AiResponse();
 
@@ -75,21 +80,45 @@ class ExplainNotifier extends Notifier<AiResponse> {
     state = const AiResponse(isLoading: true);
     try {
       final api = ref.read(apiClientProvider);
+
+      // Build payload — send last 10 history entries for context when available
+      final historyToSend = _conversationHistory.length > 10
+          ? _conversationHistory.sublist(_conversationHistory.length - 10)
+          : List<Map<String, dynamic>>.from(_conversationHistory);
+
       final response = await api.post(ApiConstants.aiExplain, data: {
         'concept': concept,
         if (courseContext != null) 'courseContext': courseContext,
+        if (historyToSend.isNotEmpty) 'history': historyToSend,
       });
       final data = response.data['data'] ?? response.data;
-      state = AiResponse(content: data.toString());
+      final result = data.toString();
+
+      state = AiResponse(content: result);
+
+      // Append this turn to conversation history
+      _conversationHistory.add({'role': 'user', 'content': concept});
+      _conversationHistory.add({'role': 'assistant', 'content': result});
+      // Keep at most 20 entries (10 turns)
+      if (_conversationHistory.length > 20) {
+        _conversationHistory.removeRange(0, _conversationHistory.length - 20);
+      }
+
       // Save to history
       ref.read(aiHistoryProvider.notifier).add(
         type: 'explain',
         prompt: concept,
-        result: data.toString(),
+        result: result,
       );
     } catch (e) {
       state = AiResponse(error: extractErrorMessage(e));
     }
+  }
+
+  /// Clear the current AI response AND the conversation history.
+  void clearHistory() {
+    _conversationHistory.clear();
+    state = const AiResponse();
   }
 
   void clear() => state = const AiResponse();

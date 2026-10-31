@@ -20,6 +20,7 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen>
   late TabController _tabCtrl;
   String _selectedLevel = 'All';
   final _levels = ['All', '100L', '200L', '300L', '400L', '500L'];
+  final _discussionsKey = GlobalKey<DiscussionsScreenState>();
 
   @override
   void initState() {
@@ -61,14 +62,18 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen>
                   );
             },
           ),
-          const DiscussionsScreen(),
-        ],
+          DiscussionsScreen(key: _discussionsKey),        ],
       ),
       floatingActionButton: AnimatedBuilder(
         animation: _tabCtrl,
         builder: (_, __) => FloatingActionButton.extended(
-          onPressed: () =>
-              _tabCtrl.index == 0 ? context.push(AppRoutes.postQuestion) : null,
+          onPressed: () {
+            if (_tabCtrl.index == 0) {
+              context.push(AppRoutes.postQuestion);
+            } else {
+              _discussionsKey.currentState?.showCreateSheet();
+            }
+          },
           icon: const Icon(Icons.add),
           label: Text(_tabCtrl.index == 0 ? 'Ask Question' : 'New Thread'),
           backgroundColor: AppColors.primary,

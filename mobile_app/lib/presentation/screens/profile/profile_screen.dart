@@ -7,7 +7,7 @@ import '../../../core/network/api_client.dart';
 import '../../../core/constants/api_constants.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/user_provider.dart';
-import '../../providers/connections_provider.dart';
+import '../../providers/department_provider.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -54,7 +54,7 @@ class ProfileScreen extends ConsumerWidget {
                           fontSize: 20,
                           color: AppColors.textPrimary)),
                   const SizedBox(height: 4),
-                  Text('${user?.displayLevel ?? ''} • Fisheries & Aquaculture',
+                  Text('${user?.displayLevel ?? ''} • ${ref.watch(primaryDepartmentProvider).value?.name ?? 'Fisheries & Aquaculture'}',
                       style: const TextStyle(
                           color: AppColors.textSecondary, fontSize: 14)),
                   const SizedBox(height: 8),
@@ -87,10 +87,7 @@ class ProfileScreen extends ConsumerWidget {
                   style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
             ),
             const SizedBox(height: 12),
-            const Wrap(spacing: 8, runSpacing: 8, children: [
-              _Badge(label: 'Fresh Scholar', icon: Icons.school),
-              _Badge(label: 'Bookworm', icon: Icons.menu_book),
-            ]),
+            _BadgesSection(),
             const SizedBox(height: 28),
             Card(
               child: Column(children: [
@@ -109,7 +106,10 @@ class ProfileScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 16),
             OutlinedButton.icon(
-              onPressed: () => ref.read(authProvider.notifier).signOut(),
+              onPressed: () async {
+                await ref.read(authProvider.notifier).signOut();
+                if (context.mounted) context.go(AppRoutes.onboarding);
+              },
               icon: const Icon(Icons.logout, color: AppColors.error),
               label: const Text('Sign Out',
                   style: TextStyle(color: AppColors.error)),
@@ -134,6 +134,64 @@ class ProfileScreen extends ConsumerWidget {
           borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (_) => _EditProfileSheet(user: user, ref: ref),
     );
+  }
+}
+
+// ─── Badges provider ─────────────────────────────────────────────────────────
+
+final _badgesProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
+  try {
+    final api = ref.read(apiClientProvider);
+    final response = await api.get(ApiConstants.badges);
+    final data = response.data['data'] ?? response.data;
+    return (data as List).cast<Map<String, dynamic>>();
+  } catch (_) {
+    return [];
+  }
+});
+
+// ─── Badges section ───────────────────────────────────────────────────────────
+
+class _BadgesSection extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final badgesAsync = ref.watch(_badgesProvider);
+    return badgesAsync.when(
+      loading: () => const SizedBox(
+        height: 36,
+        child: Center(child: LinearProgressIndicator()),
+      ),
+      error: (_, __) => const SizedBox.shrink(),
+      data: (badges) {
+        if (badges.isEmpty) {
+          return const Text(
+            'No badges earned yet. Upload resources and answer questions to earn them!',
+            style: TextStyle(color: AppColors.textHint, fontSize: 13),
+          );
+        }
+        return Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: badges
+              .map((b) => _Badge(
+                    label: b['name']?.toString() ?? 'Badge',
+                    icon: _iconForBadge(b['name']?.toString() ?? ''),
+                  ))
+              .toList(),
+        );
+      },
+    );
+  }
+
+  IconData _iconForBadge(String name) {
+    final n = name.toLowerCase();
+    if (n.contains('scholar') || n.contains('first')) return Icons.school;
+    if (n.contains('book') || n.contains('read')) return Icons.menu_book;
+    if (n.contains('upload') || n.contains('contribut')) return Icons.upload_file;
+    if (n.contains('answer') || n.contains('help')) return Icons.question_answer;
+    if (n.contains('streak') || n.contains('consist')) return Icons.local_fire_department;
+    if (n.contains('star') || n.contains('top')) return Icons.star;
+    return Icons.military_tech;
   }
 }
 

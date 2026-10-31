@@ -1,10 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:google_sign_in/google_sign_in.dart';
 import '../../core/network/api_client.dart';
 import '../../core/storage/token_storage.dart';
 import '../../core/constants/api_constants.dart';
 import '../../core/services/fcm_service.dart';
+import '../providers/user_provider.dart';
 
 // Expose the current Firebase user state
 final authStateProvider = StreamProvider<User?>((ref) {
@@ -92,9 +94,16 @@ class AuthNotifier extends Notifier<AsyncValue<User?>> {
 
   Future<UserCredential?> _mobileGoogleSignIn() async {
     try {
-      // Dynamic import to avoid web compilation issues
-      final googleSignIn = await FirebaseAuth.instance.signInWithProvider(GoogleAuthProvider());
-      return googleSignIn;
+      // ignore: depend_on_referenced_packages
+      final googleSignIn = GoogleSignIn();
+      final googleUser = await googleSignIn.signIn();
+      if (googleUser == null) return null; // user cancelled
+      final googleAuth = await googleUser.authentication;
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+      return await FirebaseAuth.instance.signInWithCredential(credential);
     } catch (_) {
       return null;
     }
@@ -102,7 +111,11 @@ class AuthNotifier extends Notifier<AsyncValue<User?>> {
 
   Future<void> signOut() async {
     await FirebaseAuth.instance.signOut();
+    if (!kIsWeb) {
+      try { await GoogleSignIn().signOut(); } catch (_) {}
+    }
     ref.read(tokenStorageProvider).clear();
+    ref.invalidate(currentUserProvider);
     state = const AsyncValue.data(null);
   }
 
@@ -130,6 +143,8 @@ class AuthNotifier extends Notifier<AsyncValue<User?>> {
       await tokenStorage.saveAccessToken(response.data['data']['accessToken']);
       await tokenStorage.saveRefreshToken(response.data['data']['refreshToken']);
       await FcmService.init(ref);
+      // Refresh user profile so router guard picks it up
+      ref.invalidate(currentUserProvider);
       state = AsyncValue.data(firebaseUser);
     } catch (e, st) {
       state = AsyncValue.error(e.toString(), st);
@@ -152,8 +167,11 @@ class AuthNotifier extends Notifier<AsyncValue<User?>> {
       await tokenStorage.saveRefreshToken(response.data['data']['refreshToken']);
       // Register FCM token after successful login
       await FcmService.init(ref);
+      // Refresh user profile so router guard picks it up
+      ref.invalidate(currentUserProvider);
     } catch (e) {
       // Backend unavailable — Firebase auth succeeded but platform JWT not stored
+      // ignore: avoid_print
       print('Backend token exchange failed: $e');
     }
   }

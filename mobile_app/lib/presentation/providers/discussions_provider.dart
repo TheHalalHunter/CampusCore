@@ -150,8 +150,13 @@ class ThreadActionsNotifier extends Notifier<AsyncValue<void>> {
     try {
       final api = ref.read(apiClientProvider);
       await api.post(
-        '${ApiConstants.discussions}?departmentId=$departmentId',
-        data: {'title': title, 'body': body, if (academicLevel != null) 'academicLevel': academicLevel},
+        ApiConstants.discussions,
+        data: {
+          'title': title,
+          'body': body,
+          if (academicLevel != null) 'academicLevel': academicLevel,
+          'departmentId': departmentId,
+        },
       );
       state = const AsyncValue.data(null);
       ref.invalidate(threadsProvider);
@@ -192,8 +197,7 @@ class UpvoteNotifier extends Notifier<Map<String, int>> {
     state = {...state, 'q_$questionId': currentCount + 1};
     try {
       final api = ref.read(apiClientProvider);
-      final response = await api.post(
-          '${ApiConstants.questions}/$questionId/upvote');
+      final response = await api.post(ApiConstants.upvoteQuestion(questionId));
       final data = response.data['data'] ?? response.data;
       state = {...state, 'q_$questionId': (data['upvoteCount'] as num).toInt()};
     } catch (_) {
@@ -206,7 +210,7 @@ class UpvoteNotifier extends Notifier<Map<String, int>> {
     try {
       final api = ref.read(apiClientProvider);
       final response = await api.post(
-          '${ApiConstants.questions}/answers/$answerId/upvote');
+          ApiConstants.upvoteAnswer(answerId));
       final data = response.data['data'] ?? response.data;
       state = {...state, 'a_$answerId': (data['upvoteCount'] as num).toInt()};
     } catch (_) {
