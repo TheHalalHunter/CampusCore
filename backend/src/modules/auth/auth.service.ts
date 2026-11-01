@@ -3,6 +3,7 @@ import {
   UnauthorizedException,
   BadRequestException,
   ServiceUnavailableException,
+  TooManyRequestsException,
   Logger,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
@@ -15,6 +16,45 @@ import { FirebaseAdminService } from '../../config/firebase.config';
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
+
+  // In-memory account lockout tracker (per email)
+  // For multi-instance deployments, replace with Redis
+  private readonly failedLoginMap = new Map<string, { count: number; firstAttempt: number }>();
+  private readonly MAX_FAILED_ATTEMPTS = 5;
+  private readonly LOCKOUT_WINDOW_MS = 15 * 60 * 1000; // 15 minutes
+
+  private checkAccountLockout(email: string): void {
+    const record = this.failedLoginMap.get(email);
+    if (!record) return;
+    const now = Date.now();
+    if (now - record.firstAttempt > this.LOCKOUT_WINDOW_MS) {
+      // Window expired — reset
+      this.failedLoginMap.delete(email);
+      return;
+    }
+    if (record.count >= this.MAX_FAILED_ATTEMPTS) {
+      throw new TooManyRequestsException(
+        'Account temporarily locked due to too many failed login attempts. Try again in 15 minutes.',
+      );
+    }
+  }
+
+  private recordFailedAttempt(email: string): void {
+    const now = Date.now();
+    const record = this.failedLoginMap.get(email);
+    if (!record || now - record.firstAttempt > this.LOCKOUT_WINDOW_MS) {
+      this.failedLoginMap.set(email, { count: 1, firstAttempt: now });
+    } else {
+      this.failedLoginMap.set(email, {
+        count: record.count + 1,
+        firstAttempt: record.firstAttempt,
+      });
+    }
+  }
+
+  private clearFailedAttempts(email: string): void {
+    this.failedLoginMap.delete(email);
+  }
 
   constructor(
     private readonly usersService: UsersService,
@@ -41,11 +81,13 @@ export class AuthService {
           'Auth service temporarily unavailable — Firebase not configured. Please contact support.',
         );
       }
+      this.recordFailedAttempt('unknown');
       throw new UnauthorizedException('Invalid or expired token. Please sign in again.');
     }
 
     const { uid, email, name } = decodedToken;
     if (!email) throw new BadRequestException('Email is required');
+    this.checkAccountLockout(email);
 
     // 2. Find or create user
     let user = await this.usersService.findByFirebaseUid(uid);
@@ -67,6 +109,7 @@ export class AuthService {
 
     // 3. Update last seen
     await this.usersService.updateLastSeen(user.id);
+    this.clearFailedAttempts(email);
 
     // 4. Issue platform tokens
     const tokens = this.generateTokens(user);
