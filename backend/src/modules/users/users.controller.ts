@@ -26,7 +26,8 @@ export class UsersController {
   @Get('me')
   @ApiOperation({ summary: 'Get current user profile' })
   getMe(@CurrentUser() user: User) {
-    return user;
+    const { fcmToken: _fcm, firebaseUid: _fb, stellarAddress: _sa, ...safeUser } = user as any;
+    return safeUser;
   }
 
   @Patch('me')

@@ -52,16 +52,18 @@ export class UsersService {
     return { accepted: true };
   }
 
-  async getPublicProfile(id: string): Promise<Partial<User>> {
+  async getPublicProfile(id: string) {
     const user = await this.findById(id);
-    // Exclude sensitive fields from public profile
-    const {
-      firebaseUid: _fb,
-      isEmailVerified: _ev,
-      acceptedIntegrityPolicy: _ap,
-      ...publicData
-    } = user;
-    return publicData;
+    return {
+      id: user.id,
+      fullName: user.fullName,
+      avatar: user.avatar,
+      academicLevel: user.academicLevel,
+      departmentId: user.departmentId,
+      reputationPoints: user.reputationPoints,
+      role: user.role,
+      createdAt: user.createdAt,
+    };
   }
 
   async getLeaderboard(): Promise<
