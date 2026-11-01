@@ -16,6 +16,8 @@ import { Roles } from '../../common/decorators/roles.decorator';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { UserRole } from '../users/enums/user-role.enum';
 import { Public } from '../../common/decorators/public.decorator';
+import { CreateCourseDto } from './dto/create-course.dto';
+import { UpdateCourseDto } from './dto/update-course.dto';
 
 @ApiTags('Courses')
 @ApiBearerAuth()
@@ -50,16 +52,16 @@ export class CoursesController {
   @Roles(UserRole.ADMIN)
   @Post()
   @ApiOperation({ summary: 'Create a course (admin only)' })
-  create(@Body() body: any) {
-    return this.service.create(body);
+  create(@Body() dto: CreateCourseDto) {
+    return this.service.create(dto);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
   @Patch(':id')
   @ApiOperation({ summary: 'Update a course (admin only)' })
-  update(@Param('id') id: string, @Body() body: any) {
-    return this.service.update(id, body);
+  update(@Param('id') id: string, @Body() dto: UpdateCourseDto) {
+    return this.service.update(id, dto);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)

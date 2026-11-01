@@ -6,6 +6,7 @@ import { Roles } from '../../common/decorators/roles.decorator';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { UserRole } from '../users/enums/user-role.enum';
 import { Public } from '../../common/decorators/public.decorator';
+import { CreateDepartmentDto } from './dto/create-department.dto';
 
 @ApiTags('Departments')
 @ApiBearerAuth()
@@ -31,8 +32,8 @@ export class DepartmentsController {
   @Roles(UserRole.ADMIN)
   @Post()
   @ApiOperation({ summary: 'Create a department (admin only)' })
-  create(@Body() body: any) {
-    return this.service.create(body);
+  create(@Body() dto: CreateDepartmentDto) {
+    return this.service.create(dto);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
