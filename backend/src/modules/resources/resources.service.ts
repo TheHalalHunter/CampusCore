@@ -41,6 +41,15 @@ export class ResourcesService {
     return resource;
   }
 
+  /** Public access — only returns approved resources */
+  async findOnePublic(id: string): Promise<Resource> {
+    const resource = await this.repo.findOne({
+      where: { id, status: ResourceStatus.APPROVED },
+    });
+    if (!resource) throw new NotFoundException('Resource not found');
+    return resource;
+  }
+
   /** Submit a resource — auto-approved and marked official for admins/lecturers */
   async submit(uploader: User, dto: SubmitResourceDto): Promise<Resource> {
     const isPrivileged = uploader.role === UserRole.ADMIN || uploader.role === UserRole.LECTURER;

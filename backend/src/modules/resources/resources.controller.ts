@@ -46,9 +46,9 @@ export class ResourcesController {
 
   @Public()
   @Get(':id')
-  @ApiOperation({ summary: 'Get a resource by ID' })
+  @ApiOperation({ summary: 'Get an approved resource by ID' })
   findOne(@Param('id') id: string) {
-    return this.service.findOne(id);
+    return this.service.findOnePublic(id);
   }
 
   @Post(':id/download')
