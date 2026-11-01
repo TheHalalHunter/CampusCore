@@ -7,6 +7,7 @@ import { User } from '../users/entities/user.entity';
 import { GamificationService } from '../gamification/gamification.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationType } from '../notifications/entities/notification.entity';
+import { SubmitResourceDto } from './dto/submit-resource.dto';
 
 @Injectable()
 export class ResourcesService {
@@ -41,10 +42,17 @@ export class ResourcesService {
   }
 
   /** Submit a resource — auto-approved and marked official for admins/lecturers */
-  async submit(uploader: User, data: Partial<Resource>): Promise<Resource> {
+  async submit(uploader: User, dto: SubmitResourceDto): Promise<Resource> {
     const isPrivileged = uploader.role === UserRole.ADMIN || uploader.role === UserRole.LECTURER;
     const resource = this.repo.create({
-      ...data,
+      title: dto.title,
+      fileUrl: dto.fileUrl,
+      type: dto.type,
+      courseId: dto.courseId,
+      description: dto.description,
+      fileType: dto.fileType,
+      fileSize: dto.fileSize,
+      academicYear: dto.academicYear,
       uploaderId: uploader.id,
       status: isPrivileged ? ResourceStatus.APPROVED : ResourceStatus.PENDING,
       isOfficial: isPrivileged,

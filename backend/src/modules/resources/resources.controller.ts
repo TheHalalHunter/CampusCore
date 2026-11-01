@@ -9,6 +9,7 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { UserRole } from '../users/enums/user-role.enum';
 import { User } from '../users/entities/user.entity';
 import { Public } from '../../common/decorators/public.decorator';
+import { SubmitResourceDto } from './dto/submit-resource.dto';
 
 @ApiTags('Resources')
 @ApiBearerAuth()
@@ -30,8 +31,8 @@ export class ResourcesController {
 
   @Post()
   @ApiOperation({ summary: 'Submit a resource for review' })
-  submit(@CurrentUser() user: User, @Body() body: any) {
-    return this.service.submit(user, body);
+  submit(@CurrentUser() user: User, @Body() dto: SubmitResourceDto) {
+    return this.service.submit(user, dto);
   }
 
   // Static sub-paths must come BEFORE :id to avoid route shadowing
