@@ -13,6 +13,40 @@ import { FirebaseAuthDto } from './dto/firebase-auth.dto';
 import { User } from '../users/entities/user.entity';
 import { FirebaseAdminService } from '../../config/firebase.config';
 
+/**
+ * Well-known disposable / temporary email domains.
+ * Defined at module level to avoid re-creating the Set on every request.
+ */
+const DISPOSABLE_DOMAINS = new Set([
+  'discard.email',
+  'dispostable.com',
+  'fakeinbox.com',
+  'getairmail.com',
+  'grr.la',
+  'guerrillamail.biz',
+  'guerrillamail.com',
+  'guerrillamail.de',
+  'guerrillamail.info',
+  'guerrillamail.net',
+  'guerrillamail.org',
+  'guerrillamailblock.com',
+  'mailinator.com',
+  'maildrop.cc',
+  'mailnesia.com',
+  'mailnull.com',
+  'sharklasers.com',
+  'spam4.me',
+  'spambog.com',
+  'spamgourmet.com',
+  'temp-mail.org',
+  'tempmail.com',
+  'throwam.com',
+  'trashmail.com',
+  'trashmail.me',
+  'trashmail.net',
+  'yopmail.com',
+]);
+
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
@@ -87,6 +121,15 @@ export class AuthService {
 
     const { uid, email, name } = decodedToken;
     if (!email) throw new BadRequestException('Email is required');
+
+    // Block disposable email domains
+    const emailDomain = email.split('@')[1]?.toLowerCase();
+    if (emailDomain && DISPOSABLE_DOMAINS.has(emailDomain)) {
+      throw new BadRequestException(
+        'Disposable email addresses are not allowed. Please use a real email address.',
+      );
+    }
+
     this.checkAccountLockout(email);
 
     // 2. Find or create user
