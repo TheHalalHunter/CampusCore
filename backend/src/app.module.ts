@@ -1,7 +1,8 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ThrottlerModule } from '@nestjs/throttler';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
 import { FirebaseModule } from './config/firebase.module';
 
 import { AuthModule } from './modules/auth/auth.module';
@@ -93,6 +94,12 @@ import { StudyGroupsModule } from './modules/study-groups/study-groups.module';
     GpaModule,
     LibraryModule,
     StudyGroupsModule,
+  ],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
   ],
 })
 export class AppModule {}

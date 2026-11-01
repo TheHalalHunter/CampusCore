@@ -1,5 +1,6 @@
 import { Controller, Post, Body, UseGuards, ForbiddenException } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { AiService } from './ai.service';
 import { ExamLockService } from '../exam-lock/exam-lock.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -9,6 +10,7 @@ import { User } from '../users/entities/user.entity';
 @ApiTags('AI Study Assistant')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
+@Throttle({ default: { limit: 20, ttl: 60000 } })
 @Controller('ai')
 export class AiController {
   constructor(
