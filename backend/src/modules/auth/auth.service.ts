@@ -3,7 +3,8 @@ import {
   UnauthorizedException,
   BadRequestException,
   ServiceUnavailableException,
-  TooManyRequestsException,
+  HttpException,
+  HttpStatus,
   Logger,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
@@ -67,8 +68,9 @@ export class AuthService {
       return;
     }
     if (record.count >= this.MAX_FAILED_ATTEMPTS) {
-      throw new TooManyRequestsException(
+      throw new HttpException(
         'Account temporarily locked due to too many failed login attempts. Try again in 15 minutes.',
+        HttpStatus.TOO_MANY_REQUESTS,
       );
     }
   }
