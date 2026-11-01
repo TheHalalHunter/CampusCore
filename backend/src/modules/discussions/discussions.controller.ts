@@ -8,11 +8,13 @@ import {
   Body,
   Query,
   UseGuards,
+  ForbiddenException,
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { DiscussionsService } from './discussions.service';
 import { CreateThreadDto } from './dto/create-thread.dto';
 import { CreateReplyDto } from './dto/create-reply.dto';
+import { ExamLockService } from '../exam-lock/exam-lock.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
@@ -25,7 +27,19 @@ import { UserRole } from '../users/enums/user-role.enum';
 @UseGuards(JwtAuthGuard)
 @Controller('discussions')
 export class DiscussionsController {
-  constructor(private readonly service: DiscussionsService) {}
+  constructor(
+    private readonly service: DiscussionsService,
+    private readonly examLock: ExamLockService,
+  ) {}
+
+  private async checkDiscussionsLock(user: User): Promise<void> {
+    const locked = await this.examLock.areDiscussionsLocked(user.academicLevel);
+    if (locked) {
+      const details = await this.examLock.getActiveLockDetails(user.academicLevel);
+      const reason = details?.reason ? ` Reason: ${details.reason}` : '';
+      throw new ForbiddenException(`Discussions are disabled during the exam period.${reason}`);
+    }
+  }
 
   // ─── Threads ──────────────────────────────────────────────────────────────
 
@@ -45,12 +59,16 @@ export class DiscussionsController {
 
   @Post()
   @ApiOperation({ summary: 'Create a new discussion thread' })
-  createThread(
+  async createThread(
     @CurrentUser() user: User,
     @Body() dto: CreateThreadDto,
     @Query('departmentId') departmentId: string,
   ) {
-    return this.service.createThread(user.id, departmentId, dto);
+    await this.checkDiscussionsLock(user);
+    // Students can only post to their own department
+    const isModerator = user.role === UserRole.MODERATOR || user.role === UserRole.ADMIN;
+    const effectiveDeptId = isModerator ? departmentId : user.departmentId;
+    return this.service.createThread(user.id, effectiveDeptId, dto);
   }
 
   @Delete(':id')
@@ -77,7 +95,12 @@ export class DiscussionsController {
 
   @Post(':id/replies')
   @ApiOperation({ summary: 'Reply to a thread' })
-  addReply(@Param('id') threadId: string, @CurrentUser() user: User, @Body() dto: CreateReplyDto) {
+  async addReply(
+    @Param('id') threadId: string,
+    @CurrentUser() user: User,
+    @Body() dto: CreateReplyDto,
+  ) {
+    await this.checkDiscussionsLock(user);
     return this.service.addReply(user.id, threadId, dto);
   }
 
