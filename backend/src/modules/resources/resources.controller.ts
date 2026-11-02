@@ -37,6 +37,17 @@ export class ResourcesController {
 
   // Static sub-paths must come BEFORE :id to avoid route shadowing
   @UseGuards(RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.MODERATOR)
+  @Patch(':id')
+  @ApiOperation({ summary: 'Update resource metadata (admin/moderator only)' })
+  update(
+    @Param('id') id: string,
+    @Body() body: { title?: string; courseId?: string; type?: string; description?: string; academicYear?: string },
+  ) {
+    return this.service.updateMetadata(id, body);
+  }
+
+  @UseGuards(RolesGuard)
   @Roles(UserRole.MODERATOR, UserRole.ADMIN)
   @Get('moderation/pending')
   @ApiOperation({ summary: 'List pending resources (moderator/admin only)' })
