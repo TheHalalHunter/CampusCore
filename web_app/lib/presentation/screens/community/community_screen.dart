@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../presentation/widgets/user_avatar.dart';
 import '../../../app/theme/app_theme.dart';
 import '../../../core/utils/responsive.dart';
 import '../../../core/network/api_client.dart';
@@ -388,6 +389,7 @@ class _QuestionTile extends StatelessWidget {
     final author      = question['author']               ?? question['askedBy'];
     final firstName   = author?['firstName']?.toString() ?? 'Student';
     final lastName    = author?['lastName']?.toString()  ?? '';
+    final avatarUrl   = author?['avatar']?.toString();
     final initials    = '${firstName.isNotEmpty ? firstName[0] : "S"}${lastName.isNotEmpty ? lastName[0] : ""}';
     final tags        = question['tags'] as List?        ?? [];
 
@@ -398,11 +400,12 @@ class _QuestionTile extends StatelessWidget {
         children: [
           Row(
             children: [
-              CircleAvatar(
+              UserAvatar(
+                avatarUrl: avatarUrl,
+                initials: initials,
                 radius: isMobile ? 15 : 18,
                 backgroundColor: AppColors.primary.withValues(alpha: 0.12),
-                child: Text(initials.toUpperCase(),
-                    style: TextStyle(color: AppColors.primary, fontSize: isMobile ? 11 : 12, fontWeight: FontWeight.w700, fontFamily: 'Nunito')),
+                fontSize: isMobile ? 11 : 12,
               ),
               SizedBox(width: isMobile ? 8 : 10),
               Expanded(

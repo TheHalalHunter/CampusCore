@@ -59,6 +59,7 @@ export class CommunityService {
         authorMap[u.id] = {
           firstName: parts[0] || 'Student',
           lastName: parts.slice(1).join(' ') || '',
+          avatar: u.avatar || null,
         };
       }
     }

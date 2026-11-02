@@ -5,6 +5,7 @@ import '../theme/app_theme.dart';
 import '../../core/utils/responsive.dart';
 import '../../core/providers/auth_provider.dart';
 import '../../presentation/screens/notifications/notifications_screen.dart';
+import '../../presentation/widgets/user_avatar.dart';
 
 class AppShell extends ConsumerStatefulWidget {
   final Widget child;
@@ -142,13 +143,11 @@ class _AppShellState extends ConsumerState<AppShell> {
               },
             ),
             IconButton(
-              icon: CircleAvatar(
+              icon: UserAvatar(
+                avatarUrl: user?.avatarUrl,
+                initials: user?.initials ?? 'ST',
                 radius: 14,
-                backgroundColor: AppColors.primaryLight,
-                child: Text(
-                  user?.initials ?? 'ST',
-                  style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700),
-                ),
+                fontSize: 11,
               ),
               onPressed: () => context.go('/profile'),
             ),
@@ -210,11 +209,11 @@ class _AppShellState extends ConsumerState<AppShell> {
                 ),
                 const Divider(color: Color(0x33FFFFFF), height: 1),
                 ListTile(
-                  leading: CircleAvatar(
+                  leading: UserAvatar(
+                    avatarUrl: user?.avatarUrl,
+                    initials: user?.initials ?? 'ST',
                     radius: 14,
-                    backgroundColor: AppColors.primaryLight,
-                    child: Text(user?.initials ?? 'ST',
-                        style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w700)),
+                    fontSize: 10,
                   ),
                   title: Text(user?.fullName ?? 'Student',
                       style: const TextStyle(color: Colors.white, fontSize: 13, fontFamily: 'Nunito', fontWeight: FontWeight.w600)),
@@ -418,17 +417,11 @@ class _AppShellState extends ConsumerState<AppShell> {
                   child: _sidebarExpanded
                       ? Row(
                           children: [
-                            CircleAvatar(
+                            UserAvatar(
+                              avatarUrl: user?.avatarUrl,
+                              initials: user?.initials ?? 'ST',
                               radius: 16,
-                              backgroundColor: AppColors.primaryLight,
-                              child: Text(
-                                user?.initials ?? 'ST',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
+                              fontSize: 11,
                             ),
                             const SizedBox(width: 10),
                             Expanded(
