@@ -118,6 +118,7 @@ CREATE TABLE questions (
   academic_level VARCHAR(10),
   upvote_count   INTEGER NOT NULL DEFAULT 0,
   answer_count   INTEGER NOT NULL DEFAULT 0,
+  view_count     INTEGER NOT NULL DEFAULT 0,
   is_resolved    BOOLEAN NOT NULL DEFAULT FALSE,
   is_flagged     BOOLEAN NOT NULL DEFAULT FALSE,
   tags           TEXT[] NOT NULL DEFAULT '{}',

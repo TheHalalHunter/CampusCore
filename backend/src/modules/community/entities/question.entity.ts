@@ -35,6 +35,9 @@ export class Question {
   @Column({ name: 'answer_count', default: 0 })
   answerCount: number;
 
+  @Column({ name: 'view_count', default: 0 })
+  viewCount: number;
+
   @Column({ name: 'is_resolved', default: false })
   isResolved: boolean;
 

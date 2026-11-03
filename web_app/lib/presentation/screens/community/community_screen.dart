@@ -385,7 +385,7 @@ class _QuestionTile extends StatelessWidget {
     final title       = question['title']?.toString()    ?? 'Question';
     final content     = question['body']?.toString()    ?? '';
     final answerCount = question['answerCount']          ?? question['_count']?['answers'] ?? 0;
-    final viewCount   = question['viewCount']            ?? 0;
+    final viewCount   = question['viewCount']            ?? question['view_count'] ?? 0;
     final author      = question['author']               ?? question['askedBy'];
     final firstName   = author?['firstName']?.toString() ?? 'Student';
     final lastName    = author?['lastName']?.toString()  ?? '';

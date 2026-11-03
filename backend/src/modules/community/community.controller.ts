@@ -40,6 +40,7 @@ export class CommunityController {
     }
   }
 
+  @Public()
   @Get('questions')
   @ApiOperation({ summary: 'Browse questions (filter by dept, course, level)' })
   getQuestions(
@@ -58,9 +59,12 @@ export class CommunityController {
     });
   }
 
+  @Public()
   @Get('questions/:id')
   @ApiOperation({ summary: 'Get a question with its answers' })
   async getQuestion(@Param('id') id: string) {
+    // Increment view count when question is opened
+    this.service.incrementViews(id).catch(() => {}); // fire-and-forget
     const question = await this.service.findQuestion(id);
     const answers = await this.service.findAnswers(id);
     return { question, answers };

@@ -135,6 +135,10 @@ export class CommunityService {
     return saved;
   }
 
+  async incrementViews(questionId: string): Promise<void> {
+    await this.questionsRepo.increment({ id: questionId }, 'viewCount', 1);
+  }
+
   async markResolved(questionId: string, userId: string): Promise<Question> {
     const question = await this.findQuestion(questionId);
     if (question.authorId !== userId) {
