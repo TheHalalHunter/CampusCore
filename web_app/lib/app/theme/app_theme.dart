@@ -19,6 +19,7 @@ class AppColors {
   static const Color success = Color(0xFF16A34A);
   static const Color error   = Color(0xFFDC2626);
   static const Color warning = Color(0xFFD97706);
+  static const Color amber   = Color(0xFFF59E0B);
   static const Color info    = Color(0xFF2196F3);
 
   // ── Backgrounds & surfaces ────────────────────────────────────────────────

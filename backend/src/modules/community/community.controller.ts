@@ -174,6 +174,23 @@ export class CommunityController {
     return this.service.unpinQuestion(id);
   }
 
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @Post('announcements')
+  @ApiOperation({ summary: 'Post an official announcement (admin only)' })
+  postAnnouncement(
+    @CurrentUser() user: User,
+    @Body('title') title: string,
+    @Body('body') body: string,
+    @Body('departmentId') departmentId?: string,
+  ) {
+    return this.service.postAnnouncement(user.id, {
+      title,
+      body,
+      departmentId: departmentId || user.departmentId,
+    });
+  }
+
   @Delete('questions/:id')
   @ApiOperation({ summary: 'Delete a question (admin/moderator deletes any; author deletes own)' })
   deleteQuestion(@Param('id') id: string, @CurrentUser() user: User) {

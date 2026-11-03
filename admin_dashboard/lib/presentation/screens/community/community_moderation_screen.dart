@@ -60,7 +60,20 @@ class CommunityModerationScreen extends ConsumerWidget {
             title: 'Community Moderation',
             subtitle: 'Verify student answers · Pin or delete posts',
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
+          // Post Announcement button
+          ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AdminColors.warning,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            ),
+            icon: const Icon(Icons.campaign_outlined, size: 18),
+            label: const Text('Post Announcement',
+                style: TextStyle(fontFamily: 'Nunito', fontWeight: FontWeight.w700)),
+            onPressed: () => _showAnnouncementDialog(context, ref),
+          ),
+          const SizedBox(height: 16),
           Expanded(
             child: questionsAsync.when(
               loading: () =>
@@ -121,6 +134,111 @@ class CommunityModerationScreen extends ConsumerWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  void _showAnnouncementDialog(BuildContext context, WidgetRef ref) {
+    final titleCtrl   = TextEditingController();
+    final contentCtrl = TextEditingController();
+    bool submitting   = false;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setState) => AlertDialog(
+          title: const Row(
+            children: [
+              Icon(Icons.campaign_outlined, color: AdminColors.warning),
+              SizedBox(width: 8),
+              Text('Post Announcement',
+                  style: TextStyle(fontWeight: FontWeight.w700, fontFamily: 'Nunito')),
+            ],
+          ),
+          content: SizedBox(
+            width: 480,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'This will appear as a pinned announcement in the community feed for all students.',
+                  style: TextStyle(color: AdminColors.grey600, fontFamily: 'Nunito', fontSize: 13),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: titleCtrl,
+                  decoration: const InputDecoration(
+                    labelText: 'Announcement Title *',
+                    prefixIcon: Icon(Icons.title_outlined),
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: contentCtrl,
+                  maxLines: 4,
+                  decoration: const InputDecoration(
+                    labelText: 'Announcement Content *',
+                    alignLabelWithHint: true,
+                    prefixIcon: Icon(Icons.notes_outlined),
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: submitting ? null : () => Navigator.pop(ctx),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AdminColors.warning,
+                foregroundColor: Colors.white,
+              ),
+              icon: submitting
+                  ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                  : const Icon(Icons.send_outlined, size: 18),
+              label: const Text('Post', style: TextStyle(fontFamily: 'Nunito', fontWeight: FontWeight.w700)),
+              onPressed: submitting ? null : () async {
+                if (titleCtrl.text.trim().isEmpty || contentCtrl.text.trim().isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Title and content are required.'), backgroundColor: AdminColors.error),
+                  );
+                  return;
+                }
+                setState(() => submitting = true);
+                try {
+                  await adminApi.post('/community/announcements', data: {
+                    'title': titleCtrl.text.trim(),
+                    'body':  contentCtrl.text.trim(),
+                  });
+                  ref.invalidate(adminQuestionsProvider);
+                  if (ctx.mounted) Navigator.pop(ctx);
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Announcement posted successfully!'),
+                        backgroundColor: AdminColors.success,
+                      ),
+                    );
+                  }
+                } catch (e) {
+                  setState(() => submitting = false);
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Failed to post announcement. Please try again.'),
+                        backgroundColor: AdminColors.error,
+                      ),
+                    );
+                  }
+                }
+              },
+            ),
+          ],
+        ),
       ),
     );
   }

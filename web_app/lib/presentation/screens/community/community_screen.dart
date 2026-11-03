@@ -44,11 +44,15 @@ final questionsProvider = FutureProvider.autoDispose<List<Map<String, dynamic>>>
     return [];
   }
 
-  // Sort pinned questions to the top, preserving relative order within groups.
+  // Sort announcements first, then pinned, then by date.
   final sorted = [...questions];
   sorted.sort((a, b) {
+    final aAnnounce = a['isAnnouncement'] == true || a['is_announcement'] == true;
+    final bAnnounce = b['isAnnouncement'] == true || b['is_announcement'] == true;
     final aPinned = a['isPinned'] == true || a['is_pinned'] == true;
     final bPinned = b['isPinned'] == true || b['is_pinned'] == true;
+    if (aAnnounce && !bAnnounce) return -1;
+    if (!aAnnounce && bAnnounce) return 1;
     if (aPinned && !bPinned) return -1;
     if (!aPinned && bPinned) return 1;
     return 0;
@@ -405,7 +409,8 @@ class _QuestionTile extends StatelessWidget {
     final avatarUrl   = author?['avatar']?.toString();
     final initials    = '${firstName.isNotEmpty ? firstName[0] : "S"}${lastName.isNotEmpty ? lastName[0] : ""}';
     final tags        = question['tags'] as List?        ?? [];
-    final isPinned    = question['isPinned'] == true || question['is_pinned'] == true;
+    final isPinned       = question['isPinned'] == true || question['is_pinned'] == true;
+    final isAnnouncement = question['isAnnouncement'] == true || question['is_announcement'] == true;
 
     return Padding(
       padding: EdgeInsets.all(isMobile ? 12 : 16),
@@ -446,7 +451,9 @@ class _QuestionTile extends StatelessWidget {
           Wrap(
             spacing: 6, runSpacing: 4,
             children: [
-              if (isPinned)
+              if (isAnnouncement)
+                const _Badge(icon: Icons.campaign_outlined, label: 'Announcement', color: AppColors.amber),
+              if (isPinned && !isAnnouncement)
                 const _Badge(icon: Icons.push_pin, label: 'Pinned', color: AppColors.warning),
               _Badge(icon: Icons.comment_outlined, label: '$answerCount ${answerCount == 1 ? "answer" : "answers"}', color: AppColors.primary),
               _Badge(icon: Icons.visibility_outlined, label: '$viewCount views', color: AppColors.success),

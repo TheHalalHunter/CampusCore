@@ -135,6 +135,21 @@ export class CommunityService {
     return saved;
   }
 
+  async postAnnouncement(
+    adminId: string,
+    data: { title: string; body: string; departmentId?: string },
+  ): Promise<Question> {
+    const question = this.questionsRepo.create({
+      title: data.title,
+      body: data.body,
+      authorId: adminId,
+      departmentId: data.departmentId,
+      isAnnouncement: true,
+      isPinned: true, // announcements are always pinned
+    });
+    return this.questionsRepo.save(question);
+  }
+
   async incrementViews(questionId: string): Promise<void> {
     await this.questionsRepo.increment({ id: questionId }, 'viewCount', 1);
   }
