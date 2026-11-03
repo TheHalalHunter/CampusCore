@@ -49,7 +49,7 @@ export class CommunityService {
 
     // Fetch author names separately using the users repository
     const authorIds = [...new Set(rawQuestions.map((q) => q.authorId))];
-    const authorMap: Record<string, { firstName: string; lastName: string }> = {};
+    const authorMap: Record<string, { firstName: string; lastName: string; avatar: string | null }> = {};
 
     if (authorIds.length > 0) {
       const users = await this.questionsRepo.manager.getRepository('User').findByIds(authorIds);
