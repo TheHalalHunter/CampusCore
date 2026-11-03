@@ -181,6 +181,36 @@ export class CommunityService {
     }
   }
 
+  async pinQuestion(id: string): Promise<Question> {
+    const question = await this.findQuestion(id);
+    question.isPinned = true;
+    return this.questionsRepo.save(question);
+  }
+
+  async unpinQuestion(id: string): Promise<Question> {
+    const question = await this.findQuestion(id);
+    question.isPinned = false;
+    return this.questionsRepo.save(question);
+  }
+
+  async deleteQuestion(id: string, userId: string, role: string): Promise<void> {
+    const question = await this.findQuestion(id);
+    if (role !== 'admin' && role !== 'moderator' && question.authorId !== userId) {
+      throw new ForbiddenException('You can only delete your own questions');
+    }
+    await this.questionsRepo.delete(id);
+  }
+
+  async deleteAnswer(id: string, userId: string, role: string): Promise<void> {
+    const answer = await this.answersRepo.findOne({ where: { id } });
+    if (!answer) throw new NotFoundException('Answer not found');
+    if (role !== 'admin' && role !== 'moderator' && answer.authorId !== userId) {
+      throw new ForbiddenException('You can only delete your own answers');
+    }
+    await this.answersRepo.delete(id);
+    await this.questionsRepo.decrement({ id: answer.questionId }, 'answerCount', 1);
+  }
+
   // --- Upvotes ---
 
   async upvoteQuestion(id: string): Promise<{ upvoteCount: number }> {

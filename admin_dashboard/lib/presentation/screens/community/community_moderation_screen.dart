@@ -58,7 +58,7 @@ class CommunityModerationScreen extends ConsumerWidget {
         children: [
           const _PageHeader(
             title: 'Community Moderation',
-            subtitle: 'Verify student answers',
+            subtitle: 'Verify student answers · Pin or delete posts',
           ),
           const SizedBox(height: 24),
           Expanded(
@@ -138,12 +138,16 @@ class _QuestionTile extends ConsumerStatefulWidget {
 
 class _QuestionTileState extends ConsumerState<_QuestionTile> {
   bool _expanded = false;
+  bool _pinning = false;
+  bool _deleting = false;
 
   @override
   Widget build(BuildContext context) {
     final q = widget.question;
     final id = q['id']?.toString() ?? '';
     final answerCount = q['answerCount'] ?? 0;
+    final isPinned =
+        q['isPinned'] == true || q['is_pinned'] == true;
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -152,14 +156,24 @@ class _QuestionTileState extends ConsumerState<_QuestionTile> {
         // Remove the default divider/extra padding inside the ExpansionTile.
         data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
         child: ExpansionTile(
-          title: Text(
-            q['title']?.toString() ?? 'Untitled question',
-            style: const TextStyle(
-              fontFamily: 'Nunito',
-              fontWeight: FontWeight.w700,
-              fontSize: 15,
-              color: AdminColors.grey900,
-            ),
+          title: Row(
+            children: [
+              if (isPinned) ...[
+                const Icon(Icons.push_pin, size: 14, color: AdminColors.warning),
+                const SizedBox(width: 4),
+              ],
+              Expanded(
+                child: Text(
+                  q['title']?.toString() ?? 'Untitled question',
+                  style: const TextStyle(
+                    fontFamily: 'Nunito',
+                    fontWeight: FontWeight.w700,
+                    fontSize: 15,
+                    color: AdminColors.grey900,
+                  ),
+                ),
+              ),
+            ],
           ),
           subtitle: Text(
             '$answerCount answers',
@@ -168,6 +182,44 @@ class _QuestionTileState extends ConsumerState<_QuestionTile> {
               fontSize: 12,
               color: AdminColors.grey600,
             ),
+          ),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Pin / Unpin button
+              _pinning
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2, color: AdminColors.warning),
+                    )
+                  : IconButton(
+                      tooltip: isPinned ? 'Unpin question' : 'Pin question',
+                      icon: Icon(
+                        isPinned ? Icons.push_pin : Icons.push_pin_outlined,
+                        size: 20,
+                        color: AdminColors.warning,
+                      ),
+                      onPressed: () => _togglePin(id, isPinned),
+                    ),
+              // Delete button
+              _deleting
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2, color: AdminColors.error),
+                    )
+                  : IconButton(
+                      tooltip: 'Delete question',
+                      icon: const Icon(Icons.delete_outline,
+                          size: 20, color: AdminColors.error),
+                      onPressed: () => _confirmDelete(context, id),
+                    ),
+              // Default expansion icon
+              const Icon(Icons.expand_more, color: AdminColors.grey600),
+            ],
           ),
           expandedCrossAxisAlignment: CrossAxisAlignment.start,
           onExpansionChanged: (v) => setState(() => _expanded = v),
@@ -222,6 +274,91 @@ class _QuestionTileState extends ConsumerState<_QuestionTile> {
       ),
     );
   }
+
+  Future<void> _togglePin(String id, bool currentlyPinned) async {
+    setState(() => _pinning = true);
+    try {
+      final endpoint = currentlyPinned
+          ? '/community/questions/$id/unpin'
+          : '/community/questions/$id/pin';
+      await adminApi.patch(endpoint);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(
+            currentlyPinned
+                ? 'Question unpinned.'
+                : '📌 Question pinned.',
+            style: const TextStyle(fontFamily: 'Nunito'),
+          ),
+          backgroundColor: AdminColors.warning,
+        ));
+      }
+      ref.invalidate(adminQuestionsProvider);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Error: $e',
+              style: const TextStyle(fontFamily: 'Nunito')),
+          backgroundColor: AdminColors.error,
+        ));
+      }
+    } finally {
+      if (mounted) setState(() => _pinning = false);
+    }
+  }
+
+  Future<void> _confirmDelete(BuildContext context, String id) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Delete Question'),
+        content: const Text(
+          'Are you sure you want to delete this question and all its answers? This cannot be undone.',
+          style: TextStyle(fontFamily: 'Nunito'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AdminColors.error,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    setState(() => _deleting = true);
+    try {
+      await adminApi.delete('/community/questions/$id');
+      if (mounted) {
+        messenger.showSnackBar(
+          const SnackBar(
+            content: Text('Question deleted.',
+                style: TextStyle(fontFamily: 'Nunito')),
+            backgroundColor: AdminColors.success,
+          ),
+        );
+      }
+      ref.invalidate(adminQuestionsProvider);
+    } catch (e) {
+      if (mounted) {
+        messenger.showSnackBar(SnackBar(
+          content: Text('Could not delete question: $e',
+              style: const TextStyle(fontFamily: 'Nunito')),
+          backgroundColor: AdminColors.error,
+        ));
+      }
+    } finally {
+      if (mounted) setState(() => _deleting = false);
+    }
+  }
 }
 
 // ─── Answer moderation card ───────────────────────────────────────────────────
@@ -238,6 +375,7 @@ class _AnswerModerationCard extends ConsumerStatefulWidget {
 
 class _AnswerModerationCardState extends ConsumerState<_AnswerModerationCard> {
   bool _verifying = false;
+  bool _deleting = false;
 
   String get _authorName {
     final author = widget.answer['author'];
@@ -278,6 +416,59 @@ class _AnswerModerationCardState extends ConsumerState<_AnswerModerationCard> {
     }
   }
 
+  Future<void> _confirmDelete(BuildContext context) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Delete Answer'),
+        content: const Text(
+          'Are you sure you want to delete this answer? This cannot be undone.',
+          style: TextStyle(fontFamily: 'Nunito'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AdminColors.error,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    setState(() => _deleting = true);
+    try {
+      await adminApi.delete('/community/answers/${widget.answer['id']}');
+      if (mounted) {
+        messenger.showSnackBar(
+          const SnackBar(
+            content: Text('Answer deleted.',
+                style: TextStyle(fontFamily: 'Nunito')),
+            backgroundColor: AdminColors.success,
+          ),
+        );
+      }
+      ref.invalidate(adminQuestionAnswersProvider(widget.questionId));
+    } catch (e) {
+      if (mounted) {
+        messenger.showSnackBar(SnackBar(
+          content: Text('Could not delete answer: $e',
+              style: const TextStyle(fontFamily: 'Nunito')),
+          backgroundColor: AdminColors.error,
+        ));
+      }
+    } finally {
+      if (mounted) setState(() => _deleting = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isVerified = widget.answer['isVerified'] == true;
@@ -295,7 +486,8 @@ class _AnswerModerationCardState extends ConsumerState<_AnswerModerationCard> {
         children: [
           Row(
             children: [
-              const Icon(Icons.person_outline, size: 18, color: AdminColors.grey600),
+              const Icon(Icons.person_outline,
+                  size: 18, color: AdminColors.grey600),
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
@@ -310,8 +502,8 @@ class _AnswerModerationCardState extends ConsumerState<_AnswerModerationCard> {
               ),
               if (isVerified)
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
                     color: AdminColors.success,
                     borderRadius: BorderRadius.circular(12),
@@ -319,7 +511,8 @@ class _AnswerModerationCardState extends ConsumerState<_AnswerModerationCard> {
                   child: const Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.check_circle, color: Colors.white, size: 14),
+                      Icon(Icons.check_circle,
+                          color: Colors.white, size: 14),
                       SizedBox(width: 4),
                       Text(
                         'Verified',
@@ -346,28 +539,46 @@ class _AnswerModerationCardState extends ConsumerState<_AnswerModerationCard> {
             ),
           ),
           const SizedBox(height: 12),
-          if (!isVerified)
-            ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AdminColors.success,
-                foregroundColor: Colors.white,
-              ),
-              icon: _verifying
+          Row(
+            children: [
+              if (!isVerified)
+                ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AdminColors.success,
+                    foregroundColor: Colors.white,
+                  ),
+                  icon: _verifying
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Icon(Icons.check, size: 16),
+                  label: Text(
+                    _verifying ? 'Verifying…' : 'Verify',
+                    style: const TextStyle(fontFamily: 'Nunito'),
+                  ),
+                  onPressed: _verifying ? null : _verify,
+                ),
+              const Spacer(),
+              _deleting
                   ? const SizedBox(
-                      width: 16,
-                      height: 16,
+                      width: 20,
+                      height: 20,
                       child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
+                          strokeWidth: 2, color: AdminColors.error),
                     )
-                  : const Icon(Icons.check, size: 16),
-              label: Text(
-                _verifying ? 'Verifying…' : 'Verify',
-                style: const TextStyle(fontFamily: 'Nunito'),
-              ),
-              onPressed: _verifying ? null : _verify,
-            ),
+                  : IconButton(
+                      tooltip: 'Delete answer',
+                      icon: const Icon(Icons.delete_outline,
+                          size: 20, color: AdminColors.error),
+                      onPressed: () => _confirmDelete(context),
+                    ),
+            ],
+          ),
         ],
       ),
     );

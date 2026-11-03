@@ -44,6 +44,9 @@ export class Question {
   @Column({ name: 'is_flagged', default: false })
   isFlagged: boolean;
 
+  @Column({ name: 'is_pinned', default: false })
+  isPinned: boolean;
+
   @Column({ name: 'tags', type: 'text', array: true, default: '{}' })
   tags: string[];
 

@@ -6,7 +6,7 @@ import '../../../app/theme/admin_theme.dart';
 import '../../../core/providers/admin_departments_provider.dart';
 import '../../../core/utils/api_client.dart';
 
-// ─── Model ────────────────────────────────────────────────────────────────────
+// ─── Models ───────────────────────────────────────────────────────────────────
 
 class PendingResource {
   final String id;
@@ -17,6 +17,8 @@ class PendingResource {
   final String type;
   final String uploaderId;
   final String? academicYear;
+  final String? courseId;
+  final String? departmentId;
 
   const PendingResource({
     required this.id,
@@ -27,6 +29,8 @@ class PendingResource {
     required this.type,
     required this.uploaderId,
     this.academicYear,
+    this.courseId,
+    this.departmentId,
   });
 
   factory PendingResource.fromJson(Map<String, dynamic> json) =>
@@ -41,6 +45,76 @@ class PendingResource {
             json['uploaderId'] as String? ?? json['uploader_id'] as String? ?? '',
         academicYear:
             json['academicYear'] as String? ?? json['academic_year'] as String?,
+        courseId:
+            json['courseId'] as String? ?? json['course_id'] as String?,
+        departmentId:
+            json['departmentId'] as String? ?? json['department_id'] as String?,
+      );
+
+  String get typeLabel {
+    switch (type) {
+      case 'lecture_note':
+        return 'Lecture Note';
+      case 'past_question':
+        return 'Past Question';
+      case 'slide':
+        return 'Slide';
+      case 'practical_manual':
+        return 'Practical Manual';
+      case 'assignment':
+        return 'Assignment';
+      default:
+        return 'Resource';
+    }
+  }
+}
+
+class AllResource {
+  final String id;
+  final String title;
+  final String? description;
+  final String fileUrl;
+  final String? fileType;
+  final String type;
+  final String uploaderId;
+  final String? academicYear;
+  final String? courseId;
+  final String? departmentId;
+  final String status;
+
+  const AllResource({
+    required this.id,
+    required this.title,
+    this.description,
+    required this.fileUrl,
+    this.fileType,
+    required this.type,
+    required this.uploaderId,
+    this.academicYear,
+    this.courseId,
+    this.departmentId,
+    required this.status,
+  });
+
+  factory AllResource.fromJson(Map<String, dynamic> json) => AllResource(
+        id: json['id'] as String,
+        title: json['title'] as String? ?? '',
+        description: json['description'] as String?,
+        fileUrl:
+            json['fileUrl'] as String? ?? json['file_url'] as String? ?? '',
+        fileType:
+            json['fileType'] as String? ?? json['file_type'] as String?,
+        type: json['type'] as String? ?? 'other',
+        uploaderId: json['uploaderId'] as String? ??
+            json['uploader_id'] as String? ??
+            '',
+        academicYear:
+            json['academicYear'] as String? ?? json['academic_year'] as String?,
+        courseId:
+            json['courseId'] as String? ?? json['course_id'] as String?,
+        departmentId:
+            json['departmentId'] as String? ?? json['department_id'] as String?,
+        status: json['status'] as String? ?? 'pending',
       );
 
   String get typeLabel {
@@ -72,6 +146,15 @@ final pendingResourcesProvider =
       .toList();
 });
 
+final allResourcesProvider =
+    FutureProvider<List<AllResource>>((ref) async {
+  final response = await adminApi.get('/resources/admin/all');
+  final data = (response.data['data'] ?? response.data) as List;
+  return data
+      .map((r) => AllResource.fromJson(r as Map<String, dynamic>))
+      .toList();
+});
+
 /// FutureProvider.family for courses by departmentId (used inside the upload dialog).
 final adminResourceCoursesProvider =
     FutureProvider.family<List<Map<String, dynamic>>, String>(
@@ -94,155 +177,517 @@ class ModerationScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final pendingAsync = ref.watch(pendingResourcesProvider);
+    final allAsync = ref.watch(allResourcesProvider);
 
-    return Padding(
-      padding: const EdgeInsets.all(28),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header row: title/subtitle on the left, Upload button on the right
-          Row(
-            children: [
-              const Expanded(
-                child: _PageHeader(
-                  title: 'Resource Moderation',
-                  subtitle: 'Review and approve student submissions',
+    return DefaultTabController(
+      length: 2,
+      child: Padding(
+        padding: const EdgeInsets.all(28),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header row: title/subtitle on the left, Upload button on the right
+            Row(
+              children: [
+                const Expanded(
+                  child: _PageHeader(
+                    title: 'Resource Moderation',
+                    subtitle: 'Review and approve student submissions',
+                  ),
                 ),
-              ),
-              ElevatedButton.icon(
-                onPressed: () async {
-                  await showDialog<void>(
-                    context: context,
-                    barrierDismissible: false,
-                    builder: (_) => UncontrolledProviderScope(
-                      container: ProviderScope.containerOf(context),
-                      child: const _UploadResourceDialog(),
-                    ),
-                  );
-                  ref.invalidate(pendingResourcesProvider);
-                },
-                icon: const Icon(Icons.upload_file, size: 18),
-                label: const Text('Upload Resource'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AdminColors.primary,
-                  foregroundColor: Colors.white,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8)),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-
-          // Stats row
-          pendingAsync.when(
-            data: (resources) => Row(children: [
-              _MiniStat(
-                  label: 'Pending',
-                  value: '${resources.length}',
-                  color: AdminColors.warning),
-            ]),
-            loading: () => const SizedBox.shrink(),
-            error: (_, __) => const SizedBox.shrink(),
-          ),
-          const SizedBox(height: 24),
-
-          const Text('Pending Submissions',
-              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
-          const SizedBox(height: 12),
-
-          Expanded(
-            child: pendingAsync.when(
-              loading: () =>
-                  const Center(child: CircularProgressIndicator()),
-              error: (_, __) => Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.error_outline,
-                        size: 48, color: AdminColors.error),
-                    const SizedBox(height: 12),
-                    const Text(
-                      'Could not load pending submissions. Check your connection and try again.',
-                      style: TextStyle(
-                        color: AdminColors.error,
-                        fontFamily: 'Nunito',
-                        fontSize: 14,
+                ElevatedButton.icon(
+                  onPressed: () async {
+                    await showDialog<void>(
+                      context: context,
+                      barrierDismissible: false,
+                      builder: (_) => UncontrolledProviderScope(
+                        container: ProviderScope.containerOf(context),
+                        child: const _UploadResourceDialog(),
                       ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 16),
-                    TextButton.icon(
-                      onPressed: () => ref.invalidate(pendingResourcesProvider),
-                      icon: const Icon(Icons.refresh),
-                      label: const Text('Retry',
-                          style: TextStyle(fontFamily: 'Nunito')),
-                    ),
-                  ],
+                    );
+                    ref.invalidate(pendingResourcesProvider);
+                    ref.invalidate(allResourcesProvider);
+                  },
+                  icon: const Icon(Icons.upload_file, size: 18),
+                  label: const Text('Upload Resource'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AdminColors.primary,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 12),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8)),
+                  ),
                 ),
+              ],
+            ),
+            const SizedBox(height: 24),
+
+            // Stats row
+            pendingAsync.when(
+              data: (resources) => Row(children: [
+                _MiniStat(
+                    label: 'Pending',
+                    value: '${resources.length}',
+                    color: AdminColors.warning),
+                const SizedBox(width: 12),
+                allAsync.when(
+                  data: (all) => _MiniStat(
+                      label: 'Total',
+                      value: '${all.length}',
+                      color: AdminColors.primary),
+                  loading: () => const SizedBox.shrink(),
+                  error: (_, __) => const SizedBox.shrink(),
+                ),
+              ]),
+              loading: () => const SizedBox.shrink(),
+              error: (_, __) => const SizedBox.shrink(),
+            ),
+            const SizedBox(height: 16),
+
+            const TabBar(
+              tabs: [
+                Tab(text: 'Pending Review'),
+                Tab(text: 'All Resources'),
+              ],
+              labelColor: AdminColors.primary,
+              unselectedLabelColor: AdminColors.grey600,
+              indicatorColor: AdminColors.primary,
+              labelStyle: TextStyle(
+                  fontFamily: 'Nunito', fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 12),
+
+            Expanded(
+              child: TabBarView(
+                children: [
+                  // Tab 0: Pending Review
+                  _PendingTab(pendingAsync: pendingAsync),
+                  // Tab 1: All Resources
+                  _AllResourcesTab(allAsync: allAsync),
+                ],
               ),
-              data: (resources) {
-                if (resources.isEmpty) {
-                  return const Center(
-                    child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.check_circle_outline,
-                              size: 56, color: AdminColors.success),
-                          SizedBox(height: 16),
-                          Text('All caught up!',
-                              style: TextStyle(
-                                  fontWeight: FontWeight.w700, fontSize: 16)),
-                          SizedBox(height: 8),
-                          Text('No resources pending review.',
-                              style:
-                                  TextStyle(color: AdminColors.grey600)),
-                        ]),
-                  );
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Pending Tab ──────────────────────────────────────────────────────────────
+
+class _PendingTab extends ConsumerWidget {
+  final AsyncValue<List<PendingResource>> pendingAsync;
+  const _PendingTab({required this.pendingAsync});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return pendingAsync.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (_, __) => Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline, size: 48, color: AdminColors.error),
+            const SizedBox(height: 12),
+            const Text(
+              'Could not load pending submissions. Check your connection and try again.',
+              style: TextStyle(
+                color: AdminColors.error,
+                fontFamily: 'Nunito',
+                fontSize: 14,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            TextButton.icon(
+              onPressed: () => ref.invalidate(pendingResourcesProvider),
+              icon: const Icon(Icons.refresh),
+              label: const Text('Retry',
+                  style: TextStyle(fontFamily: 'Nunito')),
+            ),
+          ],
+        ),
+      ),
+      data: (resources) {
+        if (resources.isEmpty) {
+          return const Center(
+            child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.check_circle_outline,
+                      size: 56, color: AdminColors.success),
+                  SizedBox(height: 16),
+                  Text('All caught up!',
+                      style: TextStyle(
+                          fontWeight: FontWeight.w700, fontSize: 16)),
+                  SizedBox(height: 8),
+                  Text('No resources pending review.',
+                      style: TextStyle(color: AdminColors.grey600)),
+                ]),
+          );
+        }
+        return ListView.builder(
+          itemCount: resources.length,
+          itemBuilder: (_, i) => _PendingCard(
+            resource: resources[i],
+            onReview: (approved, note) async {
+              try {
+                await adminApi.patch(
+                  '/resources/${resources[i].id}/review',
+                  data: {
+                    'status': approved ? 'approved' : 'rejected',
+                    if (note != null && note.isNotEmpty) 'reviewNote': note,
+                  },
+                );
+                ref.invalidate(pendingResourcesProvider);
+                ref.invalidate(allResourcesProvider);
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                    content: Text(approved
+                        ? '✅ Resource approved!'
+                        : '❌ Resource rejected.'),
+                    backgroundColor:
+                        approved ? AdminColors.success : AdminColors.error,
+                  ));
                 }
-                return ListView.builder(
-                  itemCount: resources.length,
-                  itemBuilder: (_, i) => _PendingCard(
-                    resource: resources[i],
-                    onReview: (approved, note) async {
-                      try {
-                        await adminApi.patch(
-                          '/resources/${resources[i].id}/review',
-                          data: {
-                            'status': approved ? 'approved' : 'rejected',
-                            if (note != null && note.isNotEmpty)
-                              'reviewNote': note,
-                          },
-                        );
-                        ref.invalidate(pendingResourcesProvider);
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                            content: Text(approved
-                                ? '✅ Resource approved!'
-                                : '❌ Resource rejected.'),
-                            backgroundColor: approved
-                                ? AdminColors.success
-                                : AdminColors.error,
-                          ));
-                        }
-                      } catch (e) {
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                            content: const Text('Could not submit review. Please try again.'),
-                            backgroundColor: AdminColors.error,
-                          ));
-                        }
-                      }
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                    content: Text(
+                        'Could not submit review. Please try again.'),
+                    backgroundColor: AdminColors.error,
+                  ));
+                }
+              }
+            },
+            onEdit: () {
+              showDialog<void>(
+                context: context,
+                builder: (_) => UncontrolledProviderScope(
+                  container: ProviderScope.containerOf(context),
+                  child: _EditResourceDialog(
+                    resourceId: resources[i].id,
+                    initialTitle: resources[i].title,
+                    initialType: resources[i].type,
+                    initialDepartmentId: resources[i].departmentId,
+                    initialCourseId: resources[i].courseId,
+                    initialAcademicYear: resources[i].academicYear,
+                    onSaved: () {
+                      ref.invalidate(pendingResourcesProvider);
+                      ref.invalidate(allResourcesProvider);
                     },
                   ),
-                );
-              },
+                ),
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+}
+
+// ─── All Resources Tab ────────────────────────────────────────────────────────
+
+class _AllResourcesTab extends ConsumerWidget {
+  final AsyncValue<List<AllResource>> allAsync;
+  const _AllResourcesTab({required this.allAsync});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return allAsync.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (_, __) => Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline, size: 48, color: AdminColors.error),
+            const SizedBox(height: 12),
+            const Text(
+              'Could not load resources. Check your connection and try again.',
+              style: TextStyle(
+                  color: AdminColors.error, fontFamily: 'Nunito', fontSize: 14),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            TextButton.icon(
+              onPressed: () => ref.invalidate(allResourcesProvider),
+              icon: const Icon(Icons.refresh),
+              label:
+                  const Text('Retry', style: TextStyle(fontFamily: 'Nunito')),
+            ),
+          ],
+        ),
+      ),
+      data: (resources) {
+        if (resources.isEmpty) {
+          return const Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.folder_open_outlined,
+                    size: 56, color: AdminColors.grey600),
+                SizedBox(height: 16),
+                Text('No resources yet.',
+                    style: TextStyle(
+                        fontWeight: FontWeight.w700, fontSize: 16)),
+              ],
+            ),
+          );
+        }
+        return ListView.builder(
+          itemCount: resources.length,
+          itemBuilder: (_, i) => _AllResourceCard(
+            resource: resources[i],
+            onEdit: () {
+              showDialog<void>(
+                context: context,
+                builder: (_) => UncontrolledProviderScope(
+                  container: ProviderScope.containerOf(context),
+                  child: _EditResourceDialog(
+                    resourceId: resources[i].id,
+                    initialTitle: resources[i].title,
+                    initialType: resources[i].type,
+                    initialDepartmentId: resources[i].departmentId,
+                    initialCourseId: resources[i].courseId,
+                    initialAcademicYear: resources[i].academicYear,
+                    onSaved: () {
+                      ref.invalidate(allResourcesProvider);
+                      ref.invalidate(pendingResourcesProvider);
+                    },
+                  ),
+                ),
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+}
+
+// ─── Edit Resource Dialog ─────────────────────────────────────────────────────
+
+class _EditResourceDialog extends ConsumerStatefulWidget {
+  final String resourceId;
+  final String initialTitle;
+  final String initialType;
+  final String? initialDepartmentId;
+  final String? initialCourseId;
+  final String? initialAcademicYear;
+  final VoidCallback onSaved;
+
+  const _EditResourceDialog({
+    required this.resourceId,
+    required this.initialTitle,
+    required this.initialType,
+    this.initialDepartmentId,
+    this.initialCourseId,
+    this.initialAcademicYear,
+    required this.onSaved,
+  });
+
+  @override
+  ConsumerState<_EditResourceDialog> createState() =>
+      _EditResourceDialogState();
+}
+
+class _EditResourceDialogState extends ConsumerState<_EditResourceDialog> {
+  final _formKey = GlobalKey<FormState>();
+  late final TextEditingController _titleCtrl;
+  late final TextEditingController _yearCtrl;
+
+  String? _selectedType;
+  String? _selectedDeptId;
+  String? _selectedCourseId;
+  bool _saving = false;
+
+  static const _typeOptions = <String, String>{
+    'lecture_note': 'Lecture Note',
+    'past_question': 'Past Question',
+    'slide': 'Slide',
+    'practical_manual': 'Practical Manual',
+    'assignment': 'Assignment',
+    'other': 'Other',
+  };
+
+  @override
+  void initState() {
+    super.initState();
+    _titleCtrl = TextEditingController(text: widget.initialTitle);
+    _yearCtrl = TextEditingController(text: widget.initialAcademicYear ?? '');
+    _selectedType = widget.initialType;
+    _selectedDeptId = widget.initialDepartmentId;
+    _selectedCourseId = widget.initialCourseId;
+  }
+
+  @override
+  void dispose() {
+    _titleCtrl.dispose();
+    _yearCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _save() async {
+    if (!_formKey.currentState!.validate()) return;
+    setState(() => _saving = true);
+    try {
+      await adminApi.patch('/resources/${widget.resourceId}', data: {
+        'title': _titleCtrl.text.trim(),
+        'type': _selectedType,
+        if (_selectedCourseId != null) 'courseId': _selectedCourseId,
+        if (_yearCtrl.text.trim().isNotEmpty)
+          'academicYear': _yearCtrl.text.trim(),
+      });
+      widget.onSaved();
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('✅ Resource updated!',
+              style: TextStyle(fontFamily: 'Nunito')),
+          backgroundColor: AdminColors.success,
+        ));
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _saving = false);
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Could not update resource. Please try again.',
+              style: TextStyle(fontFamily: 'Nunito')),
+          backgroundColor: AdminColors.error,
+        ));
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final deptsAsync = ref.watch(adminDepartmentsSharedProvider);
+
+    return AlertDialog(
+      title: const Text('Edit Resource',
+          style: TextStyle(fontFamily: 'Nunito', fontWeight: FontWeight.w700)),
+      content: SizedBox(
+        width: 520,
+        child: Form(
+          key: _formKey,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Title
+                TextFormField(
+                  controller: _titleCtrl,
+                  decoration: const InputDecoration(labelText: 'Title'),
+                  validator: (v) =>
+                      v == null || v.trim().isEmpty ? 'Required' : null,
+                ),
+                const SizedBox(height: 12),
+
+                // Resource Type
+                DropdownButtonFormField<String>(
+                  initialValue: _selectedType,
+                  decoration:
+                      const InputDecoration(labelText: 'Resource Type'),
+                  items: _typeOptions.entries
+                      .map((e) => DropdownMenuItem(
+                            value: e.key,
+                            child: Text(e.value),
+                          ))
+                      .toList(),
+                  onChanged: (v) => setState(() => _selectedType = v),
+                  validator: (v) => v == null ? 'Required' : null,
+                ),
+                const SizedBox(height: 12),
+
+                // Department
+                deptsAsync.when(
+                  loading: () => const LinearProgressIndicator(),
+                  error: (_, __) =>
+                      const Text('Could not load departments.'),
+                  data: (depts) => DropdownButtonFormField<String>(
+                    key: ValueKey(_selectedDeptId),
+                    initialValue: _selectedDeptId,
+                    decoration:
+                        const InputDecoration(labelText: 'Department'),
+                    items: depts
+                        .map((d) => DropdownMenuItem(
+                              value: d.id,
+                              child: Text(d.name),
+                            ))
+                        .toList(),
+                    onChanged: (v) => setState(() {
+                      _selectedDeptId = v;
+                      _selectedCourseId = null;
+                    }),
+                  ),
+                ),
+                const SizedBox(height: 12),
+
+                // Course (only shown when a department is selected)
+                if (_selectedDeptId != null) ...[
+                  ref
+                      .watch(adminResourceCoursesProvider(_selectedDeptId!))
+                      .when(
+                        loading: () => const LinearProgressIndicator(),
+                        error: (_, __) =>
+                            const Text('Could not load courses.'),
+                        data: (courses) =>
+                            DropdownButtonFormField<String>(
+                          key: ValueKey(_selectedCourseId),
+                          initialValue: _selectedCourseId,
+                          decoration:
+                              const InputDecoration(labelText: 'Course'),
+                          items: courses
+                              .map((c) => DropdownMenuItem(
+                                    value: c['id'] as String,
+                                    child: Text(
+                                        '${c['courseCode'] ?? c['course_code'] ?? ''} – ${c['title'] ?? ''}'),
+                                  ))
+                              .toList(),
+                          onChanged: (v) =>
+                              setState(() => _selectedCourseId = v),
+                        ),
+                      ),
+                  const SizedBox(height: 12),
+                ],
+
+                // Academic Year (optional)
+                TextFormField(
+                  controller: _yearCtrl,
+                  decoration: const InputDecoration(
+                    labelText: 'Academic Year (optional)',
+                    hintText: '2024/2025',
+                  ),
+                ),
+              ],
             ),
           ),
-        ],
+        ),
       ),
+      actions: [
+        TextButton(
+          onPressed: _saving ? null : () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        ElevatedButton(
+          onPressed: _saving ? null : _save,
+          style: ElevatedButton.styleFrom(
+              backgroundColor: AdminColors.primary,
+              foregroundColor: Colors.white),
+          child: _saving
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                      strokeWidth: 2, color: Colors.white),
+                )
+              : const Text('Save'),
+        ),
+      ],
     );
   }
 }
@@ -386,7 +831,8 @@ class _UploadResourceDialogState
           _submitting = false;
         });
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Upload failed. Check your connection and try again.'),
+          content: Text(
+              'Upload failed. Check your connection and try again.'),
           backgroundColor: AdminColors.error,
         ));
       }
@@ -459,7 +905,8 @@ class _UploadResourceDialogState
                         .toList(),
                     onChanged: (v) => setState(() {
                       _selectedDeptId = v;
-                      _selectedCourseId = null; // reset course when dept changes
+                      _selectedCourseId =
+                          null; // reset course when dept changes
                     }),
                     validator: (v) => v == null ? 'Required' : null,
                   ),
@@ -468,26 +915,29 @@ class _UploadResourceDialogState
 
                 // Course (only shown when a department is selected)
                 if (_selectedDeptId != null) ...[
-                  ref.watch(adminResourceCoursesProvider(_selectedDeptId!)).when(
-                    loading: () => const LinearProgressIndicator(),
-                    error: (_, __) =>
-                        const Text('Could not load courses.'),
-                    data: (courses) => DropdownButtonFormField<String>(
-                      initialValue: _selectedCourseId,
-                      decoration:
-                          const InputDecoration(labelText: 'Course'),
-                      items: courses
-                          .map((c) => DropdownMenuItem(
-                                value: c['id'] as String,
-                                child: Text(
-                                    '${c['courseCode'] ?? c['course_code'] ?? ''} – ${c['title'] ?? ''}'),
-                              ))
-                          .toList(),
-                      onChanged: (v) =>
-                          setState(() => _selectedCourseId = v),
-                      validator: (v) => v == null ? 'Required' : null,
-                    ),
-                  ),
+                  ref
+                      .watch(adminResourceCoursesProvider(_selectedDeptId!))
+                      .when(
+                        loading: () => const LinearProgressIndicator(),
+                        error: (_, __) =>
+                            const Text('Could not load courses.'),
+                        data: (courses) =>
+                            DropdownButtonFormField<String>(
+                          initialValue: _selectedCourseId,
+                          decoration:
+                              const InputDecoration(labelText: 'Course'),
+                          items: courses
+                              .map((c) => DropdownMenuItem(
+                                    value: c['id'] as String,
+                                    child: Text(
+                                        '${c['courseCode'] ?? c['course_code'] ?? ''} – ${c['title'] ?? ''}'),
+                                  ))
+                              .toList(),
+                          onChanged: (v) =>
+                              setState(() => _selectedCourseId = v),
+                          validator: (v) => v == null ? 'Required' : null,
+                        ),
+                      ),
                   const SizedBox(height: 12),
                 ],
 
@@ -545,7 +995,8 @@ class _UploadResourceDialogState
                 LinearProgressIndicator(
                   value: _uploadProgress,
                   backgroundColor: AdminColors.grey300,
-                  valueColor: const AlwaysStoppedAnimation(AdminColors.primary),
+                  valueColor:
+                      const AlwaysStoppedAnimation(AdminColors.primary),
                 ),
                 const SizedBox(height: 4),
                 Text(
@@ -558,9 +1009,7 @@ class _UploadResourceDialogState
           ),
         ] else ...[
           TextButton(
-            onPressed: _submitting
-                ? null
-                : () => Navigator.pop(context),
+            onPressed: _submitting ? null : () => Navigator.pop(context),
             child: const Text('Cancel'),
           ),
           ElevatedButton(
@@ -581,8 +1030,13 @@ class _UploadResourceDialogState
 class _PendingCard extends StatelessWidget {
   final PendingResource resource;
   final void Function(bool approved, String? note) onReview;
+  final VoidCallback onEdit;
 
-  const _PendingCard({required this.resource, required this.onReview});
+  const _PendingCard({
+    required this.resource,
+    required this.onReview,
+    required this.onEdit,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -646,6 +1100,17 @@ class _PendingCard extends StatelessWidget {
                 icon: const Icon(Icons.visibility_outlined, size: 16),
                 label: const Text('View URL'),
               ),
+              const SizedBox(width: 8),
+              // Edit button
+              OutlinedButton.icon(
+                onPressed: onEdit,
+                icon: const Icon(Icons.edit_outlined,
+                    size: 16, color: AdminColors.primary),
+                label: const Text('Edit',
+                    style: TextStyle(color: AdminColors.primary)),
+                style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: AdminColors.primary)),
+              ),
               const Spacer(),
               ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
@@ -702,6 +1167,118 @@ class _PendingCard extends StatelessWidget {
             child: const Text('Reject'),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// ─── All Resource Card ────────────────────────────────────────────────────────
+
+class _AllResourceCard extends StatelessWidget {
+  final AllResource resource;
+  final VoidCallback onEdit;
+
+  const _AllResourceCard({required this.resource, required this.onEdit});
+
+  Color _statusColor() {
+    switch (resource.status) {
+      case 'approved':
+        return AdminColors.success;
+      case 'rejected':
+        return AdminColors.error;
+      default:
+        return AdminColors.warning;
+    }
+  }
+
+  String _statusLabel() {
+    switch (resource.status) {
+      case 'approved':
+        return 'Approved';
+      case 'rejected':
+        return 'Rejected';
+      default:
+        return 'Pending';
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            const Icon(Icons.insert_drive_file_outlined,
+                color: AdminColors.primary, size: 28),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(resource.title,
+                      style: const TextStyle(
+                          fontFamily: 'Nunito',
+                          fontWeight: FontWeight.w700,
+                          fontSize: 14)),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Text(
+                        resource.typeLabel,
+                        style: const TextStyle(
+                            fontFamily: 'Nunito',
+                            color: AdminColors.grey600,
+                            fontSize: 12),
+                      ),
+                      if (resource.academicYear != null) ...[
+                        const Text(' • ',
+                            style: TextStyle(
+                                color: AdminColors.grey600, fontSize: 12)),
+                        Text(resource.academicYear!,
+                            style: const TextStyle(
+                                fontFamily: 'Nunito',
+                                color: AdminColors.grey600,
+                                fontSize: 12)),
+                      ],
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+            // Status badge
+            Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: _statusColor().withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                _statusLabel(),
+                style: TextStyle(
+                  fontFamily: 'Nunito',
+                  color: _statusColor(),
+                  fontWeight: FontWeight.w700,
+                  fontSize: 12,
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            // Edit button
+            OutlinedButton.icon(
+              onPressed: onEdit,
+              icon: const Icon(Icons.edit_outlined,
+                  size: 16, color: AdminColors.primary),
+              label: const Text('Edit',
+                  style: TextStyle(color: AdminColors.primary)),
+              style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: AdminColors.primary)),
+            ),
+          ],
+        ),
       ),
     );
   }

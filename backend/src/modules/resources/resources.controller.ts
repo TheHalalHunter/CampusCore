@@ -38,11 +38,26 @@ export class ResourcesController {
   // Static sub-paths must come BEFORE :id to avoid route shadowing
   @UseGuards(RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.MODERATOR)
+  @Get('admin/all')
+  @ApiOperation({ summary: 'Get all resources regardless of status (admin/moderator only)' })
+  findAll() {
+    return this.service.findAll();
+  }
+
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.MODERATOR)
   @Patch(':id')
   @ApiOperation({ summary: 'Update resource metadata (admin/moderator only)' })
   update(
     @Param('id') id: string,
-    @Body() body: { title?: string; courseId?: string; type?: string; description?: string; academicYear?: string },
+    @Body()
+    body: {
+      title?: string;
+      courseId?: string;
+      type?: string;
+      description?: string;
+      academicYear?: string;
+    },
   ) {
     return this.service.updateMetadata(id, body);
   }

@@ -32,15 +32,28 @@ final questionsProvider = FutureProvider.autoDispose<List<Map<String, dynamic>>>
   final resp = await api.get(ApiConstants.questions, params: {'limit': 30});
   final data = resp.data['data'] ?? resp.data;
   // Handle shaped response: { questions: [...], total: N }
+  List<Map<String, dynamic>> questions;
   if (data is Map && data['questions'] is List) {
-    return (data['questions'] as List).cast<Map<String, dynamic>>();
+    questions = (data['questions'] as List).cast<Map<String, dynamic>>();
+  } else if (data is List && data.isNotEmpty && data[0] is List) {
+    // Handle tuple fallback: [[...questions], count]
+    questions = (data[0] as List).cast<Map<String, dynamic>>();
+  } else if (data is List) {
+    questions = data.cast<Map<String, dynamic>>();
+  } else {
+    return [];
   }
-  // Handle tuple fallback: [[...questions], count]
-  if (data is List && data.isNotEmpty && data[0] is List) {
-    return (data[0] as List).cast<Map<String, dynamic>>();
-  }
-  if (data is List) return data.cast<Map<String, dynamic>>();
-  return [];
+
+  // Sort pinned questions to the top, preserving relative order within groups.
+  final sorted = [...questions];
+  sorted.sort((a, b) {
+    final aPinned = a['isPinned'] == true || a['is_pinned'] == true;
+    final bPinned = b['isPinned'] == true || b['is_pinned'] == true;
+    if (aPinned && !bPinned) return -1;
+    if (!aPinned && bPinned) return 1;
+    return 0;
+  });
+  return sorted;
 });
 
 // ── Screen ────────────────────────────────────────────────────────────────────
@@ -392,6 +405,7 @@ class _QuestionTile extends StatelessWidget {
     final avatarUrl   = author?['avatar']?.toString();
     final initials    = '${firstName.isNotEmpty ? firstName[0] : "S"}${lastName.isNotEmpty ? lastName[0] : ""}';
     final tags        = question['tags'] as List?        ?? [];
+    final isPinned    = question['isPinned'] == true || question['is_pinned'] == true;
 
     return Padding(
       padding: EdgeInsets.all(isMobile ? 12 : 16),
@@ -432,6 +446,8 @@ class _QuestionTile extends StatelessWidget {
           Wrap(
             spacing: 6, runSpacing: 4,
             children: [
+              if (isPinned)
+                const _Badge(icon: Icons.push_pin, label: 'Pinned', color: AppColors.warning),
               _Badge(icon: Icons.comment_outlined, label: '$answerCount ${answerCount == 1 ? "answer" : "answers"}', color: AppColors.primary),
               _Badge(icon: Icons.visibility_outlined, label: '$viewCount views', color: AppColors.success),
               ...tags.take(2).map((t) => _Badge(label: t.toString(), color: AppColors.cyan)),

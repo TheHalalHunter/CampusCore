@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Patch,
+  Delete,
   Param,
   Body,
   Query,
@@ -18,6 +19,7 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { Public } from '../../common/decorators/public.decorator';
 import { UserRole } from '../users/enums/user-role.enum';
 import { User } from '../users/entities/user.entity';
 
@@ -154,5 +156,33 @@ export class CommunityController {
   @ApiOperation({ summary: 'Downvote an answer' })
   downvoteAnswer(@Param('id') id: string) {
     return this.service.downvoteAnswer(id);
+  }
+
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.MODERATOR)
+  @Patch('questions/:id/pin')
+  @ApiOperation({ summary: 'Pin a question (admin/moderator only)' })
+  pinQuestion(@Param('id') id: string) {
+    return this.service.pinQuestion(id);
+  }
+
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.MODERATOR)
+  @Patch('questions/:id/unpin')
+  @ApiOperation({ summary: 'Unpin a question (admin/moderator only)' })
+  unpinQuestion(@Param('id') id: string) {
+    return this.service.unpinQuestion(id);
+  }
+
+  @Delete('questions/:id')
+  @ApiOperation({ summary: 'Delete a question (admin/moderator deletes any; author deletes own)' })
+  deleteQuestion(@Param('id') id: string, @CurrentUser() user: User) {
+    return this.service.deleteQuestion(id, user.id, user.role);
+  }
+
+  @Delete('answers/:id')
+  @ApiOperation({ summary: 'Delete an answer (admin/moderator deletes any; author deletes own)' })
+  deleteAnswer(@Param('id') id: string, @CurrentUser() user: User) {
+    return this.service.deleteAnswer(id, user.id, user.role);
   }
 }

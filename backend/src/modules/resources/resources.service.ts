@@ -131,11 +131,27 @@ export class ResourcesService {
     });
   }
 
+  /** All resources for admin view */
+  findAll(): Promise<Resource[]> {
+    return this.repo.find({
+      order: { createdAt: 'DESC' },
+    });
+  }
+
   async incrementDownload(id: string): Promise<void> {
     await this.repo.increment({ id }, 'downloadCount', 1);
   }
 
-  async updateMetadata(id: string, data: { title?: string; courseId?: string; type?: string; description?: string; academicYear?: string }): Promise<Resource> {
+  async updateMetadata(
+    id: string,
+    data: {
+      title?: string;
+      courseId?: string;
+      type?: string;
+      description?: string;
+      academicYear?: string;
+    },
+  ): Promise<Resource> {
     const resource = await this.findOne(id);
     if (data.title) resource.title = data.title;
     if (data.courseId) resource.courseId = data.courseId;

@@ -45,6 +45,7 @@ class _QuestionDetailScreenState
   bool _submitting  = false;
   bool _voting      = false;
   bool _resolving   = false;
+  bool _deleting    = false;
 
   @override
   void dispose() {
@@ -90,10 +91,10 @@ class _QuestionDetailScreenState
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+          const SnackBar(
             content: Text(
               'Could not mark as resolved. Please try again.',
-              style: const TextStyle(fontFamily: 'Nunito'),
+              style: TextStyle(fontFamily: 'Nunito'),
             ),
             backgroundColor: AppColors.error,
           ),
@@ -101,6 +102,30 @@ class _QuestionDetailScreenState
       }
     } finally {
       if (mounted) setState(() => _resolving = false);
+    }
+  }
+
+  // ── Delete question handler ───────────────────────────────────────────────
+
+  Future<void> _deleteQuestion() async {
+    setState(() => _deleting = true);
+    try {
+      final api = ref.read(apiClientProvider);
+      await api.delete('/community/questions/${widget.questionId}');
+      if (mounted) context.go('/community');
+    } catch (e) {
+      if (mounted) {
+        setState(() => _deleting = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Could not delete question. Please try again.',
+              style: TextStyle(fontFamily: 'Nunito'),
+            ),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
     }
   }
 
@@ -129,10 +154,10 @@ class _QuestionDetailScreenState
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+          const SnackBar(
             content: Text(
               'Could not post your answer. Check your connection and try again.',
-              style: const TextStyle(fontFamily: 'Nunito'),
+              style: TextStyle(fontFamily: 'Nunito'),
             ),
             backgroundColor: AppColors.error,
           ),
@@ -237,18 +262,20 @@ class _QuestionDetailScreenState
           );
           final currentUser = ref.read(currentUserProvider);
           return _QuestionDetailBody(
-            question:       question,
-            questionId:     widget.questionId,
-            currentUser:    currentUser,
-            isMobile:       isMobile,
-            padding:        padding,
-            answerCtrl:     _answerCtrl,
-            formKey:        _formKey,
-            submitting:     _submitting,
-            resolving:      _resolving,
-            onSubmitAnswer: _submitAnswer,
-            onVote:         (endpoint) => _vote(endpoint: endpoint),
-            onResolve:      _resolve,
+            question:         question,
+            questionId:       widget.questionId,
+            currentUser:      currentUser,
+            isMobile:         isMobile,
+            padding:          padding,
+            answerCtrl:       _answerCtrl,
+            formKey:          _formKey,
+            submitting:       _submitting,
+            resolving:        _resolving,
+            deleting:         _deleting,
+            onSubmitAnswer:   _submitAnswer,
+            onVote:           (endpoint) => _vote(endpoint: endpoint),
+            onResolve:        _resolve,
+            onDelete:         _deleteQuestion,
           );
         },
       ),
@@ -268,9 +295,11 @@ class _QuestionDetailBody extends StatelessWidget {
   final GlobalKey<FormState> formKey;
   final bool submitting;
   final bool resolving;
+  final bool deleting;
   final VoidCallback onSubmitAnswer;
   final void Function(String endpoint) onVote;
   final VoidCallback onResolve;
+  final VoidCallback onDelete;
 
   const _QuestionDetailBody({
     required this.question,
@@ -282,9 +311,11 @@ class _QuestionDetailBody extends StatelessWidget {
     required this.formKey,
     required this.submitting,
     required this.resolving,
+    required this.deleting,
     required this.onSubmitAnswer,
     required this.onVote,
     required this.onResolve,
+    required this.onDelete,
   });
 
   @override
@@ -318,6 +349,14 @@ class _QuestionDetailBody extends StatelessWidget {
 
     final isOwner    = currentUser != null && currentUser!.id == authorId;
     final canResolve = isOwner && !isResolved;
+
+    // Determine if the current user can delete the question
+    final userRole   = currentUser?.role ?? '';
+    final canDelete  = currentUser != null && (
+      currentUser!.id == authorId ||
+      userRole == 'admin' ||
+      userRole == 'moderator'
+    );
 
     return SingleChildScrollView(
       padding: padding,
@@ -374,6 +413,45 @@ class _QuestionDetailBody extends StatelessWidget {
                           ],
                         ),
                       ),
+                      // Delete button for author / admin / moderator
+                      if (canDelete)
+                        IconButton(
+                          icon: const Icon(Icons.delete_outline,
+                              color: AppColors.error, size: 20),
+                          tooltip: 'Delete question',
+                          onPressed: deleting
+                              ? null
+                              : () async {
+                                  final confirmed = await showDialog<bool>(
+                                    context: context,
+                                    builder: (_) => AlertDialog(
+                                      title: const Text('Delete Question'),
+                                      content: const Text(
+                                        'Are you sure you want to delete this question? This cannot be undone.',
+                                        style: TextStyle(
+                                            fontFamily: 'Nunito'),
+                                      ),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () =>
+                                              Navigator.pop(context, false),
+                                          child: const Text('Cancel'),
+                                        ),
+                                        ElevatedButton(
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: AppColors.error,
+                                            foregroundColor: Colors.white,
+                                          ),
+                                          onPressed: () =>
+                                              Navigator.pop(context, true),
+                                          child: const Text('Delete'),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                  if (confirmed == true) onDelete();
+                                },
+                        ),
                     ],
                   ),
                   SizedBox(height: isMobile ? 12 : 16),
@@ -525,10 +603,11 @@ class _QuestionDetailBody extends StatelessWidget {
               itemCount: answers.length,
               separatorBuilder: (_, __) => const SizedBox(height: 8),
               itemBuilder: (_, i) => _AnswerCard(
-                answer:     answers[i],
-                questionId: questionId,
-                isMobile:   isMobile,
-                onVote:     onVote,
+                answer:      answers[i],
+                questionId:  questionId,
+                isMobile:    isMobile,
+                onVote:      onVote,
+                currentUser: currentUser,
               ),
             ),
 
@@ -611,31 +690,99 @@ class _QuestionDetailBody extends StatelessWidget {
 
 // ── Answer card ───────────────────────────────────────────────────────────────
 
-class _AnswerCard extends StatelessWidget {
+class _AnswerCard extends ConsumerStatefulWidget {
   final Map<String, dynamic> answer;
   final String questionId;
   final bool isMobile;
   final void Function(String endpoint) onVote;
+  final AppUser? currentUser;
 
   const _AnswerCard({
     required this.answer,
     required this.questionId,
     required this.isMobile,
     required this.onVote,
+    required this.currentUser,
   });
 
   @override
+  ConsumerState<_AnswerCard> createState() => _AnswerCardState();
+}
+
+class _AnswerCardState extends ConsumerState<_AnswerCard> {
+  bool _deleting = false;
+
+  Future<void> _deleteAnswer(BuildContext context) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final answerId = widget.answer['id']?.toString() ?? '';
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Delete Answer'),
+        content: const Text(
+          'Are you sure you want to delete this answer? This cannot be undone.',
+          style: TextStyle(fontFamily: 'Nunito'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.error,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    setState(() => _deleting = true);
+    try {
+      final api = ref.read(apiClientProvider);
+      await api.delete(
+          '/community/answers/$answerId');
+      ref.invalidate(questionDetailProvider(widget.questionId));
+    } catch (e) {
+      if (mounted) {
+        setState(() => _deleting = false);
+        messenger.showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Could not delete answer. Please try again.',
+              style: TextStyle(fontFamily: 'Nunito'),
+            ),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final body       = answer['body']?.toString()        ?? '';
-    final upvotes    = answer['upvoteCount'] as int?     ??
-                       answer['upvotes']     as int?     ?? 0;
-    final answerId   = answer['id']?.toString()          ?? '';
-    final author     = answer['author']                  ?? answer['answeredBy'];
-    final firstName  = author?['firstName']?.toString()  ?? 'Student';
-    final lastName   = author?['lastName']?.toString()   ?? '';
+    final body       = widget.answer['body']?.toString()        ?? '';
+    final upvotes    = widget.answer['upvoteCount'] as int?     ??
+                       widget.answer['upvotes']     as int?     ?? 0;
+    final answerId   = widget.answer['id']?.toString()          ?? '';
+    final author     = widget.answer['author']                  ?? widget.answer['answeredBy'];
+    final authorId   = author?['id']?.toString()                ?? '';
+    final firstName  = author?['firstName']?.toString()         ?? 'Student';
+    final lastName   = author?['lastName']?.toString()          ?? '';
     final initials   =
         '${firstName.isNotEmpty ? firstName[0] : "S"}${lastName.isNotEmpty ? lastName[0] : ""}';
-    final createdAt  = answer['createdAt']?.toString()   ?? '';
+    final createdAt  = widget.answer['createdAt']?.toString()   ?? '';
+
+    // Determine if current user can delete this answer
+    final userRole   = widget.currentUser?.role ?? '';
+    final canDelete  = widget.currentUser != null && (
+      widget.currentUser!.id == authorId ||
+      userRole == 'admin' ||
+      userRole == 'moderator'
+    );
 
     return Card(
       shape: RoundedRectangleBorder(
@@ -643,28 +790,28 @@ class _AnswerCard extends StatelessWidget {
         side: const BorderSide(color: AppColors.border, width: 0.8),
       ),
       child: Padding(
-        padding: EdgeInsets.all(isMobile ? 12 : 16),
+        padding: EdgeInsets.all(widget.isMobile ? 12 : 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header: author info
+            // Header: author info + delete button
             Row(
               children: [
                 CircleAvatar(
-                  radius: isMobile ? 14 : 17,
+                  radius: widget.isMobile ? 14 : 17,
                   backgroundColor:
                       AppColors.primary.withValues(alpha: 0.12),
                   child: Text(
                     initials.toUpperCase(),
                     style: TextStyle(
                       color: AppColors.primary,
-                      fontSize: isMobile ? 10 : 12,
+                      fontSize: widget.isMobile ? 10 : 12,
                       fontWeight: FontWeight.w700,
                       fontFamily: 'Nunito',
                     ),
                   ),
                 ),
-                SizedBox(width: isMobile ? 8 : 10),
+                SizedBox(width: widget.isMobile ? 8 : 10),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -673,7 +820,7 @@ class _AnswerCard extends StatelessWidget {
                         '$firstName $lastName'.trim(),
                         style: TextStyle(
                           fontWeight: FontWeight.w700,
-                          fontSize: isMobile ? 11 : 13,
+                          fontSize: widget.isMobile ? 11 : 13,
                           fontFamily: 'Nunito',
                           color: AppColors.textPrimary,
                         ),
@@ -690,10 +837,26 @@ class _AnswerCard extends StatelessWidget {
                     ],
                   ),
                 ),
+                if (canDelete)
+                  _deleting
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2, color: AppColors.error),
+                        )
+                      : IconButton(
+                          icon: const Icon(Icons.delete_outline,
+                              color: AppColors.error, size: 18),
+                          tooltip: 'Delete answer',
+                          onPressed: () => _deleteAnswer(context),
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                        ),
               ],
             ),
 
-            SizedBox(height: isMobile ? 10 : 14),
+            SizedBox(height: widget.isMobile ? 10 : 14),
 
             // Answer body
             Text(
@@ -706,7 +869,7 @@ class _AnswerCard extends StatelessWidget {
               ),
             ),
 
-            SizedBox(height: isMobile ? 10 : 14),
+            SizedBox(height: widget.isMobile ? 10 : 14),
             const Divider(),
             const SizedBox(height: 6),
 
@@ -716,14 +879,15 @@ class _AnswerCard extends StatelessWidget {
                 _VoteButton(
                   icon: Icons.thumb_up_outlined,
                   label: '$upvotes',
-                  onTap: () => onVote(ApiConstants.upvoteAnswer(answerId)),
+                  onTap: () =>
+                      widget.onVote(ApiConstants.upvoteAnswer(answerId)),
                 ),
                 const SizedBox(width: 8),
                 _VoteButton(
                   icon: Icons.thumb_down_outlined,
                   label: '',
                   onTap: () =>
-                      onVote(ApiConstants.downvoteAnswer(answerId)),
+                      widget.onVote(ApiConstants.downvoteAnswer(answerId)),
                 ),
               ],
             ),
