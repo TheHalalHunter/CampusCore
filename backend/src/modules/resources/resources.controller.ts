@@ -1,4 +1,5 @@
 import { Controller, Get, Post, Patch, Param, Body, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Param, Body, Query, UseGuards, Req } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { ResourcesService } from './resources.service';
 import { ResourceStatus } from './entities/resource.entity';
@@ -10,13 +11,17 @@ import { UserRole } from '../users/enums/user-role.enum';
 import { User } from '../users/entities/user.entity';
 import { Public } from '../../common/decorators/public.decorator';
 import { SubmitResourceDto } from './dto/submit-resource.dto';
+import { AuditService } from '../audit/audit.service';
 
 @ApiTags('Resources')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
 @Controller('resources')
 export class ResourcesController {
-  constructor(private readonly service: ResourcesService) {}
+  constructor(
+    private readonly service: ResourcesService,
+    private readonly audit: AuditService,
+  ) {}
 
   @Public()
   @Get()
@@ -94,7 +99,15 @@ export class ResourcesController {
     @CurrentUser() reviewer: User,
     @Body('status') status: ResourceStatus.APPROVED | ResourceStatus.REJECTED,
     @Body('reviewNote') reviewNote?: string,
+    @Req() req?: any,
   ) {
-    return this.service.review(id, reviewer, status, reviewNote);
+    const result = this.service.review(id, reviewer, status, reviewNote);
+    result.then(() => this.audit.log({
+      actorId: reviewer.id, actorRole: reviewer.role,
+      action: status === ResourceStatus.APPROVED ? 'RESOURCE_APPROVED' : 'RESOURCE_REJECTED',
+      targetType: 'resource', targetId: id,
+      details: { reviewNote }, ipAddress: req?.ip,
+    })).catch(() => {});
+    return result;
   }
 }

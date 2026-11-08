@@ -24,6 +24,7 @@ import { DiscussionsModule } from './modules/discussions/discussions.module';
 import { GpaModule } from './modules/gpa/gpa.module';
 import { LibraryModule } from './modules/library/library.module';
 import { StudyGroupsModule } from './modules/study-groups/study-groups.module';
+import { AuditModule } from './modules/audit/audit.module';
 
 @Module({
   imports: [
@@ -94,6 +95,7 @@ import { StudyGroupsModule } from './modules/study-groups/study-groups.module';
     GpaModule,
     LibraryModule,
     StudyGroupsModule,
+    AuditModule,
   ],
   providers: [
     {
