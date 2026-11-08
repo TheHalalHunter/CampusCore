@@ -3,16 +3,6 @@ allprojects {
         google()
         mavenCentral()
     }
-    // Force all subprojects to compile against SDK 36
-    subprojects {
-        afterEvaluate { project ->
-            if (project.hasProperty('android')) {
-                project.android {
-                    if (compileSdkVersion < 36) compileSdkVersion 36
-                }
-            }
-        }
-    }
 }
 
 rootProject.buildDir = "../build"
