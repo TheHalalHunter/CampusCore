@@ -5,27 +5,6 @@ allprojects {
     }
 }
 
-// Fix kotlin-android plugin issue for AGP 9+ across all subprojects
-subprojects {
-    afterEvaluate {
-        if (it.plugins.hasPlugin("com.android.library") || it.plugins.hasPlugin("com.android.application")) {
-            it.android {
-                if (it.compileSdkVersion == null || it.compileSdkVersion < 36) {
-                    compileSdkVersion 36
-                }
-            }
-        }
-        // Remove kotlin-android plugin if present (not needed with AGP 9+)
-        it.configurations.configureEach {
-            resolutionStrategy.eachDependency { details ->
-                if (details.requested.group == 'org.jetbrains.kotlin') {
-                    details.useVersion '2.0.0'
-                }
-            }
-        }
-    }
-}
-
 rootProject.buildDir = "../build"
 
 subprojects {
