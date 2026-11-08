@@ -25,7 +25,6 @@ if (flutterVersionName == null) {
 android {
     namespace "com.campuscore.app"
     compileSdk 36
-    ndkVersion flutter.ndkVersion
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
