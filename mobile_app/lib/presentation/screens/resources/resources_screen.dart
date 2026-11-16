@@ -10,8 +10,8 @@ import '../../widgets/common/error_view.dart';
 import '../../widgets/common/offline_banner.dart';
 
 class ResourcesScreen extends ConsumerStatefulWidget {
-  final String courseId;
-  const ResourcesScreen({super.key, required this.courseId});
+  final String? courseId;
+  const ResourcesScreen({super.key, this.courseId});
 
   @override
   ConsumerState<ResourcesScreen> createState() => _ResourcesScreenState();
@@ -95,7 +95,9 @@ class _ResourcesScreenState extends ConsumerState<ResourcesScreen> {
           // Resources list
           Expanded(
             child: OfflineBanner(
-              cacheKey: 'resources_course_${widget.courseId}',
+              cacheKey: (widget.courseId == null || widget.courseId!.isEmpty)
+              ? 'resources_all'
+              : 'resources_course_${widget.courseId}',
               child: resourcesAsync.when(
                 loading: () => const Center(child: CircularProgressIndicator()),
                 error: (e, _) => ErrorView(

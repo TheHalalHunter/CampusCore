@@ -27,7 +27,10 @@ import '../../presentation/screens/profile/public_profile_screen.dart';
 import '../../presentation/screens/profile/connections_screen.dart';
 import '../../presentation/screens/notifications/notifications_screen.dart';
 import '../../presentation/screens/search/search_screen.dart';
+import '../../presentation/screens/leaderboard/leaderboard_screen.dart';
+import '../../presentation/screens/study_groups/study_groups_screen.dart';
 import '../../presentation/providers/user_provider.dart';
+import '../../app/theme/app_theme.dart';
 
 export 'app_router.dart';
 
@@ -83,7 +86,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 
       // Full-screen routes (no bottom nav)
       GoRoute(path: AppRoutes.resources, builder: (_, state) {
-        final courseId = state.uri.queryParameters['courseId'] ?? '';
+        final courseId = state.uri.queryParameters['courseId'];
         return ResourcesScreen(courseId: courseId);
       }),
       GoRoute(
@@ -99,6 +102,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(path: AppRoutes.search,          builder: (_, __) => const SearchScreen()),
       GoRoute(path: AppRoutes.discussions,     builder: (_, __) => const DiscussionsScreen()),
       GoRoute(path: AppRoutes.connections,     builder: (_, __) => const ConnectionsScreen()),
+      GoRoute(path: AppRoutes.leaderboard,     builder: (_, __) => const LeaderboardScreen()),
+      GoRoute(path: AppRoutes.studyGroups,     builder: (_, __) => const StudyGroupsScreen()),
       GoRoute(
         path: '${AppRoutes.discussions}/:threadId',
         builder: (_, state) => ThreadDetailScreen(threadId: state.pathParameters['threadId']!),
@@ -133,10 +138,12 @@ class AppRoutes {
   static const String discussions    = '/discussions';
   static const String connections    = '/connections';
   static const String publicProfile  = '/profile/:userId';
+  static const String leaderboard    = '/leaderboard';
+  static const String studyGroups    = '/study-groups';
 }
 
-/// Bottom navigation shell
-class MainShell extends StatelessWidget {
+/// Bottom navigation shell with AppBar and Drawer
+class MainShell extends ConsumerWidget {
   final Widget child;
   const MainShell({super.key, required this.child});
 
@@ -150,9 +157,35 @@ class MainShell extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final selectedIndex = _selectedIndex(context);
     return Scaffold(
+      appBar: AppBar(
+        backgroundColor: AppColors.navyDark,
+        foregroundColor: Colors.white,
+        title: const Row(
+          children: [
+            Icon(Icons.school, color: Colors.white),
+            SizedBox(width: 8),
+            Text(
+              'CampusCore',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
+                fontSize: 18,
+                fontFamily: 'Nunito',
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.search, color: Colors.white),
+            onPressed: () => context.push(AppRoutes.search),
+          ),
+        ],
+      ),
+      drawer: const _AppDrawer(),
       body: child,
       bottomNavigationBar: NavigationBar(
         selectedIndex: selectedIndex,
@@ -173,6 +206,90 @@ class MainShell extends StatelessWidget {
           NavigationDestination(icon: Icon(Icons.person_outline), selectedIcon: Icon(Icons.person), label: 'Profile'),
         ],
       ),
+    );
+  }
+}
+
+class _AppDrawer extends ConsumerWidget {
+  const _AppDrawer();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Drawer(
+      child: Column(
+        children: [
+          const DrawerHeader(
+            decoration: BoxDecoration(color: AppColors.navyDark),
+            child: Row(
+              children: [
+                Icon(Icons.school, color: Colors.white, size: 32),
+                SizedBox(width: 12),
+                Text(
+                  'CampusCore',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 20,
+                    fontFamily: 'Nunito',
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: ListView(
+              padding: EdgeInsets.zero,
+              children: [
+                _DrawerItem(icon: Icons.home_outlined,              label: 'Home',          route: AppRoutes.home,          drawerContext: context),
+                _DrawerItem(icon: Icons.menu_book_outlined,         label: 'Courses',       route: AppRoutes.courses,       drawerContext: context),
+                _DrawerItem(icon: Icons.folder_outlined,            label: 'Resources',     route: AppRoutes.resources,     drawerContext: context),
+                _DrawerItem(icon: Icons.forum_outlined,             label: 'Community',     route: AppRoutes.community,     drawerContext: context),
+                _DrawerItem(icon: Icons.auto_awesome_outlined,      label: 'AI Assistant',  route: AppRoutes.aiAssistant,   drawerContext: context),
+                _DrawerItem(icon: Icons.trending_up_outlined,       label: 'Progress',      route: AppRoutes.progress,      drawerContext: context),
+                _DrawerItem(icon: Icons.leaderboard_outlined,       label: 'Leaderboard',   route: AppRoutes.leaderboard,   drawerContext: context),
+                _DrawerItem(icon: Icons.bookmark_outline,           label: 'Library',       route: AppRoutes.library,       drawerContext: context),
+                _DrawerItem(icon: Icons.groups_outlined,            label: 'Study Groups',  route: AppRoutes.studyGroups,   drawerContext: context),
+                _DrawerItem(icon: Icons.people_outline,             label: 'Connections',   route: AppRoutes.connections,   drawerContext: context),
+                _DrawerItem(icon: Icons.notifications_outlined,     label: 'Notifications', route: AppRoutes.notifications, drawerContext: context),
+                _DrawerItem(icon: Icons.person_outline,             label: 'Profile',       route: AppRoutes.profile,       drawerContext: context),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DrawerItem extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String route;
+  final BuildContext drawerContext;
+
+  const _DrawerItem({
+    required this.icon,
+    required this.label,
+    required this.route,
+    required this.drawerContext,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      leading: Icon(icon, color: AppColors.navyMid),
+      title: Text(
+        label,
+        style: const TextStyle(
+          fontFamily: 'Nunito',
+          fontWeight: FontWeight.w600,
+          color: AppColors.textPrimary,
+        ),
+      ),
+      onTap: () {
+        Navigator.of(drawerContext).pop(); // close drawer
+        drawerContext.go(route);
+      },
     );
   }
 }

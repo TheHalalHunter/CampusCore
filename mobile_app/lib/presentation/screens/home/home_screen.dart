@@ -5,7 +5,6 @@ import '../../../app/theme/app_theme.dart';
 import '../../../app/router/app_router.dart';
 import '../../providers/user_provider.dart';
 import '../../providers/courses_provider.dart';
-import '../../providers/notifications_provider.dart';
 import '../../providers/department_provider.dart';
 import '../../providers/community_provider.dart';
 
@@ -15,76 +14,11 @@ class HomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final userAsync = ref.watch(currentUserProvider);
-    final unreadAsync = ref.watch(unreadCountProvider);
 
     return Scaffold(
       backgroundColor: AppColors.background,
       body: CustomScrollView(
         slivers: [
-          // App bar
-          SliverAppBar(
-            floating: true,
-            backgroundColor: AppColors.surface,
-            title: const Row(
-              children: [
-                Icon(Icons.school, color: AppColors.primary),
-                SizedBox(width: 8),
-                Text(
-                  'CampusCore',
-                  style: TextStyle(
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 20,
-                  ),
-                ),
-              ],
-            ),
-            actions: [
-              // Search
-              IconButton(
-                icon: const Icon(Icons.search, color: AppColors.textPrimary),
-                tooltip: 'Search',
-                onPressed: () => context.push(AppRoutes.search),
-              ),
-              // Notification bell with unread badge
-              Stack(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.notifications_outlined,
-                        color: AppColors.textPrimary),
-                    onPressed: () => context.push(AppRoutes.notifications),
-                  ),
-                  unreadAsync.when(
-                    data: (count) => count > 0
-                        ? Positioned(
-                            right: 8,
-                            top: 8,
-                            child: Container(
-                              padding: const EdgeInsets.all(4),
-                              decoration: const BoxDecoration(
-                                color: AppColors.error,
-                                shape: BoxShape.circle,
-                              ),
-                              child: Text(
-                                count > 9 ? '9+' : '$count',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 9,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                            ),
-                          )
-                        : const SizedBox(),
-                    loading: () => const SizedBox(),
-                    error: (_, __) => const SizedBox(),
-                  ),
-                ],
-              ),
-              const SizedBox(width: 4),
-            ],
-          ),
-
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.all(20),
@@ -119,9 +53,9 @@ class HomeScreen extends ConsumerWidget {
                     loading: () => const Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const _ShimmerBox(width: 200, height: 24),
+                        _ShimmerBox(width: 200, height: 24),
                         SizedBox(height: 6),
-                        const _ShimmerBox(width: 160, height: 16),
+                        _ShimmerBox(width: 160, height: 16),
                       ],
                     ),
                     error: (_, __) => const Text(
@@ -138,35 +72,23 @@ class HomeScreen extends ConsumerWidget {
                   // Quick actions
                   const _SectionHeader(title: 'Quick Actions'),
                   const SizedBox(height: 12),
-                  Row(
+                  GridView.count(
+                    crossAxisCount: 3,
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    crossAxisSpacing: 12,
+                    mainAxisSpacing: 12,
+                    childAspectRatio: 1.0,
                     children: [
-                      _QuickAction(
-                        icon: Icons.auto_awesome,
-                        label: 'AI Tutor',
-                        color: AppColors.accent,
-                        onTap: () => context.push(AppRoutes.aiAssistant),
-                      ),
-                      const SizedBox(width: 16),
-                      _QuickAction(
-                        icon: Icons.calculate,
-                        label: 'GPA Calc',
-                        color: AppColors.info,
-                        onTap: () => context.push(AppRoutes.gpaCalculator),
-                      ),
-                      const SizedBox(width: 16),
-                      _QuickAction(
-                        icon: Icons.trending_up,
-                        label: 'Progress',
-                        color: AppColors.success,
-                        onTap: () => context.push(AppRoutes.progress),
-                      ),
-                      const SizedBox(width: 16),
-                      _QuickAction(
-                        icon: Icons.upload_file,
-                        label: 'Upload',
-                        color: AppColors.primaryLight,
-                        onTap: () => context.push(AppRoutes.uploadResource),
-                      ),
+                      _QuickAction(icon: Icons.auto_awesome,          label: 'AI Tutor',      color: AppColors.amber,        onTap: () => context.push(AppRoutes.aiAssistant)),
+                      _QuickAction(icon: Icons.calculate,             label: 'GPA Calc',      color: AppColors.info,         onTap: () => context.push(AppRoutes.gpaCalculator)),
+                      _QuickAction(icon: Icons.trending_up,           label: 'Progress',      color: AppColors.success,      onTap: () => context.push(AppRoutes.progress)),
+                      _QuickAction(icon: Icons.upload_file,           label: 'Upload',        color: AppColors.primaryLight, onTap: () => context.push(AppRoutes.uploadResource)),
+                      _QuickAction(icon: Icons.folder_outlined,       label: 'Resources',     color: AppColors.cyan,         onTap: () => context.push(AppRoutes.resources)),
+                      _QuickAction(icon: Icons.leaderboard_outlined,  label: 'Leaderboard',   color: AppColors.primary,      onTap: () => context.push(AppRoutes.leaderboard)),
+                      _QuickAction(icon: Icons.groups_outlined,       label: 'Study Groups',  color: AppColors.navyMid,      onTap: () => context.push(AppRoutes.studyGroups)),
+                      _QuickAction(icon: Icons.people_outline,        label: 'Connections',   color: AppColors.secondary,    onTap: () => context.push(AppRoutes.connections)),
+                      _QuickAction(icon: Icons.notifications_outlined, label: 'Notifications', color: AppColors.warning,     onTap: () => context.push(AppRoutes.notifications)),
                     ],
                   ),
                   const SizedBox(height: 28),
@@ -267,7 +189,7 @@ class _RealCoursesList extends StatelessWidget {
             3,
             (_) => const Padding(
                   padding: EdgeInsets.only(bottom: 10),
-                  child: const _ShimmerBox(
+                  child: _ShimmerBox(
                       width: double.infinity, height: 72, radius: 16),
                 )),
       ),
@@ -407,8 +329,8 @@ class _QuickAction extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: 52,
-            height: 52,
+            width: 48,
+            height: 48,
             decoration: BoxDecoration(
               color: color.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(14),
