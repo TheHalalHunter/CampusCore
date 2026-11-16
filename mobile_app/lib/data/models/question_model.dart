@@ -10,6 +10,8 @@ class QuestionModel {
   final int answerCount;
   final bool isResolved;
   final bool isFlagged;
+  final bool isAnnouncement;
+  final bool isPinned;
   final List<String> tags;
   final DateTime createdAt;
 
@@ -25,6 +27,8 @@ class QuestionModel {
     required this.answerCount,
     required this.isResolved,
     required this.isFlagged,
+    required this.isAnnouncement,
+    required this.isPinned,
     required this.tags,
     required this.createdAt,
   });
@@ -44,6 +48,8 @@ class QuestionModel {
           (json['answer_count'] as num?)?.toInt() ?? 0,
       isResolved: json['isResolved'] as bool? ?? json['is_resolved'] as bool? ?? false,
       isFlagged: json['isFlagged'] as bool? ?? json['is_flagged'] as bool? ?? false,
+      isAnnouncement: json['isAnnouncement'] as bool? ?? json['is_announcement'] as bool? ?? false,
+      isPinned: json['isPinned'] as bool? ?? json['is_pinned'] as bool? ?? false,
       tags: (json['tags'] as List?)?.map((t) => t.toString()).toList() ?? [],
       createdAt: DateTime.tryParse(
             json['createdAt'] as String? ?? json['created_at'] as String? ?? '',

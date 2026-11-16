@@ -83,6 +83,12 @@ class ApiConstants {
   static const String gpaCgpa = '/gpa/cgpa';
   static String deleteSemester(String id) => '/gpa/semesters/$id';
 
+  // Study Groups
+  static const String studyGroups   = '/study-groups';
+  static const String studyGroupsMy = '/study-groups/my';
+  static String joinStudyGroup(String id)  => '/study-groups/$id/join';
+  static String leaveStudyGroup(String id) => '/study-groups/$id/leave';
+
   // Personal Library
   static const String library = '/library';
   static String libraryRemove(String resourceId) => '/library/$resourceId';

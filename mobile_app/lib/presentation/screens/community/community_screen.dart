@@ -234,6 +234,15 @@ class _QATab extends ConsumerWidget {
       );
     }
 
+    // Sort: announcements first, then pinned, then rest
+    final sortedItems = [...paginated.items]..sort((a, b) {
+        if (a.isAnnouncement && !b.isAnnouncement) return -1;
+        if (!a.isAnnouncement && b.isAnnouncement) return 1;
+        if (a.isPinned && !b.isPinned) return -1;
+        if (!a.isPinned && b.isPinned) return 1;
+        return 0;
+      });
+
     return RefreshIndicator(
       onRefresh: () => ref
           .read(paginatedQuestionsProvider.notifier)
@@ -243,14 +252,14 @@ class _QATab extends ConsumerWidget {
       color: AppColors.primary,
       child: LoadMoreList(
         padding: const EdgeInsets.all(16),
-        itemCount: paginated.items.length,
+        itemCount: sortedItems.length,
         separatorBuilder: (_, __) => const SizedBox(height: 8),
         isLoadingMore: paginated.isLoadingMore,
         hasMore: paginated.hasMore,
         onLoadMore: () => ref
             .read(paginatedQuestionsProvider.notifier)
             .load(level: selectedLevel == 'All' ? null : selectedLevel),
-        itemBuilder: (_, i) => _QuestionCard(question: paginated.items[i]),
+        itemBuilder: (_, i) => _QuestionCard(question: sortedItems[i]),
       ),
     );
   }
@@ -274,6 +283,14 @@ class _QuestionCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              if (question.isAnnouncement || question.isPinned) ...[
+                Wrap(spacing: 6, children: [
+                  if (question.isAnnouncement) const _AnnouncementBadge(),
+                  if (question.isPinned && !question.isAnnouncement)
+                    const _PinnedBadge(),
+                ]),
+                const SizedBox(height: 6),
+              ],
               Row(children: [
                 CircleAvatar(
                   radius: 16,
@@ -384,4 +401,54 @@ class _StatChip extends StatelessWidget {
               fontWeight: FontWeight.w500)),
     ]);
   }
+}
+
+class _AnnouncementBadge extends StatelessWidget {
+  const _AnnouncementBadge();
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+    decoration: BoxDecoration(
+      color: AppColors.amber.withValues(alpha: 0.15),
+      borderRadius: BorderRadius.circular(6),
+    ),
+    child: const Row(mainAxisSize: MainAxisSize.min, children: [
+      Icon(Icons.campaign_outlined, size: 12, color: AppColors.amber),
+      SizedBox(width: 4),
+      Text(
+        'Announcement',
+        style: TextStyle(
+          color: AppColors.amber,
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+          fontFamily: 'Nunito',
+        ),
+      ),
+    ]),
+  );
+}
+
+class _PinnedBadge extends StatelessWidget {
+  const _PinnedBadge();
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+    decoration: BoxDecoration(
+      color: AppColors.warning.withValues(alpha: 0.15),
+      borderRadius: BorderRadius.circular(6),
+    ),
+    child: const Row(mainAxisSize: MainAxisSize.min, children: [
+      Icon(Icons.push_pin, size: 12, color: AppColors.warning),
+      SizedBox(width: 4),
+      Text(
+        'Pinned',
+        style: TextStyle(
+          color: AppColors.warning,
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+          fontFamily: 'Nunito',
+        ),
+      ),
+    ]),
+  );
 }

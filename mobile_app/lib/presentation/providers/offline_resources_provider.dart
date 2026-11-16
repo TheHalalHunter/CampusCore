@@ -5,7 +5,9 @@ import '../../core/constants/api_constants.dart';
 import '../../core/storage/offline_cache.dart';
 
 /// Cache key for a given course's resources.
-String _cacheKey(String courseId) => 'resources_course_$courseId';
+/// When courseId is null or empty, caches all resources.
+String _cacheKey(String? courseId) =>
+    (courseId == null || courseId.isEmpty) ? 'resources_all' : 'resources_course_$courseId';
 
 /// Offline-aware resources provider.
 ///
@@ -15,7 +17,7 @@ String _cacheKey(String courseId) => 'resources_course_$courseId';
 ///   3. If network fails and stale cache exists, return stale data.
 ///   4. If no cache at all, rethrow so the UI can show an error.
 final offlineResourcesProvider =
-    FutureProvider.family<List<ResourceModel>, String>((ref, courseId) async {
+    FutureProvider.family<List<ResourceModel>, String?>((ref, courseId) async {
   final cacheKey = _cacheKey(courseId);
 
   // Return fresh cache without hitting network
@@ -30,9 +32,13 @@ final offlineResourcesProvider =
 
   try {
     final api = ref.read(apiClientProvider);
+    final params = <String, dynamic>{};
+    if (courseId != null && courseId.isNotEmpty) {
+      params['courseId'] = courseId;
+    }
     final response = await api.get(
       ApiConstants.resources,
-      queryParams: {'courseId': courseId},
+      queryParams: params.isNotEmpty ? params : null,
     );
     final data = response.data['data'] ?? response.data;
     final resources = (data as List)
@@ -86,6 +92,6 @@ final offlineCoursesProvider =
 });
 
 /// Manually bust the resource cache for a course (e.g. after upload).
-Future<void> bustResourceCache(String courseId) async {
+Future<void> bustResourceCache(String? courseId) async {
   await OfflineCache.remove(_cacheKey(courseId));
 }
