@@ -73,8 +73,26 @@ class ExplainNotifier extends Notifier<AiResponse> {
   /// {'role': 'assistant', 'content': ...}. Capped at 20 entries (10 turns).
   final List<Map<String, dynamic>> _conversationHistory = [];
 
+  /// Expose history so the screen can persist it to storage.
+  List<Map<String, dynamic>> get conversationHistory =>
+      List.unmodifiable(_conversationHistory);
+
   @override
   AiResponse build() => const AiResponse();
+
+  /// Restore history from persisted storage (e.g. on screen init).
+  void restoreHistory(List<Map<String, dynamic>> messages) {
+    _conversationHistory.clear();
+    _conversationHistory.addAll(messages);
+    // If the last assistant message exists, show it as content
+    final lastAssistant = _conversationHistory.lastWhere(
+        (m) => m['role'] == 'assistant',
+        orElse: () => <String, dynamic>{});
+    final content = lastAssistant['content']?.toString() ?? '';
+    if (content.isNotEmpty) {
+      state = AiResponse(content: content);
+    }
+  }
 
   Future<void> explain(String concept, {String? courseContext}) async {
     state = const AiResponse(isLoading: true);

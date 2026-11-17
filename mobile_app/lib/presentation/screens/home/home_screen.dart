@@ -27,43 +27,87 @@ class HomeScreen extends ConsumerWidget {
                 children: [
                   // Greeting with real user name
                   userAsync.when(
-                    data: (user) => Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Good day, ${user?.firstName ?? 'Scholar'} 👋',
-                          style:
-                              Theme.of(context).textTheme.titleLarge?.copyWith(
+                    data: (user) => Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [
+                            AppColors.navyDark,
+                            AppColors.navyMid,
+                            AppColors.primary,
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              const Icon(Icons.wb_sunny_outlined,
+                                  color: AppColors.amber, size: 22),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'Good day, ${user?.firstName ?? 'Scholar'} 👋',
+                                  style: const TextStyle(
                                     fontWeight: FontWeight.w700,
-                                    color: AppColors.textPrimary,
+                                    fontSize: 20,
+                                    color: Colors.white,
                                   ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          user != null
-                              ? '${user.displayLevel} • ${ref.watch(primaryDepartmentProvider).value?.name ?? 'Loading...'}'
-                              : 'Ready to learn something new today?',
-                          style: const TextStyle(
-                            color: AppColors.textSecondary,
-                            fontSize: 14,
+                                ),
+                              ),
+                            ],
                           ),
+                          const SizedBox(height: 6),
+                          Text(
+                            user != null
+                                ? '${user.displayLevel} • ${ref.watch(primaryDepartmentProvider).value?.name ?? 'Loading...'}'
+                                : 'Ready to learn something new today?',
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    loading: () => Container(
+                      width: double.infinity,
+                      height: 80,
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [AppColors.navyDark, AppColors.primary],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
                         ),
-                      ],
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: const Center(
+                        child: _ShimmerBox(width: 200, height: 20),
+                      ),
                     ),
-                    loading: () => const Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _ShimmerBox(width: 200, height: 24),
-                        SizedBox(height: 6),
-                        _ShimmerBox(width: 160, height: 16),
-                      ],
-                    ),
-                    error: (_, __) => const Text(
-                      'Good day, Scholar 👋',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 20,
-                        color: AppColors.textPrimary,
+                    error: (_, __) => Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [AppColors.navyDark, AppColors.primary],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: const Text(
+                        'Good day, Scholar 👋',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 20,
+                          color: Colors.white,
+                        ),
                       ),
                     ),
                   ),
@@ -325,32 +369,46 @@ class _QuickAction extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: color.withValues(alpha: 0.2)),
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: AppColors.border, width: 0.8),
+          boxShadow: [
+            BoxShadow(
+              color: color.withValues(alpha: 0.08),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
             ),
-            child: Icon(icon, color: color, size: 24),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
+          ],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.14),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, color: color, size: 22),
             ),
-            textAlign: TextAlign.center,
-            maxLines: 2,
-            overflow: TextOverflow.visible,
-          ),
-        ],
+            const SizedBox(height: 8),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
+              ),
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.visible,
+            ),
+          ],
+        ),
       ),
     );
   }

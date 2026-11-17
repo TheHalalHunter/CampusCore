@@ -28,67 +28,140 @@ class ProfileScreen extends ConsumerWidget {
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
+            // ── Avatar + name card ───────────────────────────────────────
             userAsync.when(
-              data: (user) => Column(
-                children: [
-                  CircleAvatar(
+              data: (user) => Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    children: [
+                      // Avatar with edit overlay
+                      GestureDetector(
+                        onTap: () => _showEditSheet(context, ref, user),
+                        child: Stack(
+                          children: [
+                            CircleAvatar(
+                              radius: 48,
+                              backgroundColor: AppColors.primary,
+                              backgroundImage: user?.avatar != null
+                                  ? NetworkImage(user!.avatar!)
+                                  : null,
+                              child: user?.avatar == null
+                                  ? Text(
+                                      user?.firstName
+                                              .substring(0, 1)
+                                              .toUpperCase() ??
+                                          'S',
+                                      style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 36,
+                                          fontWeight: FontWeight.w700))
+                                  : null,
+                            ),
+                            Positioned(
+                              bottom: 0,
+                              right: 0,
+                              child: Container(
+                                width: 28,
+                                height: 28,
+                                decoration: BoxDecoration(
+                                  color: AppColors.primary,
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                      color: Colors.white, width: 2),
+                                ),
+                                child: const Icon(Icons.edit,
+                                    color: Colors.white, size: 14),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      Text(user?.fullName ?? 'Student',
+                          style: const TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 20,
+                              color: AppColors.textPrimary)),
+                      const SizedBox(height: 6),
+                      Text(
+                          '${user?.displayLevel ?? ''} • ${ref.watch(primaryDepartmentProvider).value?.name ?? 'Fisheries & Aquaculture'}',
+                          style: const TextStyle(
+                              color: AppColors.textSecondary, fontSize: 14)),
+                      const SizedBox(height: 10),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 14, vertical: 7),
+                        decoration: BoxDecoration(
+                          color: AppColors.accent.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                              color: AppColors.accent.withValues(alpha: 0.3)),
+                        ),
+                        child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.star,
+                                  color: AppColors.accent, size: 16),
+                              const SizedBox(width: 6),
+                              Text(
+                                  '${user?.reputationPoints ?? 0} reputation points',
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 13,
+                                      color: AppColors.textPrimary)),
+                            ]),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              loading: () => Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(children: [
+                    const CircleAvatar(
+                        radius: 48, backgroundColor: AppColors.grey200),
+                    const SizedBox(height: 14),
+                    Container(
+                        width: 140, height: 20, color: AppColors.grey200),
+                  ]),
+                ),
+              ),
+              error: (_, __) => const Card(
+                child: Padding(
+                  padding: EdgeInsets.all(24),
+                  child: CircleAvatar(
                     radius: 48,
                     backgroundColor: AppColors.primary,
-                    backgroundImage: user?.avatar != null
-                        ? NetworkImage(user!.avatar!)
-                        : null,
-                    child: user?.avatar == null
-                        ? Text(
-                            user?.firstName.substring(0, 1).toUpperCase() ??
-                                'S',
-                            style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 36,
-                                fontWeight: FontWeight.w700))
-                        : null,
+                    child: Icon(Icons.person, size: 48, color: Colors.white),
                   ),
-                  const SizedBox(height: 12),
-                  Text(user?.fullName ?? 'Student',
-                      style: const TextStyle(
-                          fontWeight: FontWeight.w700,
-                          fontSize: 20,
-                          color: AppColors.textPrimary)),
-                  const SizedBox(height: 4),
-                  Text('${user?.displayLevel ?? ''} • ${ref.watch(primaryDepartmentProvider).value?.name ?? 'Fisheries & Aquaculture'}',
-                      style: const TextStyle(
-                          color: AppColors.textSecondary, fontSize: 14)),
-                  const SizedBox(height: 8),
-                  Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                    const Icon(Icons.star, color: AppColors.accent, size: 18),
-                    const SizedBox(width: 4),
-                    Text('${user?.reputationPoints ?? 0} reputation points',
-                        style: const TextStyle(
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.textPrimary)),
-                  ]),
-                ],
-              ),
-              loading: () => Column(children: [
-                const CircleAvatar(
-                    radius: 48, backgroundColor: AppColors.grey200),
-                const SizedBox(height: 12),
-                Container(width: 120, height: 20, color: AppColors.grey200),
-              ]),
-              error: (_, __) => const CircleAvatar(
-                radius: 48,
-                backgroundColor: AppColors.primary,
-                child: Icon(Icons.person, size: 48, color: Colors.white),
+                ),
               ),
             ),
-            const SizedBox(height: 24),
-            const Align(
-              alignment: Alignment.centerLeft,
-              child: Text('Badges',
-                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+
+            const SizedBox(height: 20),
+
+            // ── Badges card ──────────────────────────────────────────────
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Badges',
+                        style: TextStyle(
+                            fontWeight: FontWeight.w700, fontSize: 16)),
+                    const SizedBox(height: 12),
+                    _BadgesSection(),  // ConsumerWidget — cannot be const
+                  ],
+                ),
+              ),
             ),
-            const SizedBox(height: 12),
-            _BadgesSection(),
-            const SizedBox(height: 28),
+
+            const SizedBox(height: 20),
+
+            // ── Navigation card ──────────────────────────────────────────
             Card(
               child: Column(children: [
                 _ProfileTile(Icons.people_outline, 'Connections',
@@ -104,7 +177,9 @@ class ProfileScreen extends ConsumerWidget {
                     () => context.push(AppRoutes.aiAssistant)),
               ]),
             ),
-            const SizedBox(height: 16),
+
+            const SizedBox(height: 20),
+
             OutlinedButton.icon(
               onPressed: () async {
                 await ref.read(authProvider.notifier).signOut();
@@ -120,6 +195,7 @@ class ProfileScreen extends ConsumerWidget {
                     borderRadius: BorderRadius.circular(12)),
               ),
             ),
+            const SizedBox(height: 20),
           ],
         ),
       ),

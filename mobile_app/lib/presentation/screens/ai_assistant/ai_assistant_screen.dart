@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import '../../../app/theme/app_theme.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/constants/api_constants.dart';
 import '../../../core/utils/error_helper.dart';
+import '../../../core/storage/conversation_storage.dart';
 import '../../providers/ai_provider.dart';
 
 class AiAssistantScreen extends ConsumerStatefulWidget {
@@ -17,10 +19,133 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
+  // Conversation state
+  String _currentConvId = '';
+  String _currentTitle = 'New Conversation';
+  bool _titleSet = false;
+  List<Map<String, dynamic>> _conversations = [];
+
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 5, vsync: this);
+    _currentConvId = DateTime.now().millisecondsSinceEpoch.toString();
+    _loadHistory();
+  }
+
+  Future<void> _loadHistory() async {
+    final all = await ConversationStorage.loadAll();
+    final last = await ConversationStorage.loadLast();
+    if (mounted) setState(() => _conversations = all);
+    if (last != null && mounted) {
+      setState(() {
+        _currentConvId =
+            last['id']?.toString() ?? _currentConvId;
+        _currentTitle = last['title']?.toString() ?? 'New Conversation';
+        _titleSet = true;
+      });
+      // Restore messages into explainProvider
+      final messages = (last['messages'] as List? ?? [])
+          .cast<Map<String, dynamic>>();
+      ref.read(explainProvider.notifier).restoreHistory(messages);
+    }
+  }
+
+  Future<void> _saveCurrentConversation() async {
+    final history = ref.read(explainProvider.notifier).conversationHistory;
+    if (history.isEmpty) return;
+    final existing = _conversations.firstWhere(
+      (c) => c['id']?.toString() == _currentConvId,
+      orElse: () => <String, dynamic>{},
+    );
+    final createdAt =
+        existing['createdAt']?.toString() ?? DateTime.now().toIso8601String();
+    final conv = {
+      'id': _currentConvId,
+      'title': _currentTitle,
+      'messages': history,
+      'createdAt': createdAt,
+      'updatedAt': DateTime.now().toIso8601String(),
+    };
+    await ConversationStorage.saveConversation(conv);
+    await ConversationStorage.saveLastId(_currentConvId);
+    final all = await ConversationStorage.loadAll();
+    if (mounted) setState(() => _conversations = all);
+  }
+
+  void _newConversation() {
+    ref.read(explainProvider.notifier).clearHistory();
+    setState(() {
+      _currentConvId = DateTime.now().millisecondsSinceEpoch.toString();
+      _currentTitle = 'New Conversation';
+      _titleSet = false;
+    });
+  }
+
+  void _openConversation(Map<String, dynamic> conv) {
+    final messages =
+        (conv['messages'] as List? ?? []).cast<Map<String, dynamic>>();
+    ref.read(explainProvider.notifier).restoreHistory(messages);
+    setState(() {
+      _currentConvId = conv['id']?.toString() ?? _currentConvId;
+      _currentTitle = conv['title']?.toString() ?? 'Conversation';
+      _titleSet = true;
+    });
+  }
+
+  Future<void> _deleteConversation(String id) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete conversation?'),
+        content: const Text('This cannot be undone.'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancel')),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style:
+                ElevatedButton.styleFrom(backgroundColor: AppColors.error),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    await ConversationStorage.deleteConversation(id);
+    final all = await ConversationStorage.loadAll();
+    if (mounted) setState(() => _conversations = all);
+    if (id == _currentConvId) _newConversation();
+  }
+
+  Future<void> _renameConversation() async {
+    final ctrl = TextEditingController(text: _currentTitle);
+    final result = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Rename Conversation'),
+        content: TextField(
+          controller: ctrl,
+          autofocus: true,
+          decoration: const InputDecoration(labelText: 'Title'),
+          onSubmitted: (v) => Navigator.pop(ctx, v.trim()),
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancel')),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, ctrl.text.trim()),
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+    if (result != null && result.isNotEmpty && mounted) {
+      setState(() => _currentTitle = result);
+      await _saveCurrentConversation();
+    }
   }
 
   @override
@@ -29,18 +154,163 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen>
     super.dispose();
   }
 
+  Widget _buildConversationsList() {
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.fromLTRB(16, 16, 8, 12),
+          color: AppColors.navyDark,
+          child: Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  'Conversations',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 15,
+                  ),
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.add, color: AppColors.coreBlue, size: 20),
+                tooltip: 'New conversation',
+                onPressed: () {
+                  Navigator.pop(context);
+                  _newConversation();
+                },
+                padding: EdgeInsets.zero,
+                constraints:
+                    const BoxConstraints(minWidth: 32, minHeight: 32),
+              ),
+            ],
+          ),
+        ),
+        Expanded(
+          child: _conversations.isEmpty
+              ? const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(24),
+                    child: Text(
+                      'No saved conversations yet.\nStart chatting to build history.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                          color: AppColors.textOnDarkSub, fontSize: 12),
+                    ),
+                  ),
+                )
+              : ListView.builder(
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
+                  itemCount: _conversations.length,
+                  itemBuilder: (_, index) {
+                    final conv = _conversations[index];
+                    final id = conv['id']?.toString() ?? '';
+                    final title =
+                        conv['title']?.toString() ?? 'Conversation';
+                    final updated = DateTime.tryParse(
+                        conv['updatedAt']?.toString() ?? '');
+                    final isActive = id == _currentConvId;
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 2),
+                      decoration: BoxDecoration(
+                        color: isActive
+                            ? AppColors.primary.withValues(alpha: 0.2)
+                            : Colors.transparent,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: ListTile(
+                        dense: true,
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 2),
+                        title: Text(
+                          title,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: isActive
+                                ? Colors.white
+                                : AppColors.textOnDarkSub,
+                            fontSize: 12,
+                            fontWeight: isActive
+                                ? FontWeight.w700
+                                : FontWeight.w500,
+                          ),
+                        ),
+                        subtitle: updated != null
+                            ? Text(
+                                DateFormat('MMM d').format(updated),
+                                style: const TextStyle(
+                                    color: AppColors.textOnDarkSub,
+                                    fontSize: 10),
+                              )
+                            : null,
+                        trailing: IconButton(
+                          icon: const Icon(Icons.delete_outline,
+                              size: 16, color: AppColors.textOnDarkSub),
+                          tooltip: 'Delete',
+                          onPressed: () {
+                            Navigator.pop(context);
+                            _deleteConversation(id);
+                          },
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(
+                              minWidth: 28, minHeight: 28),
+                        ),
+                        onTap: () {
+                          Navigator.pop(context);
+                          if (id != _currentConvId) _openConversation(conv);
+                        },
+                      ),
+                    );
+                  },
+                ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      drawer: Drawer(
+        backgroundColor: AppColors.navyMid,
+        child: _buildConversationsList(),
+      ),
       appBar: AppBar(
-        title: const Row(
+        title: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.auto_awesome, color: AppColors.accent, size: 20),
-            SizedBox(width: 8),
-            Text('AI Study Assistant'),
+            const Icon(Icons.auto_awesome, color: AppColors.accent, size: 20),
+            const SizedBox(width: 8),
+            Flexible(
+              child: GestureDetector(
+                onTap: _renameConversation,
+                child: Text(
+                  _currentTitle,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+                ),
+              ),
+            ),
           ],
         ),
+        actions: [
+          Builder(
+            builder: (ctx) => IconButton(
+              icon: const Icon(Icons.history_outlined,
+                  color: AppColors.coreBlue),
+              tooltip: 'Conversations',
+              onPressed: () => Scaffold.of(ctx).openDrawer(),
+            ),
+          ),
+          TextButton.icon(
+            onPressed: _newConversation,
+            icon: const Icon(Icons.add, color: AppColors.coreBlue, size: 16),
+            label: const Text('New',
+                style: TextStyle(color: AppColors.coreBlue, fontSize: 13)),
+          ),
+        ],
         bottom: TabBar(
           controller: _tabController,
           isScrollable: true,
@@ -59,12 +329,32 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen>
       ),
       body: TabBarView(
         controller: _tabController,
-        children: const [
-          _ExplainTab(),
-          _QuizTab(),
-          _FlashcardsTab(),
-          _SummarizeTab(),
-          _PredictTab(),
+        children: [
+          _ExplainTab(onConversationUpdated: () async {
+            if (!_titleSet) {
+              final history =
+                  ref.read(explainProvider.notifier).conversationHistory;
+              if (history.isNotEmpty) {
+                final firstUser = history.firstWhere(
+                    (m) => m['role'] == 'user',
+                    orElse: () => <String, dynamic>{});
+                final content = firstUser['content']?.toString() ?? '';
+                if (content.isNotEmpty && mounted) {
+                  setState(() {
+                    _currentTitle = content.length > 40
+                        ? '${content.substring(0, 40)}...'
+                        : content;
+                    _titleSet = true;
+                  });
+                }
+              }
+            }
+            await _saveCurrentConversation();
+          }),
+          const _QuizTab(),
+          const _FlashcardsTab(),
+          const _SummarizeTab(),
+          const _PredictTab(),
         ],
       ),
     );
@@ -266,7 +556,8 @@ class _AiErrorCard extends StatelessWidget {
 // ─── EXPLAIN TAB ──────────────────────────────────────────────────────────────
 
 class _ExplainTab extends ConsumerStatefulWidget {
-  const _ExplainTab();
+  final Future<void> Function()? onConversationUpdated;
+  const _ExplainTab({this.onConversationUpdated});
 
   @override
   ConsumerState<_ExplainTab> createState() => _ExplainTabState();
@@ -346,15 +637,16 @@ class _ExplainTabState extends ConsumerState<_ExplainTab> {
             buttonIcon: Icons.auto_awesome,
             controller: _conceptCtrl,
             isLoading: state.isLoading,
-            onSubmit: () {
+            onSubmit: () async {
               final concept = _conceptCtrl.text.trim();
               if (concept.isEmpty) return;
-              ref.read(explainProvider.notifier).explain(
+              await ref.read(explainProvider.notifier).explain(
                     concept,
                     courseContext: _contextCtrl.text.trim().isEmpty
                         ? null
                         : _contextCtrl.text.trim(),
                   );
+              await widget.onConversationUpdated?.call();
             },
           ),
           const SizedBox(height: 12),
@@ -1402,7 +1694,7 @@ class _PredictTabState extends ConsumerState<_PredictTab> {
                       width: 28,
                       height: 28,
                       decoration: BoxDecoration(
-                        color: AppColors.accent.withOpacity(0.1),
+                        color: AppColors.accent.withValues(alpha: 0.1),
                         shape: BoxShape.circle,
                       ),
                       child: Center(

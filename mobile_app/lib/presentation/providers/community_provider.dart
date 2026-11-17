@@ -28,9 +28,26 @@ final questionsProvider = FutureProvider.family<List<QuestionModel>,
   }
 });
 
-// All questions (no filter)
+// All questions (no filter) — parses { data: { questions: [...], total: N } }
 final allQuestionsProvider = FutureProvider<List<QuestionModel>>((ref) async {
-  return ref.watch(questionsProvider((courseId: null, level: null)).future);
+  try {
+    final api = ref.read(apiClientProvider);
+    final response = await api.get(ApiConstants.questions, queryParams: {'limit': 30});
+    final data = response.data['data'] ?? response.data;
+    List raw;
+    if (data is Map && data['questions'] is List) {
+      raw = data['questions'] as List;
+    } else if (data is List && data.length == 2 && data[1] is int) {
+      raw = data[0] as List;
+    } else if (data is List) {
+      raw = data;
+    } else {
+      return [];
+    }
+    return raw.map((q) => QuestionModel.fromJson(q)).toList();
+  } catch (_) {
+    return [];
+  }
 });
 
 // ─── Answers ──────────────────────────────────────────────────────────────────
@@ -96,11 +113,11 @@ class PostQuestionNotifier extends Notifier<AsyncValue<void>> {
       final api = ref.read(apiClientProvider);
       await api.post(ApiConstants.questions, data: {
         'title': title,
-        'body': body,
-        'courseId': courseId,
-        'departmentId': dept?.id,
-        'academicLevel': academicLevel,
-        'tags': tags,
+        if (body.isNotEmpty) 'body': body,
+        if (courseId != null) 'courseId': courseId,
+        if (dept?.id != null) 'departmentId': dept!.id,
+        if (academicLevel != null) 'academicLevel': academicLevel,
+        if (tags.isNotEmpty) 'tags': tags,
       });
       state = const AsyncValue.data(null);
       // Invalidate questions cache
