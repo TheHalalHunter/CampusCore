@@ -480,9 +480,87 @@ class _AppShellState extends ConsumerState<AppShell> {
             ),
           ),
 
-          // Main content
+          // Main content with top bar showing notification bell
           Expanded(
-            child: widget.child,
+            child: Column(
+              children: [
+                // Top bar with notification bell and user avatar
+                Container(
+                  height: 56,
+                  color: AppColors.surface,
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          'CampusCore',
+                          style: TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 13,
+                            fontFamily: 'Nunito',
+                          ),
+                        ),
+                      ),
+                      // Notification bell with badge
+                      Consumer(
+                        builder: (context, ref, _) {
+                          final count = ref
+                              .watch(notifUnreadCountProvider)
+                              .maybeWhen(data: (n) => n, orElse: () => 0);
+                          return Stack(
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.notifications_outlined,
+                                    color: AppColors.textSecondary),
+                                tooltip: 'Notifications',
+                                onPressed: () => context.go('/notifications'),
+                              ),
+                              if (count > 0)
+                                Positioned(
+                                  right: 6,
+                                  top: 6,
+                                  child: Container(
+                                    constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.error,
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Text(
+                                      count > 99 ? '99+' : '$count',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 9,
+                                        fontWeight: FontWeight.w800,
+                                        fontFamily: 'Nunito',
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          );
+                        },
+                      ),
+                      const SizedBox(width: 4),
+                      // User avatar
+                      GestureDetector(
+                        onTap: () => context.go('/profile'),
+                        child: UserAvatar(
+                          avatarUrl: user?.avatarUrl,
+                          initials: user?.initials ?? 'ST',
+                          radius: 16,
+                          fontSize: 12,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                    ],
+                  ),
+                ),
+                const Divider(height: 1, color: AppColors.border),
+                Expanded(child: widget.child),
+              ],
+            ),
           ),
         ],
       ),

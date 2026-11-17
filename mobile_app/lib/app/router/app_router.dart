@@ -183,6 +183,45 @@ class MainShell extends ConsumerWidget {
             icon: const Icon(Icons.search, color: Colors.white),
             onPressed: () => context.push(AppRoutes.search),
           ),
+          // Notification bell with unread badge
+          Stack(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.notifications_outlined, color: Colors.white),
+                tooltip: 'Notifications',
+                onPressed: () => context.push(AppRoutes.notifications),
+              ),
+              Positioned(
+                right: 6,
+                top: 6,
+                child: Consumer(
+                  builder: (_, ref, __) {
+                    final count = ref.watch(notifUnreadCountProvider)
+                        .maybeWhen(data: (n) => n, orElse: () => 0);
+                    if (count == 0) return const SizedBox.shrink();
+                    return Container(
+                      constraints: const BoxConstraints(minWidth: 14, minHeight: 14),
+                      padding: const EdgeInsets.symmetric(horizontal: 3),
+                      decoration: BoxDecoration(
+                        color: AppColors.error,
+                        borderRadius: BorderRadius.circular(7),
+                      ),
+                      child: Text(
+                        count > 99 ? '99+' : '$count',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 8,
+                          fontWeight: FontWeight.w800,
+                          fontFamily: 'Nunito',
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
         ],
       ),
       drawer: const _AppDrawer(),
