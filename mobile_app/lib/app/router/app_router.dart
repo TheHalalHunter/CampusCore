@@ -30,6 +30,7 @@ import '../../presentation/screens/search/search_screen.dart';
 import '../../presentation/screens/leaderboard/leaderboard_screen.dart';
 import '../../presentation/screens/study_groups/study_groups_screen.dart';
 import '../../presentation/providers/user_provider.dart';
+import '../../presentation/providers/notifications_provider.dart';
 import '../../app/theme/app_theme.dart';
 
 export 'app_router.dart';
@@ -196,7 +197,7 @@ class MainShell extends ConsumerWidget {
                 top: 6,
                 child: Consumer(
                   builder: (_, ref, __) {
-                    final count = ref.watch(notifUnreadCountProvider)
+                    final count = ref.watch(unreadCountProvider)
                         .maybeWhen(data: (n) => n, orElse: () => 0);
                     if (count == 0) return const SizedBox.shrink();
                     return Container(
