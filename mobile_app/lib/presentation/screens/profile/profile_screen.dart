@@ -361,8 +361,6 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
       await api.patch(ApiConstants.me, data: {
         'fullName': _nameCtrl.text.trim(),
         if (_phoneCtrl.text.trim().isNotEmpty) 'phone': _phoneCtrl.text.trim(),
-        if (_matricCtrl.text.trim().isNotEmpty)
-          'matricNumber': _matricCtrl.text.trim(),
         if (_selectedLevel != null) 'academicLevel': _selectedLevel,
       });
       widget.ref.invalidate(currentUserProvider);
@@ -406,12 +404,6 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
               controller: _phoneCtrl,
               keyboardType: TextInputType.phone,
               decoration: const InputDecoration(labelText: 'Phone (optional)'),
-            ),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: _matricCtrl,
-              decoration:
-                  const InputDecoration(labelText: 'Matric Number (optional)'),
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
