@@ -41,12 +41,24 @@ final offlineResourcesProvider =
       queryParams: params.isNotEmpty ? params : null,
     );
     final data = response.data['data'] ?? response.data;
-    final resources = (data as List)
+    List resourceList;
+    // Handle TypeORM tuple [[...items], count] or flat list
+    if (data is List && data.isNotEmpty && data[0] is List) {
+      resourceList = data[0] as List; // tuple: [[items], count]
+    } else if (data is List) {
+      resourceList = data;
+    } else if (data is Map) {
+      final items = data['items'] ?? data['data'];
+      resourceList = items is List ? items : [];
+    } else {
+      resourceList = [];
+    }
+    final resources = resourceList
         .map((r) => ResourceModel.fromJson(r as Map<String, dynamic>))
         .toList();
 
     // Update cache
-    await OfflineCache.put(cacheKey, data);
+    await OfflineCache.put(cacheKey, resourceList);
     return resources;
   } catch (e) {
     // Network failed — fall back to stale cache if available
@@ -56,8 +68,7 @@ final offlineResourcesProvider =
           .map((r) => ResourceModel.fromJson(r as Map<String, dynamic>))
           .toList();
     }
-    rethrow;
-  }
+    rethrow;  }
 });
 
 /// Offline-aware courses provider for a department.

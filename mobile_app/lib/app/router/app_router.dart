@@ -41,20 +41,33 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     navigatorKey: routerKey,
     initialLocation: AppRoutes.onboarding,
     debugLogDiagnostics: false,
-    // Redirect to integrity policy if user hasn't accepted it yet
     redirect: (context, state) {
       final user = ref.read(currentUserProvider).valueOrNull;
-      final onPolicyScreen = state.matchedLocation == AppRoutes.integrityPolicy;
+      final location = state.matchedLocation;
+
       final onAuthScreens = [
         AppRoutes.onboarding,
         AppRoutes.login,
         AppRoutes.register,
-      ].contains(state.matchedLocation);
+        AppRoutes.forgotPassword,
+      ].contains(location);
 
-      // If user is logged in, hasn't accepted policy, and isn't already on the policy screen
+      // Not logged in — send to onboarding
+      if (user == null && !onAuthScreens) {
+        return AppRoutes.onboarding;
+      }
+
+      // Logged in — don't go back to auth screens
+      if (user != null && onAuthScreens) {
+        return AppRoutes.home;
+      }
+
+      // Integrity policy check
+      final onPolicyScreen = location == AppRoutes.integrityPolicy;
       if (user != null && !user.acceptedIntegrityPolicy && !onPolicyScreen && !onAuthScreens) {
         return AppRoutes.integrityPolicy;
       }
+
       return null;
     },
     routes: [
