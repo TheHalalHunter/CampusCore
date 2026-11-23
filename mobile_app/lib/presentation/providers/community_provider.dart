@@ -9,61 +9,49 @@ import 'department_provider.dart';
 
 final questionsProvider = FutureProvider.family<List<QuestionModel>,
     ({String? courseId, String? level})>((ref, filters) async {
-  try {
-    final dept = await ref.watch(primaryDepartmentProvider.future);
-    final api = ref.read(apiClientProvider);
-    final params = <String, dynamic>{'page': 1, 'limit': 20};
-    if (dept != null) params['departmentId'] = dept.id;
-    if (filters.courseId != null) params['courseId'] = filters.courseId;
-    if (filters.level != null) params['level'] = filters.level;
-    final response = await api.get(ApiConstants.questions, queryParams: params);
-    final raw = response.data['data'] ?? response.data;
-    // Handle both array and [items, count] tuple from backend
-    final List items = raw is List
-        ? (raw.length == 2 && raw[1] is int ? raw[0] as List : raw)
-        : [];
-    return items.map((q) => QuestionModel.fromJson(q)).toList();
-  } catch (_) {
-    return [];
-  }
+  final dept = await ref.watch(primaryDepartmentProvider.future);
+  final api = ref.read(apiClientProvider);
+  final params = <String, dynamic>{'page': 1, 'limit': 20};
+  if (dept != null) params['departmentId'] = dept.id;
+  if (filters.courseId != null) params['courseId'] = filters.courseId;
+  if (filters.level != null) params['level'] = filters.level;
+  final response = await api.get(ApiConstants.questions, queryParams: params);
+  final raw = response.data['data'] ?? response.data;
+  // Handle both array and [items, count] tuple from backend
+  final List items = raw is List
+      ? (raw.length == 2 && raw[1] is int ? raw[0] as List : raw)
+      : [];
+  return items.map((q) => QuestionModel.fromJson(q)).toList();
 });
 
 // All questions (no filter) — parses { data: { questions: [...], total: N } }
 final allQuestionsProvider = FutureProvider<List<QuestionModel>>((ref) async {
-  try {
-    final api = ref.read(apiClientProvider);
-    final response = await api.get(ApiConstants.questions, queryParams: {'limit': 30});
-    final data = response.data['data'] ?? response.data;
-    List raw;
-    if (data is Map && data['questions'] is List) {
-      raw = data['questions'] as List;
-    } else if (data is List && data.length == 2 && data[1] is int) {
-      raw = data[0] as List;
-    } else if (data is List) {
-      raw = data;
-    } else {
-      return [];
-    }
-    return raw.map((q) => QuestionModel.fromJson(q)).toList();
-  } catch (_) {
+  final api = ref.read(apiClientProvider);
+  final response = await api.get(ApiConstants.questions, queryParams: {'limit': 30});
+  final data = response.data['data'] ?? response.data;
+  List raw;
+  if (data is Map && data['questions'] is List) {
+    raw = data['questions'] as List;
+  } else if (data is List && data.length == 2 && data[1] is int) {
+    raw = data[0] as List;
+  } else if (data is List) {
+    raw = data;
+  } else {
     return [];
   }
+  return raw.map((q) => QuestionModel.fromJson(q)).toList();
 });
 
 // ─── Answers ──────────────────────────────────────────────────────────────────
 
 final answersProvider =
     FutureProvider.family<List<AnswerModel>, String>((ref, questionId) async {
-  try {
-    final api = ref.read(apiClientProvider);
-    final response = await api.get(ApiConstants.questionDetail(questionId));
-    final data = response.data['data'] ?? response.data;
-    // Backend returns { question, answers }
-    final answers = data['answers'] as List? ?? [];
-    return answers.map((a) => AnswerModel.fromJson(a)).toList();
-  } catch (_) {
-    return [];
-  }
+  final api = ref.read(apiClientProvider);
+  final response = await api.get(ApiConstants.questionDetail(questionId));
+  final data = response.data['data'] ?? response.data;
+  // Backend returns { question, answers }
+  final answers = data['answers'] as List? ?? [];
+  return answers.map((a) => AnswerModel.fromJson(a)).toList();
 });
 
 /// Fetches a single question with its answers — used by question_detail_screen
@@ -76,19 +64,15 @@ class QuestionWithAnswers {
 
 final questionDetailProvider =
     FutureProvider.family<QuestionWithAnswers?, String>((ref, questionId) async {
-  try {
-    final api = ref.read(apiClientProvider);
-    final response = await api.get(ApiConstants.questionDetail(questionId));
-    final data = response.data['data'] ?? response.data;
-    return QuestionWithAnswers(
-      question: QuestionModel.fromJson(data['question'] as Map<String, dynamic>),
-      answers: (data['answers'] as List? ?? [])
-          .map((a) => AnswerModel.fromJson(a))
-          .toList(),
-    );
-  } catch (_) {
-    return null;
-  }
+  final api = ref.read(apiClientProvider);
+  final response = await api.get(ApiConstants.questionDetail(questionId));
+  final data = response.data['data'] ?? response.data;
+  return QuestionWithAnswers(
+    question: QuestionModel.fromJson(data['question'] as Map<String, dynamic>),
+    answers: (data['answers'] as List? ?? [])
+        .map((a) => AnswerModel.fromJson(a))
+        .toList(),
+  );
 });
 
 // ─── Post Question ────────────────────────────────────────────────────────────

@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:file_picker/file_picker.dart';
 import '../../../app/theme/app_theme.dart';
 import '../../../app/router/app_router.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/constants/api_constants.dart';
+import '../../../core/storage/supabase_storage.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/user_provider.dart';
 import '../../providers/department_provider.dart';
@@ -37,7 +39,8 @@ class ProfileScreen extends ConsumerWidget {
                     children: [
                       // Avatar with edit overlay
                       GestureDetector(
-                        onTap: () => _showEditSheet(context, ref, user),
+                        onTap: () => _pickAndUploadAvatar(
+                            context, ref, user?.id ?? ''),
                         child: Stack(
                           children: [
                             CircleAvatar(
@@ -210,6 +213,46 @@ class ProfileScreen extends ConsumerWidget {
           borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (_) => _EditProfileSheet(user: user, ref: ref),
     );
+  }
+
+  Future<void> _pickAndUploadAvatar(
+      BuildContext context, WidgetRef ref, String userId) async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['jpg', 'jpeg', 'png'],
+      withData: true,
+    );
+    if (result == null || result.files.isEmpty) return;
+    final file = result.files.first;
+    if (file.bytes == null) return;
+
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final ext = file.extension ?? 'jpg';
+      final path =
+          'avatars/$userId/${DateTime.now().millisecondsSinceEpoch}.$ext';
+      final mimeType = ext == 'png' ? 'image/png' : 'image/jpeg';
+
+      final url = await SupabaseStorageService.uploadFile(
+        bytes: file.bytes!,
+        path: path,
+        mimeType: mimeType,
+      );
+
+      final api = ref.read(apiClientProvider);
+      await api.patch(ApiConstants.me, data: {'avatar': url});
+      ref.invalidate(currentUserProvider);
+
+      messenger.showSnackBar(const SnackBar(
+        content: Text('Profile photo updated!'),
+        backgroundColor: AppColors.success,
+      ));
+    } catch (e) {
+      messenger.showSnackBar(SnackBar(
+        content: Text('Could not upload photo: $e'),
+        backgroundColor: AppColors.error,
+      ));
+    }
   }
 }
 
