@@ -1,5 +1,5 @@
-import { Controller, Get, Post, Patch, Param, Body, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+import { Controller, Get, Post, Patch, Param, Body, UseGuards, Query } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { DepartmentsService } from './departments.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
@@ -17,8 +17,13 @@ export class DepartmentsController {
   @Public()
   @Get()
   @ApiOperation({ summary: 'List all active departments' })
-  findAll() {
-    return this.service.findAll();
+  @ApiQuery({ name: 'universityId', required: false })
+  @ApiQuery({ name: 'universityName', required: false })
+  findAll(
+    @Query('universityId') universityId?: string,
+    @Query('universityName') universityName?: string,
+  ) {
+    return this.service.findAll({ universityId, universityName });
   }
 
   @Public()

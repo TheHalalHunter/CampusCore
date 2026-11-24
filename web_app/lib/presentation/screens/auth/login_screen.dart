@@ -23,6 +23,36 @@ final departmentsProvider =
   ];
 });
 
+// ── Universities provider ─────────────────────────────────────────────────────
+final universitiesProvider =
+    FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
+  try {
+    final api = ref.read(apiClientProvider);
+    final resp = await api.get(ApiConstants.universities);
+    final data = resp.data['data'];
+    if (data is List) return data.cast<Map<String, dynamic>>();
+  } catch (_) {}
+  return [
+    {'id': null, 'name': 'Ladoke Akintola University of Technology', 'shortName': 'LAUTECH'},
+  ];
+});
+
+final departmentsByUniversityProvider =
+    FutureProvider.autoDispose.family<List<Map<String, dynamic>>, String?>((ref, universityId) async {
+  try {
+    final api = ref.read(apiClientProvider);
+    final path = universityId != null
+        ? '${ApiConstants.departments}?universityId=$universityId'
+        : ApiConstants.departments;
+    final resp = await api.get(path);
+    final data = resp.data['data'];
+    if (data is List) return data.cast<Map<String, dynamic>>();
+  } catch (_) {}
+  return [
+    {'id': 'fisheries-lautech', 'name': 'Fisheries & Aquaculture — LAUTECH'},
+  ];
+});
+
 // ── Screen ────────────────────────────────────────────────────────────────────
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -531,6 +561,7 @@ class _SignUpFormState extends ConsumerState<_SignUpForm> {
   bool    _loading     = false;
   String? _error;
   String? _selectedDeptId;
+  String? _selectedUniversityId;
   String  _selectedLevel = '100L';
 
   final _levels = ['100L', '200L', '300L', '400L', '500L'];
@@ -619,8 +650,6 @@ class _SignUpFormState extends ConsumerState<_SignUpForm> {
 
   @override
   Widget build(BuildContext context) {
-    final depts = ref.watch(departmentsProvider);
-
     return Padding(
       padding: const EdgeInsets.fromLTRB(28, 28, 28, 24),
       child: Form(
@@ -672,38 +701,88 @@ class _SignUpFormState extends ConsumerState<_SignUpForm> {
             ),
             const SizedBox(height: 12),
 
-            // Department dropdown
-            depts.when(
+            // University dropdown
+            ref.watch(universitiesProvider).when(
               loading: () => const Padding(
                 padding: EdgeInsets.symmetric(vertical: 8),
                 child: LinearProgressIndicator(),
               ),
               error: (_, __) => const SizedBox.shrink(),
-              data: (list) => DropdownButtonFormField<String>(
-                initialValue: _selectedDeptId,
-                decoration: const InputDecoration(
-                  labelText: 'Department *',
-                  prefixIcon: Icon(Icons.apartment_outlined),
-                ),
-                hint: const Text('Select department',
-                    style: TextStyle(fontFamily: 'Nunito')),
-                items: list
-                    .map((d) => DropdownMenuItem(
-                          value: d['id']?.toString(),
-                          child: Text(
-                            d['name']?.toString() ?? '',
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                                fontSize: 13, fontFamily: 'Nunito'),
-                          ),
-                        ))
-                    .toList(),
-                onChanged: (v) =>
-                    setState(() { _selectedDeptId = v; _error = null; }),
-                validator: (v) =>
-                    v == null ? 'Select your department' : null,
+              data: (unis) => Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  DropdownButtonFormField<String>(
+                    key: ValueKey(_selectedUniversityId),
+                    initialValue: _selectedUniversityId,
+                    decoration: const InputDecoration(
+                      labelText: 'University *',
+                      prefixIcon: Icon(Icons.account_balance_outlined),
+                    ),
+                    hint: const Text('Select university',
+                        style: TextStyle(fontFamily: 'Nunito')),
+                    items: unis
+                        .map((u) => DropdownMenuItem(
+                              value: u['id']?.toString(),
+                              child: Text(
+                                u['name']?.toString() ?? '',
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(fontSize: 13, fontFamily: 'Nunito'),
+                              ),
+                            ))
+                        .toList(),
+                    onChanged: (v) => setState(() {
+                      _selectedUniversityId = v;
+                      _selectedDeptId = null;
+                      _error = null;
+                    }),
+                    validator: (v) => v == null ? 'Select your university' : null,
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    'More universities coming soon',
+                    style: TextStyle(
+                      color: AppColors.textHint,
+                      fontSize: 11,
+                      fontFamily: 'Nunito',
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                ],
               ),
             ),
+            const SizedBox(height: 12),
+
+            // Department dropdown — only shown after university selected
+            if (_selectedUniversityId != null)
+              ref.watch(departmentsByUniversityProvider(_selectedUniversityId)).when(
+                loading: () => const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 8),
+                  child: LinearProgressIndicator(),
+                ),
+                error: (_, __) => const SizedBox.shrink(),
+                data: (list) => DropdownButtonFormField<String>(
+                  key: ValueKey(_selectedDeptId),
+                  initialValue: _selectedDeptId,
+                  decoration: const InputDecoration(
+                    labelText: 'Department *',
+                    prefixIcon: Icon(Icons.apartment_outlined),
+                  ),
+                  hint: const Text('Select department',
+                      style: TextStyle(fontFamily: 'Nunito')),
+                  items: list
+                      .map((d) => DropdownMenuItem(
+                            value: d['id']?.toString(),
+                            child: Text(
+                              d['name']?.toString() ?? '',
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(fontSize: 13, fontFamily: 'Nunito'),
+                            ),
+                          ))
+                      .toList(),
+                  onChanged: (v) => setState(() { _selectedDeptId = v; _error = null; }),
+                  validator: (v) => v == null ? 'Select your department' : null,
+                ),
+              ),
             const SizedBox(height: 12),
 
             // Academic level

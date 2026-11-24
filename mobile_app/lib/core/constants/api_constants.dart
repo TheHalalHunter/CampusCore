@@ -20,6 +20,7 @@ class ApiConstants {
 
   // Departments
   static const String departments = '/departments';
+  static const String universities = '/universities';
 
   // Courses
   static const String courses = '/courses';

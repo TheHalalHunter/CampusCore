@@ -10,8 +10,11 @@ export class DepartmentsService {
     private readonly repo: Repository<Department>,
   ) {}
 
-  findAll(): Promise<Department[]> {
-    return this.repo.find({ where: { isActive: true } });
+  findAll(filter?: { universityId?: string; universityName?: string }): Promise<Department[]> {
+    const where: any = { isActive: true };
+    if (filter?.universityId) where.universityId = filter.universityId;
+    if (filter?.universityName) where.universityName = filter.universityName;
+    return this.repo.find({ where });
   }
 
   async findOne(id: string): Promise<Department> {

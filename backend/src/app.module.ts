@@ -25,6 +25,7 @@ import { GpaModule } from './modules/gpa/gpa.module';
 import { LibraryModule } from './modules/library/library.module';
 import { StudyGroupsModule } from './modules/study-groups/study-groups.module';
 import { AuditModule } from './modules/audit/audit.module';
+import { UniversitiesModule } from './modules/universities/universities.module';
 
 @Module({
   imports: [
@@ -96,6 +97,7 @@ import { AuditModule } from './modules/audit/audit.module';
     LibraryModule,
     StudyGroupsModule,
     AuditModule,
+    UniversitiesModule,
   ],
   providers: [
     {

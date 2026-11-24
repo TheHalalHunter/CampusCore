@@ -20,6 +20,9 @@ export class Department {
   @Column({ name: 'university_name' })
   universityName: string;
 
+  @Column({ name: 'university_id', nullable: true })
+  universityId: string;
+
   @Column({ name: 'is_active', default: true })
   isActive: boolean;
 

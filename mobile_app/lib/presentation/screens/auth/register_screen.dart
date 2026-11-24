@@ -5,7 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../../app/theme/app_theme.dart';
 import '../../../app/router/app_router.dart';
 import '../../providers/auth_provider.dart';
-import '../../providers/department_provider.dart';
+import '../../providers/university_provider.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
@@ -22,6 +22,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   bool _obscure = true;
   bool _isLoading = false;
   String? _selectedLevel;
+  String? _selectedUniversityId;
+  String? _selectedDepartmentId;
 
   @override
   void dispose() {
@@ -47,12 +49,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       await credential.user?.updateDisplayName(_nameCtrl.text.trim());
 
       // 3. Exchange Firebase token for platform JWT
-      // Pass fullName + level + department so backend creates the user record
-      final dept = await ref.read(primaryDepartmentProvider.future);
+      final dept = _selectedDepartmentId;
       await ref.read(authProvider.notifier).registerWithFirebase(
             firebaseUser: credential.user!,
             fullName: _nameCtrl.text.trim(),
-            departmentId: dept?.id,
+            departmentId: dept,
             academicLevel: _selectedLevel,
           );
 
@@ -157,6 +158,74 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     : null,
               ),
               const SizedBox(height: 16),
+
+              // University dropdown
+              ref.watch(universitiesProvider).when(
+                loading: () => const LinearProgressIndicator(),
+                error: (_, __) => const SizedBox.shrink(),
+                data: (unis) => DropdownButtonFormField<String>(
+                  key: ValueKey(_selectedUniversityId),
+                  initialValue: _selectedUniversityId,
+                  decoration: const InputDecoration(
+                    labelText: 'University',
+                    prefixIcon: Icon(Icons.account_balance_outlined),
+                  ),
+                  hint: const Text('Select university'),
+                  items: unis
+                      .map((u) => DropdownMenuItem(
+                            value: u['id']?.toString(),
+                            child: Text(
+                              u['name']?.toString() ?? '',
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ))
+                      .toList(),
+                  onChanged: (v) => setState(() {
+                    _selectedUniversityId = v;
+                    _selectedDepartmentId = null;
+                  }),
+                  validator: (v) =>
+                      v == null ? 'Please select your university' : null,
+                ),
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                'More universities coming soon',
+                style: TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 12,
+                    fontStyle: FontStyle.italic),
+              ),
+              const SizedBox(height: 16),
+
+              // Department dropdown — only shown after university selected
+              if (_selectedUniversityId != null) ...[
+                ref.watch(departmentsByUniversityProvider(_selectedUniversityId)).when(
+                  loading: () => const LinearProgressIndicator(),
+                  error: (_, __) => const SizedBox.shrink(),
+                  data: (depts) => DropdownButtonFormField<String>(
+                    key: ValueKey(_selectedDepartmentId),
+                    initialValue: _selectedDepartmentId,
+                    decoration: const InputDecoration(
+                      labelText: 'Department',
+                      prefixIcon: Icon(Icons.apartment_outlined),
+                    ),
+                    hint: const Text('Select department'),
+                    items: depts
+                        .map((d) => DropdownMenuItem(
+                              value: d.id,
+                              child: Text(d.name,
+                                  overflow: TextOverflow.ellipsis),
+                            ))
+                        .toList(),
+                    onChanged: (v) =>
+                        setState(() => _selectedDepartmentId = v),
+                    validator: (v) =>
+                        v == null ? 'Please select your department' : null,
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
 
               // Academic level
               DropdownButtonFormField<String>(

@@ -12,6 +12,7 @@ class ApiConstants {
   // Courses
   static const String courses     = '/courses';
   static const String departments = '/departments';
+  static const String universities = '/universities';
 
   // Resources
   static const String resources      = '/resources';

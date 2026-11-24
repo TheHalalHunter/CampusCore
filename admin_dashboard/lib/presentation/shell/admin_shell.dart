@@ -74,6 +74,10 @@ class _AdminSidebar extends StatelessWidget {
         label: 'Departments',
         route: AdminRoutes.departments),
     _NavItem(
+        icon: Icons.account_balance_outlined,
+        label: 'Universities',
+        route: AdminRoutes.universities),
+    _NavItem(
         icon: Icons.menu_book_outlined,
         label: 'Courses',
         route: AdminRoutes.courses),
