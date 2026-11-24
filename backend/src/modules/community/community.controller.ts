@@ -64,9 +64,9 @@ export class CommunityController {
   @Public()
   @Get('questions/:id')
   @ApiOperation({ summary: 'Get a question with its answers' })
-  async getQuestion(@Param('id') id: string) {
-    // Increment view count when question is opened
-    this.service.incrementViews(id).catch(() => {}); // fire-and-forget
+  async getQuestion(@Param('id') id: string, @CurrentUser('id') userId: string | undefined) {
+    // Increment view count when question is opened (unique per user)
+    this.service.incrementViews(id, userId ?? '').catch(() => {}); // fire-and-forget
     const question = await this.service.findQuestion(id);
     const answers = await this.service.findAnswers(id);
     return { question, answers };
@@ -136,26 +136,26 @@ export class CommunityController {
 
   @Post('questions/:id/upvote')
   @ApiOperation({ summary: 'Upvote a question' })
-  upvoteQuestion(@Param('id') id: string) {
-    return this.service.upvoteQuestion(id);
+  upvoteQuestion(@Param('id') id: string, @CurrentUser('id') userId: string) {
+    return this.service.upvoteQuestion(id, userId);
   }
 
   @Post('questions/:id/downvote')
   @ApiOperation({ summary: 'Downvote a question' })
-  downvoteQuestion(@Param('id') id: string) {
-    return this.service.downvoteQuestion(id);
+  downvoteQuestion(@Param('id') id: string, @CurrentUser('id') userId: string) {
+    return this.service.downvoteQuestion(id, userId);
   }
 
   @Post('answers/:id/upvote')
   @ApiOperation({ summary: 'Upvote an answer' })
-  upvoteAnswer(@Param('id') id: string) {
-    return this.service.upvoteAnswer(id);
+  upvoteAnswer(@Param('id') id: string, @CurrentUser('id') userId: string) {
+    return this.service.upvoteAnswer(id, userId);
   }
 
   @Post('answers/:id/downvote')
   @ApiOperation({ summary: 'Downvote an answer' })
-  downvoteAnswer(@Param('id') id: string) {
-    return this.service.downvoteAnswer(id);
+  downvoteAnswer(@Param('id') id: string, @CurrentUser('id') userId: string) {
+    return this.service.downvoteAnswer(id, userId);
   }
 
   @UseGuards(RolesGuard)

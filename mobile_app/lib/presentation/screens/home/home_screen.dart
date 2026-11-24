@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import '../../../app/theme/app_theme.dart';
 import '../../../app/router/app_router.dart';
 import '../../providers/user_provider.dart';
@@ -27,7 +28,16 @@ class HomeScreen extends ConsumerWidget {
                 children: [
                   // Greeting with real user name
                   userAsync.when(
-                    data: (user) => Container(
+                    data: (user) {
+                      final hour = DateTime.now().hour;
+                      final greeting = hour < 12
+                          ? 'Good morning'
+                          : hour < 17
+                              ? 'Good afternoon'
+                              : 'Good evening';
+                      final firstName = user?.firstName ?? 'Scholar';
+                      final dateStr = DateFormat('EEEE, MMMM d').format(DateTime.now());
+                      return Container(
                       width: double.infinity,
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
@@ -47,12 +57,19 @@ class HomeScreen extends ConsumerWidget {
                         children: [
                           Row(
                             children: [
-                              const Icon(Icons.wb_sunny_outlined,
-                                  color: AppColors.amber, size: 22),
+                              Icon(
+                                hour < 12
+                                    ? Icons.wb_sunny_outlined
+                                    : hour < 17
+                                        ? Icons.wb_sunny
+                                        : Icons.nights_stay_outlined,
+                                color: AppColors.amber,
+                                size: 22,
+                              ),
                               const SizedBox(width: 8),
                               Expanded(
                                 child: Text(
-                                  'Good day, ${user?.firstName ?? 'Scholar'} 👋',
+                                  '$greeting, $firstName! 👋',
                                   style: const TextStyle(
                                     fontWeight: FontWeight.w700,
                                     fontSize: 20,
@@ -61,6 +78,14 @@ class HomeScreen extends ConsumerWidget {
                                 ),
                               ),
                             ],
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            dateStr,
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 13,
+                            ),
                           ),
                           const SizedBox(height: 6),
                           Text(
@@ -74,7 +99,7 @@ class HomeScreen extends ConsumerWidget {
                           ),
                         ],
                       ),
-                    ),
+                    );},
                     loading: () => Container(
                       width: double.infinity,
                       height: 80,
@@ -101,13 +126,26 @@ class HomeScreen extends ConsumerWidget {
                         ),
                         borderRadius: BorderRadius.circular(16),
                       ),
-                      child: const Text(
-                        'Good day, Scholar 👋',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w700,
-                          fontSize: 20,
-                          color: Colors.white,
-                        ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '${DateTime.now().hour < 12 ? 'Good morning' : DateTime.now().hour < 17 ? 'Good afternoon' : 'Good evening'}, Scholar! 👋',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 20,
+                              color: Colors.white,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            DateFormat('EEEE, MMMM d').format(DateTime.now()),
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),

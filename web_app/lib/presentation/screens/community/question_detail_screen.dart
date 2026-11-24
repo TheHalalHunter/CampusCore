@@ -46,6 +46,7 @@ class _QuestionDetailScreenState
   bool _voting      = false;
   bool _resolving   = false;
   bool _deleting    = false;
+  String? _userVote;
 
   @override
   void dispose() {
@@ -60,7 +61,13 @@ class _QuestionDetailScreenState
     setState(() => _voting = true);
     try {
       final api = ref.read(apiClientProvider);
-      await api.post(endpoint);
+      final response = await api.post(endpoint);
+      // Backend returns { upvoteCount, userVote } — update local vote state
+      final respData = response.data['data'] ?? response.data;
+      if (respData is Map<String, dynamic>) {
+        final newUserVote = respData['userVote']?.toString();
+        if (mounted) setState(() => _userVote = newUserVote);
+      }
       ref.invalidate(questionDetailProvider(widget.questionId));
     } catch (_) {
       // Silently ignore — provider refresh restores correct state
@@ -260,6 +267,13 @@ class _QuestionDetailScreenState
             id: widget.questionId,
             title: question['title']?.toString() ?? '',
           );
+          // Initialize _userVote from question data on first load
+          final serverUserVote = question['userVote']?.toString();
+          if (_userVote == null && serverUserVote != null) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) setState(() => _userVote = serverUserVote);
+            });
+          }
           final currentUser = ref.read(currentUserProvider);
           return _QuestionDetailBody(
             question:         question,
@@ -272,6 +286,7 @@ class _QuestionDetailScreenState
             submitting:       _submitting,
             resolving:        _resolving,
             deleting:         _deleting,
+            userVote:         _userVote,
             onSubmitAnswer:   _submitAnswer,
             onVote:           (endpoint) => _vote(endpoint: endpoint),
             onResolve:        _resolve,
@@ -296,6 +311,7 @@ class _QuestionDetailBody extends StatelessWidget {
   final bool submitting;
   final bool resolving;
   final bool deleting;
+  final String? userVote;
   final VoidCallback onSubmitAnswer;
   final void Function(String endpoint) onVote;
   final VoidCallback onResolve;
@@ -312,6 +328,7 @@ class _QuestionDetailBody extends StatelessWidget {
     required this.submitting,
     required this.resolving,
     required this.deleting,
+    required this.userVote,
     required this.onSubmitAnswer,
     required this.onVote,
     required this.onResolve,
@@ -514,6 +531,7 @@ class _QuestionDetailBody extends StatelessWidget {
                       _VoteButton(
                         icon: Icons.thumb_up_outlined,
                         label: '$upvotes',
+                        filled: userVote == 'up',
                         onTap: () =>
                             onVote(ApiConstants.upvoteQuestion(questionId)),
                       ),
@@ -521,6 +539,7 @@ class _QuestionDetailBody extends StatelessWidget {
                       _VoteButton(
                         icon: Icons.thumb_down_outlined,
                         label: '',
+                        filled: userVote == 'down',
                         onTap: () =>
                             onVote(ApiConstants.downvoteQuestion(questionId)),
                       ),
@@ -879,6 +898,7 @@ class _AnswerCardState extends ConsumerState<_AnswerCard> {
                 _VoteButton(
                   icon: Icons.thumb_up_outlined,
                   label: '$upvotes',
+                  filled: false,
                   onTap: () =>
                       widget.onVote(ApiConstants.upvoteAnswer(answerId)),
                 ),
@@ -886,6 +906,7 @@ class _AnswerCardState extends ConsumerState<_AnswerCard> {
                 _VoteButton(
                   icon: Icons.thumb_down_outlined,
                   label: '',
+                  filled: false,
                   onTap: () =>
                       widget.onVote(ApiConstants.downvoteAnswer(answerId)),
                 ),
@@ -916,16 +937,24 @@ class _AnswerCardState extends ConsumerState<_AnswerCard> {
 class _VoteButton extends StatelessWidget {
   final IconData icon;
   final String   label;
+  final bool     filled;
   final VoidCallback onTap;
 
   const _VoteButton({
     required this.icon,
     required this.label,
+    required this.filled,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
+    final effectiveIcon = filled
+        ? (icon == Icons.thumb_up_outlined
+            ? Icons.thumb_up
+            : Icons.thumb_down)
+        : icon;
+    final iconColor = filled ? AppColors.primary : AppColors.textSecondary;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(8),
@@ -934,13 +963,13 @@ class _VoteButton extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 16, color: AppColors.textSecondary),
+            Icon(effectiveIcon, size: 16, color: iconColor),
             if (label.isNotEmpty) ...[
               const SizedBox(width: 4),
               Text(
                 label,
-                style: const TextStyle(
-                  color: AppColors.textSecondary,
+                style: TextStyle(
+                  color: iconColor,
                   fontSize: 13,
                   fontFamily: 'Nunito',
                   fontWeight: FontWeight.w600,

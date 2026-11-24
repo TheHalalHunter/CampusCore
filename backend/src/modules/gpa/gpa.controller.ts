@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Delete, Param, Body, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Param, Body, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { GpaService } from './gpa.service';
 import { SaveSemesterDto } from './dto/save-semester.dto';
@@ -28,6 +28,16 @@ export class GpaController {
   @ApiOperation({ summary: 'Delete a saved semester' })
   deleteSemester(@Param('id') id: string, @CurrentUser('id') userId: string) {
     return this.service.deleteSemester(id, userId);
+  }
+
+  @Patch('semesters/:id')
+  @ApiOperation({ summary: 'Update a saved semester' })
+  updateSemester(
+    @Param('id') id: string,
+    @CurrentUser('id') userId: string,
+    @Body() dto: SaveSemesterDto,
+  ) {
+    return this.service.updateSemester(id, userId, dto);
   }
 
   @Get('cgpa')

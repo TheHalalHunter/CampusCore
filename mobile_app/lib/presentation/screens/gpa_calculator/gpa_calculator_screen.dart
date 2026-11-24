@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../../app/theme/app_theme.dart';
+import '../../../core/network/api_client.dart';
+import '../../../core/constants/api_constants.dart';
 import '../../providers/gpa_provider.dart';
+import '../../providers/courses_provider.dart';
 
 class GpaCalculatorScreen extends ConsumerStatefulWidget {
   const GpaCalculatorScreen({super.key});
@@ -21,6 +24,7 @@ class _GpaCalculatorScreenState extends ConsumerState<GpaCalculatorScreen>
   String _selectedLevel = '100L';
   int _selectedSemester = 1;
   final _yearCtrl = TextEditingController();
+  String? _editingId;
 
   static const Map<String, double> _gradePoints = {
     'A': 5.0,
@@ -90,6 +94,39 @@ class _GpaCalculatorScreenState extends ConsumerState<GpaCalculatorScreen>
             ))
         .toList();
 
+    if (_editingId != null) {
+      // PATCH existing semester
+      try {
+        final api = ref.read(apiClientProvider);
+        await api.patch('${ApiConstants.gpaSemesters}/$_editingId', data: {
+          'academicLevel': _selectedLevel,
+          'semester': _selectedSemester,
+          if (_yearCtrl.text.trim().isNotEmpty) 'academicYear': _yearCtrl.text.trim(),
+          'courses': courses.map((c) => c.toJson()).toList(),
+          'gpa': _gpa,
+          'totalUnits': _totalUnits,
+        });
+        ref.invalidate(gpaSemestersProvider);
+        ref.invalidate(cgpaProvider);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('Semester updated!'),
+            backgroundColor: AppColors.success,
+          ));
+          _reset();
+          _tabCtrl.animateTo(1);
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('Could not update. Try again.'),
+            backgroundColor: AppColors.error,
+          ));
+        }
+      }
+      return;
+    }
+
     final ok = await ref.read(gpaActionsProvider.notifier).saveSemester(
           academicLevel: _selectedLevel,
           semester: _selectedSemester,
@@ -114,7 +151,29 @@ class _GpaCalculatorScreenState extends ConsumerState<GpaCalculatorScreen>
         _entries.add(_CourseEntry());
         _gpa = null;
         _totalUnits = null;
+        _editingId = null;
       });
+
+  void _editSemester(GpaSemesterModel s) {
+    setState(() {
+      _editingId = s.id;
+      _selectedLevel = s.academicLevel;
+      _selectedSemester = s.semester;
+      _yearCtrl.text = s.academicYear ?? '';
+      _entries.clear();
+      for (final c in s.courses) {
+        final entry = _CourseEntry();
+        entry.nameCtrl.text = c.name;
+        entry.unitsCtrl.text = c.creditUnits.toString();
+        entry.selectedGrade = c.grade;
+        _entries.add(entry);
+      }
+      if (_entries.isEmpty) _entries.add(_CourseEntry());
+      _gpa = null;
+      _totalUnits = null;
+    });
+    _tabCtrl.animateTo(0);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -297,6 +356,7 @@ class _GpaCalculatorScreenState extends ConsumerState<GpaCalculatorScreen>
           ..._entries.asMap().entries.map((entry) {
             final idx = entry.key;
             final e = entry.value;
+            final coursesAsync = ref.watch(coursesProvider);
             return Container(
               margin: const EdgeInsets.only(bottom: 10),
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -308,21 +368,104 @@ class _GpaCalculatorScreenState extends ConsumerState<GpaCalculatorScreen>
               child: Row(children: [
                 Expanded(
                   flex: 3,
-                  child: TextField(
-                    controller: e.nameCtrl,
-                    style: const TextStyle(
-                        fontSize: 14, color: AppColors.textPrimary),
-                    decoration: InputDecoration(
-                      hintText: 'e.g. AQU 201',
-                      hintStyle: const TextStyle(
-                          color: AppColors.textHint, fontSize: 13),
-                      filled: true,
-                      fillColor: AppColors.grey100,
-                      contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 10),
-                      border: OutlineInputBorder(
+                  child: coursesAsync.when(
+                    data: (courses) {
+                      if (courses.isEmpty) {
+                        return TextField(
+                          controller: e.nameCtrl,
+                          style: const TextStyle(
+                              fontSize: 14, color: AppColors.textPrimary),
+                          decoration: InputDecoration(
+                            hintText: 'e.g. AQU 201',
+                            hintStyle: const TextStyle(
+                                color: AppColors.textHint, fontSize: 13),
+                            filled: true,
+                            fillColor: AppColors.grey100,
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 10),
+                            border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide: BorderSide.none),
+                          ),
+                        );
+                      }
+                      return Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        decoration: BoxDecoration(
+                          color: AppColors.grey100,
                           borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide.none),
+                        ),
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<String>(
+                            value: courses.any((c) => c.title == e.nameCtrl.text)
+                                ? e.nameCtrl.text
+                                : null,
+                            isExpanded: true,
+                            hint: const Text('Select course',
+                                style: TextStyle(
+                                    color: AppColors.textHint, fontSize: 13)),
+                            style: const TextStyle(
+                                fontSize: 13, color: AppColors.textPrimary),
+                            items: courses
+                                .map((c) => DropdownMenuItem<String>(
+                                      value: c.title,
+                                      child: Text(
+                                        '${c.courseCode} — ${c.title}',
+                                        overflow: TextOverflow.ellipsis,
+                                        style:
+                                            const TextStyle(fontSize: 12),
+                                      ),
+                                    ))
+                                .toList(),
+                            onChanged: (v) {
+                              if (v == null) return;
+                              setState(() {
+                                e.nameCtrl.text = v;
+                                final match = courses.firstWhere(
+                                  (c) => c.title == v,
+                                  orElse: () => courses.first,
+                                );
+                                e.unitsCtrl.text =
+                                    match.creditUnits.toString();
+                              });
+                            },
+                          ),
+                        ),
+                      );
+                    },
+                    loading: () => TextField(
+                      controller: e.nameCtrl,
+                      style: const TextStyle(
+                          fontSize: 14, color: AppColors.textPrimary),
+                      decoration: InputDecoration(
+                        hintText: 'e.g. AQU 201',
+                        hintStyle: const TextStyle(
+                            color: AppColors.textHint, fontSize: 13),
+                        filled: true,
+                        fillColor: AppColors.grey100,
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 10),
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide.none),
+                      ),
+                    ),
+                    error: (_, __) => TextField(
+                      controller: e.nameCtrl,
+                      style: const TextStyle(
+                          fontSize: 14, color: AppColors.textPrimary),
+                      decoration: InputDecoration(
+                        hintText: 'e.g. AQU 201',
+                        hintStyle: const TextStyle(
+                            color: AppColors.textHint, fontSize: 13),
+                        filled: true,
+                        fillColor: AppColors.grey100,
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 10),
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide.none),
+                      ),
                     ),
                   ),
                 ),
@@ -431,8 +574,9 @@ class _GpaCalculatorScreenState extends ConsumerState<GpaCalculatorScreen>
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (_, __) => const SizedBox.shrink(),
             data: (cgpa) {
-              if (cgpa == null || cgpa.semesters == 0)
+              if (cgpa == null || cgpa.semesters == 0) {
                 return const SizedBox.shrink();
+              }
               return Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(20),
@@ -519,6 +663,7 @@ class _GpaCalculatorScreenState extends ConsumerState<GpaCalculatorScreen>
                   ],
                   ...semesters.map((s) => _SemesterCard(
                         semester: s,
+                        onEdit: () => _editSemester(s),
                         onDelete: () async {
                           final ok = await ref
                               .read(gpaActionsProvider.notifier)
@@ -554,7 +699,8 @@ class _GpaCalculatorScreenState extends ConsumerState<GpaCalculatorScreen>
 class _SemesterCard extends StatelessWidget {
   final GpaSemesterModel semester;
   final VoidCallback onDelete;
-  const _SemesterCard({required this.semester, required this.onDelete});
+  final VoidCallback? onEdit;
+  const _SemesterCard({required this.semester, required this.onDelete, this.onEdit});
 
   @override
   Widget build(BuildContext context) {
@@ -580,6 +726,13 @@ class _SemesterCard extends StatelessWidget {
                     color: AppColors.primary,
                     fontSize: 15)),
           ),
+          if (onEdit != null)
+            IconButton(
+              icon: const Icon(Icons.edit_outlined,
+                  color: AppColors.primary, size: 18),
+              onPressed: onEdit,
+              tooltip: 'Edit semester',
+            ),
           IconButton(
             icon: const Icon(Icons.delete_outline,
                 color: AppColors.error, size: 18),
@@ -729,7 +882,7 @@ class _GpaTrendChart extends StatelessWidget {
                     show: true,
                     drawVerticalLine: false,
                     horizontalInterval: 1,
-                    getDrawingHorizontalLine: (_) => FlLine(
+                    getDrawingHorizontalLine: (_) => const FlLine(
                       color: AppColors.border,
                       strokeWidth: 0.8,
                     ),
@@ -793,7 +946,7 @@ class _GpaTrendChart extends StatelessWidget {
                       ),
                       belowBarData: BarAreaData(
                         show: true,
-                        color: AppColors.primary.withOpacity(0.08),
+                        color: AppColors.primary.withValues(alpha: 0.08),
                       ),
                     ),
                   ],

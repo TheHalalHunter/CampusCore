@@ -50,6 +50,14 @@ export class GpaService {
     await this.repo.delete(id);
   }
 
+  /** Update a saved semester by id */
+  async updateSemester(id: string, userId: string, dto: SaveSemesterDto): Promise<GpaSemester> {
+    const s = await this.repo.findOne({ where: { id, userId } });
+    if (!s) throw new NotFoundException('Semester not found');
+    Object.assign(s, dto);
+    return this.repo.save(s);
+  }
+
   /** Calculate CGPA across all saved semesters */
   async getCgpa(userId: string): Promise<{
     cgpa: number;

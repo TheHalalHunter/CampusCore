@@ -8,6 +8,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Question } from './entities/question.entity';
 import { Answer } from './entities/answer.entity';
+import { Vote } from './entities/vote.entity';
 import { GamificationService } from '../gamification/gamification.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationType } from '../notifications/entities/notification.entity';
@@ -19,6 +20,8 @@ export class CommunityService {
     private readonly questionsRepo: Repository<Question>,
     @InjectRepository(Answer)
     private readonly answersRepo: Repository<Answer>,
+    @InjectRepository(Vote)
+    private readonly votesRepo: Repository<Vote>,
     private readonly gamification: GamificationService,
     private readonly notifications: NotificationsService,
   ) {}
@@ -49,7 +52,10 @@ export class CommunityService {
 
     // Fetch author names separately using the users repository
     const authorIds = [...new Set(rawQuestions.map((q) => q.authorId))];
-    const authorMap: Record<string, { firstName: string; lastName: string; avatar: string | null }> = {};
+    const authorMap: Record<
+      string,
+      { firstName: string; lastName: string; avatar: string | null }
+    > = {};
 
     if (authorIds.length > 0) {
       const users = await this.questionsRepo.manager.getRepository('User').findByIds(authorIds);
@@ -150,8 +156,21 @@ export class CommunityService {
     return this.questionsRepo.save(question);
   }
 
-  async incrementViews(questionId: string): Promise<void> {
-    await this.questionsRepo.increment({ id: questionId }, 'viewCount', 1);
+  async incrementViews(questionId: string, userId: string): Promise<void> {
+    // Only count unique views: one record per user+question
+    const existing = await this.votesRepo.findOne({
+      where: { userId, targetId: questionId, targetType: 'question', voteType: 'view' },
+    });
+    if (!existing) {
+      const record = this.votesRepo.create({
+        userId,
+        targetId: questionId,
+        targetType: 'question',
+        voteType: 'view',
+      });
+      await this.votesRepo.save(record);
+      await this.questionsRepo.increment({ id: questionId }, 'viewCount', 1);
+    }
   }
 
   async markResolved(questionId: string, userId: string): Promise<Question> {
@@ -228,14 +247,92 @@ export class CommunityService {
 
   // --- Upvotes ---
 
-  async upvoteQuestion(id: string): Promise<{ upvoteCount: number }> {
+  async upvoteQuestion(
+    id: string,
+    userId: string,
+  ): Promise<{ upvoteCount: number; userVote: string | null }> {
+    const existing = await this.votesRepo.findOne({
+      where: { userId, targetId: id, targetType: 'question' },
+    });
+
+    if (existing && existing.voteType === 'up') {
+      // Toggle off — remove vote
+      await this.votesRepo.delete(existing.id);
+      await this.questionsRepo
+        .createQueryBuilder()
+        .update()
+        .set({ upvoteCount: () => 'GREATEST(upvote_count - 1, 0)' })
+        .where('id = :id', { id })
+        .execute();
+      const q = await this.questionsRepo.findOne({ where: { id } });
+      return { upvoteCount: q?.upvoteCount ?? 0, userVote: null };
+    }
+
+    if (existing && existing.voteType === 'down') {
+      // Switch from down to up
+      existing.voteType = 'up';
+      await this.votesRepo.save(existing);
+      await this.questionsRepo.increment({ id }, 'upvoteCount', 1);
+      const q = await this.questionsRepo.findOne({ where: { id } });
+      return { upvoteCount: q?.upvoteCount ?? 0, userVote: 'up' };
+    }
+
+    // No existing vote — create upvote
+    const vote = this.votesRepo.create({
+      userId,
+      targetId: id,
+      targetType: 'question',
+      voteType: 'up',
+    });
+    await this.votesRepo.save(vote);
     await this.questionsRepo.increment({ id }, 'upvoteCount', 1);
     const q = await this.questionsRepo.findOne({ where: { id } });
-    return { upvoteCount: q?.upvoteCount ?? 0 };
+    return { upvoteCount: q?.upvoteCount ?? 0, userVote: 'up' };
   }
 
-  async downvoteQuestion(id: string): Promise<{ upvoteCount: number }> {
-    // Prevent going below 0
+  async downvoteQuestion(
+    id: string,
+    userId: string,
+  ): Promise<{ upvoteCount: number; userVote: string | null }> {
+    const existing = await this.votesRepo.findOne({
+      where: { userId, targetId: id, targetType: 'question' },
+    });
+
+    if (existing && existing.voteType === 'down') {
+      // Toggle off — remove vote
+      await this.votesRepo.delete(existing.id);
+      await this.questionsRepo
+        .createQueryBuilder()
+        .update()
+        .set({ upvoteCount: () => 'GREATEST(upvote_count - 1, 0)' })
+        .where('id = :id', { id })
+        .execute();
+      const q = await this.questionsRepo.findOne({ where: { id } });
+      return { upvoteCount: q?.upvoteCount ?? 0, userVote: null };
+    }
+
+    if (existing && existing.voteType === 'up') {
+      // Switch from up to down
+      existing.voteType = 'down';
+      await this.votesRepo.save(existing);
+      await this.questionsRepo
+        .createQueryBuilder()
+        .update()
+        .set({ upvoteCount: () => 'GREATEST(upvote_count - 1, 0)' })
+        .where('id = :id', { id })
+        .execute();
+      const q = await this.questionsRepo.findOne({ where: { id } });
+      return { upvoteCount: q?.upvoteCount ?? 0, userVote: 'down' };
+    }
+
+    // No existing vote — create downvote
+    const vote = this.votesRepo.create({
+      userId,
+      targetId: id,
+      targetType: 'question',
+      voteType: 'down',
+    });
+    await this.votesRepo.save(vote);
     await this.questionsRepo
       .createQueryBuilder()
       .update()
@@ -243,16 +340,89 @@ export class CommunityService {
       .where('id = :id', { id })
       .execute();
     const q = await this.questionsRepo.findOne({ where: { id } });
-    return { upvoteCount: q?.upvoteCount ?? 0 };
+    return { upvoteCount: q?.upvoteCount ?? 0, userVote: 'down' };
   }
 
-  async upvoteAnswer(id: string): Promise<{ upvoteCount: number }> {
+  async upvoteAnswer(
+    id: string,
+    userId: string,
+  ): Promise<{ upvoteCount: number; userVote: string | null }> {
+    const existing = await this.votesRepo.findOne({
+      where: { userId, targetId: id, targetType: 'answer' },
+    });
+
+    if (existing && existing.voteType === 'up') {
+      await this.votesRepo.delete(existing.id);
+      await this.answersRepo
+        .createQueryBuilder()
+        .update()
+        .set({ upvoteCount: () => 'GREATEST(upvote_count - 1, 0)' })
+        .where('id = :id', { id })
+        .execute();
+      const a = await this.answersRepo.findOne({ where: { id } });
+      return { upvoteCount: a?.upvoteCount ?? 0, userVote: null };
+    }
+
+    if (existing && existing.voteType === 'down') {
+      existing.voteType = 'up';
+      await this.votesRepo.save(existing);
+      await this.answersRepo.increment({ id }, 'upvoteCount', 1);
+      const a = await this.answersRepo.findOne({ where: { id } });
+      return { upvoteCount: a?.upvoteCount ?? 0, userVote: 'up' };
+    }
+
+    const vote = this.votesRepo.create({
+      userId,
+      targetId: id,
+      targetType: 'answer',
+      voteType: 'up',
+    });
+    await this.votesRepo.save(vote);
     await this.answersRepo.increment({ id }, 'upvoteCount', 1);
     const a = await this.answersRepo.findOne({ where: { id } });
-    return { upvoteCount: a?.upvoteCount ?? 0 };
+    return { upvoteCount: a?.upvoteCount ?? 0, userVote: 'up' };
   }
 
-  async downvoteAnswer(id: string): Promise<{ upvoteCount: number }> {
+  async downvoteAnswer(
+    id: string,
+    userId: string,
+  ): Promise<{ upvoteCount: number; userVote: string | null }> {
+    const existing = await this.votesRepo.findOne({
+      where: { userId, targetId: id, targetType: 'answer' },
+    });
+
+    if (existing && existing.voteType === 'down') {
+      await this.votesRepo.delete(existing.id);
+      await this.answersRepo
+        .createQueryBuilder()
+        .update()
+        .set({ upvoteCount: () => 'GREATEST(upvote_count - 1, 0)' })
+        .where('id = :id', { id })
+        .execute();
+      const a = await this.answersRepo.findOne({ where: { id } });
+      return { upvoteCount: a?.upvoteCount ?? 0, userVote: null };
+    }
+
+    if (existing && existing.voteType === 'up') {
+      existing.voteType = 'down';
+      await this.votesRepo.save(existing);
+      await this.answersRepo
+        .createQueryBuilder()
+        .update()
+        .set({ upvoteCount: () => 'GREATEST(upvote_count - 1, 0)' })
+        .where('id = :id', { id })
+        .execute();
+      const a = await this.answersRepo.findOne({ where: { id } });
+      return { upvoteCount: a?.upvoteCount ?? 0, userVote: 'down' };
+    }
+
+    const vote = this.votesRepo.create({
+      userId,
+      targetId: id,
+      targetType: 'answer',
+      voteType: 'down',
+    });
+    await this.votesRepo.save(vote);
     await this.answersRepo
       .createQueryBuilder()
       .update()
@@ -260,6 +430,6 @@ export class CommunityService {
       .where('id = :id', { id })
       .execute();
     const a = await this.answersRepo.findOne({ where: { id } });
-    return { upvoteCount: a?.upvoteCount ?? 0 };
+    return { upvoteCount: a?.upvoteCount ?? 0, userVote: 'down' };
   }
 }

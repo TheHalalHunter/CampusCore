@@ -4,6 +4,7 @@ import '../../../app/theme/app_theme.dart';
 import '../../../core/utils/responsive.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/constants/api_constants.dart';
+import '../courses/courses_screen.dart' show coursesProvider;
 
 // ── Providers ─────────────────────────────────────────────────────────────────
 
@@ -89,6 +90,7 @@ class ProgressScreen extends ConsumerStatefulWidget {
 class _ProgressScreenState extends ConsumerState<ProgressScreen>
     with SingleTickerProviderStateMixin {
   late final TabController _tabController;
+  Map<String, dynamic>? _editingSemester;
 
   @override
   void initState() {
@@ -100,6 +102,11 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen>
   void dispose() {
     _tabController.dispose();
     super.dispose();
+  }
+
+  void _startEdit(Map<String, dynamic> semester) {
+    setState(() => _editingSemester = semester);
+    _tabController.animateTo(1);
   }
 
   @override
@@ -130,8 +137,15 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen>
       body: TabBarView(
         controller: _tabController,
         children: [
-          _CgpaOverviewTab(tabController: _tabController),
-          _GpaCalculatorTab(tabController: _tabController),
+          _CgpaOverviewTab(
+            tabController: _tabController,
+            onEdit: _startEdit,
+          ),
+          _GpaCalculatorTab(
+            tabController: _tabController,
+            editingSemester: _editingSemester,
+            onEditConsumed: () => setState(() => _editingSemester = null),
+          ),
         ],
       ),
     );
@@ -142,7 +156,8 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen>
 
 class _CgpaOverviewTab extends ConsumerWidget {
   final TabController tabController;
-  const _CgpaOverviewTab({required this.tabController});
+  final void Function(Map<String, dynamic> semester) onEdit;
+  const _CgpaOverviewTab({required this.tabController, required this.onEdit});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -204,6 +219,7 @@ class _CgpaOverviewTab extends ConsumerWidget {
                         .map((s) => _SemesterCard(
                               semester: s,
                               isMobile: isMobile,
+                              onEdit: () => onEdit(s),
                               onDelete: () async {
                                 final id = s['id']?.toString() ?? '';
                                 if (id.isEmpty) return;
@@ -216,10 +232,10 @@ class _CgpaOverviewTab extends ConsumerWidget {
                                 } catch (e) {
                                   if (context.mounted) {
                                     ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
+                                      const SnackBar(
                                         content: Text(
                                           'Could not delete the semester. Please try again.',
-                                          style: const TextStyle(fontFamily: 'Nunito'),
+                                          style: TextStyle(fontFamily: 'Nunito'),
                                         ),
                                         backgroundColor: AppColors.error,
                                       ),
@@ -370,11 +386,13 @@ class _SemesterCard extends StatelessWidget {
   final Map<String, dynamic> semester;
   final bool isMobile;
   final VoidCallback onDelete;
+  final VoidCallback? onEdit;
 
   const _SemesterCard({
     required this.semester,
     required this.isMobile,
     required this.onDelete,
+    this.onEdit,
   });
 
   @override
@@ -432,6 +450,13 @@ class _SemesterCard extends StatelessWidget {
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
+            if (onEdit != null)
+              IconButton(
+                icon: const Icon(Icons.edit_outlined,
+                    color: AppColors.primary, size: 20),
+                onPressed: onEdit,
+                tooltip: 'Edit semester',
+              ),
             IconButton(
               icon: const Icon(Icons.delete_outline,
                   color: AppColors.error, size: 20),
@@ -679,7 +704,13 @@ class _CourseRow {
 
 class _GpaCalculatorTab extends ConsumerStatefulWidget {
   final TabController tabController;
-  const _GpaCalculatorTab({required this.tabController});
+  final Map<String, dynamic>? editingSemester;
+  final VoidCallback onEditConsumed;
+  const _GpaCalculatorTab({
+    required this.tabController,
+    this.editingSemester,
+    required this.onEditConsumed,
+  });
 
   @override
   ConsumerState<_GpaCalculatorTab> createState() => _GpaCalculatorTabState();
@@ -692,6 +723,7 @@ class _GpaCalculatorTabState extends ConsumerState<_GpaCalculatorTab> {
   final _yearCtrl = TextEditingController();
   final List<_CourseRow> _courses = [_CourseRow()];
   bool _isSaving = false;
+  String? _editingId;
 
   static const List<String> _levels = [
     '100L',
@@ -700,6 +732,42 @@ class _GpaCalculatorTabState extends ConsumerState<_GpaCalculatorTab> {
     '400L',
     '500L',
   ];
+
+  @override
+  void didUpdateWidget(_GpaCalculatorTab oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.editingSemester != null &&
+        widget.editingSemester != oldWidget.editingSemester) {
+      _populateFromSemester(widget.editingSemester!);
+      widget.onEditConsumed();
+    }
+  }
+
+  void _populateFromSemester(Map<String, dynamic> s) {
+    final level = s['academicLevel']?.toString() ?? '100L';
+    final semester = (s['semester'] as num?)?.toInt() ?? 1;
+    final year = s['academicYear']?.toString() ?? '';
+    final rawCourses = s['courses'] as List? ?? [];
+
+    setState(() {
+      _editingId = s['id']?.toString();
+      _selectedLevel = _levels.contains(level) ? level : '100L';
+      _selectedSemester = semester;
+      _yearCtrl.text = year;
+      for (final c in _courses) {
+        c.dispose();
+      }
+      _courses.clear();
+      for (final c in rawCourses.whereType<Map>()) {
+        final row = _CourseRow();
+        row.nameCtrl.text = c['name']?.toString() ?? '';
+        row.creditUnits = (c['creditUnits'] as num?)?.toInt() ?? 3;
+        row.grade = c['grade']?.toString() ?? 'A';
+        _courses.add(row);
+      }
+      if (_courses.isEmpty) _courses.add(_CourseRow());
+    });
+  }
 
   @override
   void dispose() {
@@ -765,7 +833,9 @@ class _GpaCalculatorTabState extends ConsumerState<_GpaCalculatorTab> {
       };
 
       final api = ref.read(apiClientProvider);
-      final resp = await api.post(ApiConstants.gpaSemesters, data: dto);
+      final resp = _editingId != null
+          ? await api.patch('${ApiConstants.gpaSemesters}/$_editingId', data: dto)
+          : await api.post(ApiConstants.gpaSemesters, data: dto);
       final body = resp.data as Map<String, dynamic>;
 
       if (body['success'] == true) {
@@ -773,10 +843,10 @@ class _GpaCalculatorTabState extends ConsumerState<_GpaCalculatorTab> {
         ref.invalidate(cgpaProvider);
         _resetForm();
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
             content: Text(
-              'Semester saved!',
-              style: TextStyle(fontFamily: 'Nunito'),
+              _editingId != null ? 'Semester updated!' : 'Semester saved!',
+              style: const TextStyle(fontFamily: 'Nunito'),
             ),
             backgroundColor: AppColors.success,
           ));
@@ -795,6 +865,7 @@ class _GpaCalculatorTabState extends ConsumerState<_GpaCalculatorTab> {
 
   void _resetForm() {
     setState(() {
+      _editingId = null;
       for (final c in _courses) {
         c.dispose();
       }
@@ -997,23 +1068,91 @@ class _GpaCalculatorTabState extends ConsumerState<_GpaCalculatorTab> {
   Widget _buildCourseRow(int index) {
     final row = _courses[index];
     final gp = _kGradePoints[row.grade] ?? 0.0;
+    final coursesAsync = ref.watch(coursesProvider);
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Course name
+          // Course name — dropdown if courses available, fallback to text field
           Expanded(
             flex: 4,
-            child: TextFormField(
-              controller: row.nameCtrl,
-              onChanged: (_) => setState(() {}),
-              style: const TextStyle(fontFamily: 'Nunito', fontSize: 13),
-              decoration: const InputDecoration(
-                hintText: 'e.g. Fisheries Biology',
-                contentPadding:
-                    EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            child: coursesAsync.when(
+              data: (courses) {
+                if (courses.isEmpty) {
+                  return TextFormField(
+                    controller: row.nameCtrl,
+                    onChanged: (_) => setState(() {}),
+                    style: const TextStyle(fontFamily: 'Nunito', fontSize: 13),
+                    decoration: const InputDecoration(
+                      hintText: 'e.g. Fisheries Biology',
+                      contentPadding:
+                          EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    ),
+                  );
+                }
+                return DropdownButtonFormField<String>(
+                  initialValue: courses.any((c) => c['title'] == row.nameCtrl.text)
+                      ? row.nameCtrl.text
+                      : null,
+                  decoration: const InputDecoration(
+                    hintText: 'Select course',
+                    contentPadding:
+                        EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  ),
+                  style: const TextStyle(
+                      fontFamily: 'Nunito',
+                      fontSize: 13,
+                      color: AppColors.textPrimary),
+                  items: courses
+                      .map((c) => DropdownMenuItem<String>(
+                            value: c['title']?.toString() ?? '',
+                            child: Text(
+                              '${c['courseCode'] ?? ''} — ${c['title'] ?? ''}',
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                  fontFamily: 'Nunito', fontSize: 13),
+                            ),
+                          ))
+                      .toList(),
+                  onChanged: (v) {
+                    if (v == null) return;
+                    setState(() {
+                      row.nameCtrl.text = v;
+                      // Auto-fill credit units from selected course
+                      final match = courses.firstWhere(
+                        (c) => c['title'] == v,
+                        orElse: () => {},
+                      );
+                      if (match.isNotEmpty) {
+                        final units =
+                            (match['creditUnits'] as num?)?.toInt() ?? row.creditUnits;
+                        row.creditUnits = units;
+                      }
+                    });
+                  },
+                );
+              },
+              loading: () => TextFormField(
+                controller: row.nameCtrl,
+                onChanged: (_) => setState(() {}),
+                style: const TextStyle(fontFamily: 'Nunito', fontSize: 13),
+                decoration: const InputDecoration(
+                  hintText: 'e.g. Fisheries Biology',
+                  contentPadding:
+                      EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                ),
+              ),
+              error: (_, __) => TextFormField(
+                controller: row.nameCtrl,
+                onChanged: (_) => setState(() {}),
+                style: const TextStyle(fontFamily: 'Nunito', fontSize: 13),
+                decoration: const InputDecoration(
+                  hintText: 'e.g. Fisheries Biology',
+                  contentPadding:
+                      EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                ),
               ),
             ),
           ),
