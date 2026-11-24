@@ -1,6 +1,7 @@
-import { IsString, IsOptional, MaxLength } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, MaxLength } from 'class-validator';
 
 export class CreateUniversityDto {
+  @IsNotEmpty()
   @IsString()
   @MaxLength(200)
   name: string;

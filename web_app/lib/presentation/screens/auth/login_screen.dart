@@ -33,7 +33,7 @@ final universitiesProvider =
     if (data is List) return data.cast<Map<String, dynamic>>();
   } catch (_) {}
   return [
-    {'id': null, 'name': 'Ladoke Akintola University of Technology', 'shortName': 'LAUTECH'},
+    {'id': 'lautech', 'name': 'Ladoke Akintola University of Technology', 'shortName': 'LAUTECH'},
   ];
 });
 
