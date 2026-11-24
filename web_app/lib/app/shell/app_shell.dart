@@ -28,6 +28,7 @@ class _AppShellState extends ConsumerState<AppShell> {
     (label: 'AI Assist',     route: '/ai',             icon: Icons.auto_awesome_outlined),
     (label: 'Leaderboard',   route: '/leaderboard',    icon: Icons.leaderboard_outlined),
     (label: 'Library',       route: '/library',        icon: Icons.bookmark_outline),
+    (label: 'Connections',   route: '/connections',    icon: Icons.people_alt_outlined),
     (label: 'Study Groups',  route: '/study-groups',   icon: Icons.groups_outlined),
     (label: 'Profile',       route: '/profile',        icon: Icons.person_outlined),
   ];
