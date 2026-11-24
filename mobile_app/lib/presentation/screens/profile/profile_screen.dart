@@ -375,7 +375,6 @@ class _EditProfileSheet extends StatefulWidget {
 class _EditProfileSheetState extends State<_EditProfileSheet> {
   late final TextEditingController _nameCtrl;
   late final TextEditingController _phoneCtrl;
-  late final TextEditingController _matricCtrl;
   String? _selectedLevel;
   bool _saving = false;
 
@@ -383,8 +382,7 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
   void initState() {
     super.initState();
     _nameCtrl = TextEditingController(text: widget.user?.fullName ?? '');
-    _phoneCtrl = TextEditingController(text: widget.user?.phone ?? '');
-    _matricCtrl = TextEditingController(text: widget.user?.matricNumber ?? '');
+    _phoneCtrl = TextEditingController();
     _selectedLevel = widget.user?.academicLevel;
   }
 
@@ -392,7 +390,6 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
   void dispose() {
     _nameCtrl.dispose();
     _phoneCtrl.dispose();
-    _matricCtrl.dispose();
     super.dispose();
   }
 
