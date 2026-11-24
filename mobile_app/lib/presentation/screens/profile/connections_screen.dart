@@ -17,12 +17,13 @@ final _findStudentsProvider =
   if (query.length < 2) return [];
   try {
     final api = ref.read(apiClientProvider);
-    final response =
-        await api.get(ApiConstants.search, queryParams: {'q': query});
+    // Use dedicated user search endpoint
+    final response = await api.get(
+      '/users/search',
+      queryParams: {'q': query},
+    );
     final data = response.data['data'] ?? response.data;
-    if (data is List) {
-      return data.cast<Map<String, dynamic>>();
-    }
+    if (data is List) return data.cast<Map<String, dynamic>>();
     return [];
   } catch (_) {
     return [];

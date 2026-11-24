@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, ILike } from 'typeorm';
 import { User } from './entities/user.entity';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserRole } from './enums/user-role.enum';
@@ -64,6 +64,20 @@ export class UsersService {
       role: user.role,
       createdAt: user.createdAt,
     };
+  }
+
+  async searchUsers(query: string, departmentId?: string, excludeId?: string) {
+    if (!query || query.trim().length < 2) return [];
+    const pattern = ILike(`%${query.trim()}%`);
+    const users = await this.usersRepository.find({
+      where: [
+        { fullName: pattern, isActive: true, role: UserRole.STUDENT },
+      ],
+      select: ['id', 'fullName', 'avatar', 'academicLevel', 'departmentId', 'reputationPoints'],
+      take: 20,
+      order: { fullName: 'ASC' },
+    });
+    return users.filter(u => u.id !== excludeId);
   }
 
   async getLeaderboard(): Promise<

@@ -4,6 +4,7 @@ import {
   Patch,
   Body,
   Param,
+  Query,
   UseGuards,
   HttpCode,
   HttpStatus,
@@ -48,6 +49,16 @@ export class UsersController {
   @ApiOperation({ summary: 'Get top 50 users by reputation points' })
   getLeaderboard() {
     return this.usersService.getLeaderboard();
+  }
+
+  @Get('search')
+  @ApiOperation({ summary: 'Search for students by name' })
+  searchUsers(
+    @Query('q') query: string,
+    @Query('departmentId') departmentId?: string,
+    @CurrentUser('id') currentUserId?: string,
+  ) {
+    return this.usersService.searchUsers(query, departmentId, currentUserId);
   }
 
   @Get(':id/profile')
