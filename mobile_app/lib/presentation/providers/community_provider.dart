@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/models/question_model.dart';
 import '../../core/network/api_client.dart';
 import '../../core/constants/api_constants.dart';
+import '../../core/storage/offline_cache.dart';
 import '../../core/utils/error_helper.dart';
 import 'department_provider.dart';
 
@@ -10,36 +11,70 @@ import 'department_provider.dart';
 final questionsProvider = FutureProvider.family<List<QuestionModel>,
     ({String? courseId, String? level})>((ref, filters) async {
   final dept = await ref.watch(primaryDepartmentProvider.future);
-  final api = ref.read(apiClientProvider);
-  final params = <String, dynamic>{'page': 1, 'limit': 20};
-  if (dept != null) params['departmentId'] = dept.id;
-  if (filters.courseId != null) params['courseId'] = filters.courseId;
-  if (filters.level != null) params['level'] = filters.level;
-  final response = await api.get(ApiConstants.questions, queryParams: params);
-  final raw = response.data['data'] ?? response.data;
-  // Handle both array and [items, count] tuple from backend
-  final List items = raw is List
-      ? (raw.length == 2 && raw[1] is int ? raw[0] as List : raw)
-      : [];
-  return items.map((q) => QuestionModel.fromJson(q)).toList();
+  final cacheKey = 'questions_${dept?.id ?? 'all'}_${filters.level ?? ''}';
+
+  if (OfflineCache.isFresh(cacheKey)) {
+    final cached = OfflineCache.get<List>(cacheKey);
+    if (cached != null) return cached.map((q) => QuestionModel.fromJson(q as Map<String, dynamic>)).toList();
+  }
+
+  try {
+    final api = ref.read(apiClientProvider);
+    final params = <String, dynamic>{'page': 1, 'limit': 20};
+    if (dept != null) params['departmentId'] = dept.id;
+    if (filters.courseId != null) params['courseId'] = filters.courseId;
+    if (filters.level != null) params['level'] = filters.level;
+    final response = await api.get(ApiConstants.questions, queryParams: params);
+    final raw = response.data['data'] ?? response.data;
+    List items;
+    if (raw is Map && raw['questions'] is List) {
+      items = raw['questions'] as List;
+    } else if (raw is List && raw.length == 2 && raw[1] is int) {
+      items = raw[0] as List;
+    } else if (raw is List) {
+      items = raw;
+    } else {
+      items = [];
+    }
+    await OfflineCache.put(cacheKey, items);
+    return items.map((q) => QuestionModel.fromJson(q as Map<String, dynamic>)).toList();
+  } catch (e) {
+    final stale = OfflineCache.get<List>(cacheKey);
+    if (stale != null) return stale.map((q) => QuestionModel.fromJson(q as Map<String, dynamic>)).toList();
+    rethrow;
+  }
 });
 
-// All questions (no filter) — parses { data: { questions: [...], total: N } }
+// All questions (no filter)
 final allQuestionsProvider = FutureProvider<List<QuestionModel>>((ref) async {
-  final api = ref.read(apiClientProvider);
-  final response = await api.get(ApiConstants.questions, queryParams: {'limit': 30});
-  final data = response.data['data'] ?? response.data;
-  List raw;
-  if (data is Map && data['questions'] is List) {
-    raw = data['questions'] as List;
-  } else if (data is List && data.length == 2 && data[1] is int) {
-    raw = data[0] as List;
-  } else if (data is List) {
-    raw = data;
-  } else {
-    return [];
+  const cacheKey = 'questions_all';
+
+  if (OfflineCache.isFresh(cacheKey)) {
+    final cached = OfflineCache.get<List>(cacheKey);
+    if (cached != null) return cached.map((q) => QuestionModel.fromJson(q as Map<String, dynamic>)).toList();
   }
-  return raw.map((q) => QuestionModel.fromJson(q)).toList();
+
+  try {
+    final api = ref.read(apiClientProvider);
+    final response = await api.get(ApiConstants.questions, queryParams: {'limit': 30});
+    final data = response.data['data'] ?? response.data;
+    List raw;
+    if (data is Map && data['questions'] is List) {
+      raw = data['questions'] as List;
+    } else if (data is List && data.length == 2 && data[1] is int) {
+      raw = data[0] as List;
+    } else if (data is List) {
+      raw = data;
+    } else {
+      return [];
+    }
+    await OfflineCache.put(cacheKey, raw);
+    return raw.map((q) => QuestionModel.fromJson(q as Map<String, dynamic>)).toList();
+  } catch (e) {
+    final stale = OfflineCache.get<List>(cacheKey);
+    if (stale != null) return stale.map((q) => QuestionModel.fromJson(q as Map<String, dynamic>)).toList();
+    rethrow;
+  }
 });
 
 // ─── Answers ──────────────────────────────────────────────────────────────────

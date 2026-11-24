@@ -2,12 +2,24 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/models/course_model.dart';
 import '../../core/network/api_client.dart';
 import '../../core/constants/api_constants.dart';
+import '../../core/storage/offline_cache.dart';
 import 'department_provider.dart';
 
-/// All courses for the primary department.
+/// All courses for the primary department — offline-aware.
 final coursesProvider = FutureProvider<List<CourseModel>>((ref) async {
   final dept = await ref.watch(primaryDepartmentProvider.future);
   if (dept == null) return [];
+
+  final cacheKey = 'courses_${dept.id}';
+
+  // Return fresh cache without hitting network
+  if (OfflineCache.isFresh(cacheKey)) {
+    final cached = OfflineCache.get<List>(cacheKey);
+    if (cached != null) {
+      return cached.map((c) => CourseModel.fromJson(c as Map<String, dynamic>)).toList();
+    }
+  }
+
   try {
     final api = ref.read(apiClientProvider);
     final response = await api.get(
@@ -15,9 +27,16 @@ final coursesProvider = FutureProvider<List<CourseModel>>((ref) async {
       queryParams: {'departmentId': dept.id},
     );
     final data = response.data['data'] ?? response.data;
-    return (data as List).map((c) => CourseModel.fromJson(c)).toList();
-  } catch (_) {
-    return [];
+    final List list = data is List ? data : [];
+    await OfflineCache.put(cacheKey, list);
+    return list.map((c) => CourseModel.fromJson(c as Map<String, dynamic>)).toList();
+  } catch (e) {
+    // Network failed — fall back to stale cache
+    final stale = OfflineCache.get<List>(cacheKey);
+    if (stale != null) {
+      return stale.map((c) => CourseModel.fromJson(c as Map<String, dynamic>)).toList();
+    }
+    rethrow;
   }
 });
 
