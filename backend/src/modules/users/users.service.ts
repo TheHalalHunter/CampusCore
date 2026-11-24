@@ -80,6 +80,18 @@ export class UsersService {
     return users.filter(u => u.id !== excludeId);
   }
 
+  async getSuggestedUsers(departmentId?: string, excludeId?: string, limit = 20) {
+    const where: any = { isActive: true, role: UserRole.STUDENT };
+    if (departmentId) where.departmentId = departmentId;
+    const users = await this.usersRepository.find({
+      where,
+      select: ['id', 'fullName', 'avatar', 'academicLevel', 'departmentId', 'reputationPoints'],
+      take: limit,
+      order: { reputationPoints: 'DESC' },
+    });
+    return users.filter(u => u.id !== excludeId);
+  }
+
   async getLeaderboard(): Promise<
     Pick<User, 'id' | 'fullName' | 'reputationPoints' | 'role' | 'academicLevel' | 'departmentId'>[]
   > {

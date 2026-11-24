@@ -14,16 +14,19 @@ import '../../../data/models/user_model.dart';
 final _findStudentsProvider =
     FutureProvider.family<List<Map<String, dynamic>>, String>(
         (ref, query) async {
-  if (query.length < 2) return [];
   try {
     final api = ref.read(apiClientProvider);
-    // Use dedicated user search endpoint
-    final response = await api.get(
-      '/users/search',
-      queryParams: {'q': query},
-    );
-    final data = response.data['data'] ?? response.data;
-    if (data is List) return data.cast<Map<String, dynamic>>();
+    if (query.length >= 2) {
+      // Search by name
+      final response = await api.get('/users/search', queryParams: {'q': query});
+      final data = response.data['data'] ?? response.data;
+      if (data is List) return data.cast<Map<String, dynamic>>();
+    } else {
+      // Show suggestions when no search query
+      final response = await api.get('/users/suggestions');
+      final data = response.data['data'] ?? response.data;
+      if (data is List) return data.cast<Map<String, dynamic>>();
+    }
     return [];
   } catch (_) {
     return [];
@@ -234,13 +237,46 @@ class _FindStudentsTab extends ConsumerWidget {
         ),
         Expanded(
           child: searchQuery.length < 2
-              ? const Center(
-                  child: Column(mainAxisSize: MainAxisSize.min, children: [
-                    Icon(Icons.person_search, size: 56, color: AppColors.grey400),
-                    SizedBox(height: 16),
-                    Text('Enter a name to search for students.',
-                        style: TextStyle(color: AppColors.textHint)),
-                  ]),
+              ? studentsAsync.when(
+                  loading: () => const Center(child: CircularProgressIndicator()),
+                  error: (_, __) => const Center(
+                    child: Text('Could not load suggestions.',
+                        style: TextStyle(color: AppColors.textSecondary)),
+                  ),
+                  data: (students) {
+                    if (students.isEmpty) {
+                      return const Center(
+                        child: Column(mainAxisSize: MainAxisSize.min, children: [
+                          Icon(Icons.person_search, size: 56, color: AppColors.grey400),
+                          SizedBox(height: 16),
+                          Text('No students found.',
+                              style: TextStyle(color: AppColors.textHint)),
+                        ]),
+                      );
+                    }
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Padding(
+                          padding: EdgeInsets.fromLTRB(16, 8, 16, 4),
+                          child: Text('Suggested Students',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w700,
+                                fontSize: 14,
+                                color: AppColors.textSecondary,
+                              )),
+                        ),
+                        Expanded(
+                          child: ListView.separated(
+                            padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+                            itemCount: students.length,
+                            separatorBuilder: (_, __) => const SizedBox(height: 8),
+                            itemBuilder: (_, i) => _buildStudentCard(students[i]),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
                 )
               : studentsAsync.when(
                   loading: () =>
@@ -264,72 +300,55 @@ class _FindStudentsTab extends ConsumerWidget {
                       padding: const EdgeInsets.all(16),
                       itemCount: students.length,
                       separatorBuilder: (_, __) => const SizedBox(height: 8),
-                      itemBuilder: (_, i) {
-                        final s = students[i];
-                        final id = s['id']?.toString() ?? '';
-                        final fullName = s['fullName']?.toString() ??
-                            '${s['firstName'] ?? ''} ${s['lastName'] ?? ''}'
-                                .trim();
-                        final level = s['academicLevel']?.toString();
-                        final initials = fullName.isNotEmpty
-                            ? fullName
-                                .trim()
-                                .split(RegExp(r'\s+'))
-                                .take(2)
-                                .map((w) => w.isNotEmpty ? w[0].toUpperCase() : '')
-                                .join()
-                            : '?';
-                        final isLoading = actionLoading[id] == true;
-                        return Card(
-                          child: ListTile(
-                            contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 6),
-                            leading: CircleAvatar(
-                              backgroundColor:
-                                  AppColors.primary.withValues(alpha: 0.15),
-                              child: Text(
-                                initials,
-                                style: const TextStyle(
-                                    color: AppColors.primary,
-                                    fontWeight: FontWeight.w700),
-                              ),
-                            ),
-                            title: Text(fullName.isNotEmpty ? fullName : 'Student',
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.w600)),
-                            subtitle: level != null
-                                ? Text(level,
-                                    style: const TextStyle(
-                                        fontSize: 12,
-                                        color: AppColors.textSecondary))
-                                : null,
-                            trailing: isLoading
-                                ? const SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: CircularProgressIndicator(
-                                        strokeWidth: 2))
-                                : ElevatedButton(
-                                    onPressed: id.isEmpty
-                                        ? null
-                                        : () => onSendRequest(id),
-                                    style: ElevatedButton.styleFrom(
-                                      minimumSize: const Size(80, 34),
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 12),
-                                      textStyle:
-                                          const TextStyle(fontSize: 12),
-                                    ),
-                                    child: const Text('Connect'),
-                                  ),
-                          ),
-                        );
-                      },
+                      itemBuilder: (_, i) => _buildStudentCard(students[i]),
                     );
                   },
                 ),
         ),
       ],
+    );
+  }
+
+  Widget _buildStudentCard(Map<String, dynamic> s) {
+    final id = s['id']?.toString() ?? '';
+    final fullName = s['fullName']?.toString() ??
+        '${s['firstName'] ?? ''} ${s['lastName'] ?? ''}'.trim();
+    final level = s['academicLevel']?.toString();
+    final initials = fullName.isNotEmpty
+        ? fullName.trim().split(RegExp(r'\s+')).take(2)
+            .map((w) => w.isNotEmpty ? w[0].toUpperCase() : '').join()
+        : '?';
+    final isLoading = actionLoading[id] == true;
+    return Card(
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+        leading: CircleAvatar(
+          backgroundColor: AppColors.primary.withValues(alpha: 0.15),
+          child: Text(initials,
+              style: const TextStyle(
+                  color: AppColors.primary, fontWeight: FontWeight.w700)),
+        ),
+        title: Text(fullName.isNotEmpty ? fullName : 'Student',
+            style: const TextStyle(fontWeight: FontWeight.w600)),
+        subtitle: level != null
+            ? Text(level,
+                style: const TextStyle(
+                    fontSize: 12, color: AppColors.textSecondary))
+            : null,
+        trailing: isLoading
+            ? const SizedBox(
+                width: 20, height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2))
+            : ElevatedButton(
+                onPressed: id.isEmpty ? null : () => onSendRequest(id),
+                style: ElevatedButton.styleFrom(
+                  minimumSize: const Size(80, 34),
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  textStyle: const TextStyle(fontSize: 12),
+                ),
+                child: const Text('Connect'),
+              ),
+      ),
     );
   }
 }

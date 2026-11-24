@@ -61,6 +61,15 @@ export class UsersController {
     return this.usersService.searchUsers(query, departmentId, currentUserId);
   }
 
+  @Get('suggestions')
+  @ApiOperation({ summary: 'Get suggested students to connect with' })
+  getSuggestions(
+    @Query('departmentId') departmentId?: string,
+    @CurrentUser('id') currentUserId?: string,
+  ) {
+    return this.usersService.getSuggestedUsers(departmentId, currentUserId);
+  }
+
   @Get(':id/profile')
   @ApiOperation({ summary: 'Get public profile of a user' })
   getProfile(@Param('id') id: string) {

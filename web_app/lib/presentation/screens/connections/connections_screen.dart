@@ -129,52 +129,40 @@ final userProfileCacheProvider = FutureProvider.autoDispose
 
 final _findStudentsProvider = FutureProvider.autoDispose
     .family<List<_UserProfile>, String>((ref, query) async {
-  if (query.length < 2) return [];
-
   final results = <_UserProfile>[];
   final seen    = <String>{};
+  final api     = ref.read(apiClientProvider);
 
-  // Strategy 1: filter accepted-connection peers by name
-  try {
-    final connections = await ref.read(connectionsProvider.future);
-    final currentUser = ref.read(currentUserProvider);
-    final lowerQuery  = query.toLowerCase();
-
-    for (final conn in connections) {
-      if (conn.status != 'accepted') continue;
-      final peerId = conn.requesterId == currentUser?.id
-          ? conn.receiverId
-          : conn.requesterId;
-      if (peerId.isEmpty || seen.contains(peerId)) continue;
-
-      try {
-        final profile =
-            await ref.read(userProfileCacheProvider(peerId).future);
-        if (profile != null &&
-            profile.fullName.toLowerCase().contains(lowerQuery)) {
-          results.add(profile);
-          seen.add(peerId);
-        }
-      } catch (_) {}
-    }
-  } catch (_) {}
-
-  // Strategy 2: optimistic — try user search endpoint if backend adds it
-  try {
-    final api  = ref.read(apiClientProvider);
-    final resp = await api.get('/users/search', params: {'q': query});
-    final data = resp.data['data'];
-    if (data is List) {
-      for (final item in data.cast<Map<String, dynamic>>()) {
-        final p = _UserProfile.fromMap(item);
-        if (p.id.isNotEmpty && !seen.contains(p.id)) {
-          results.add(p);
-          seen.add(p.id);
+  if (query.length >= 2) {
+    // Search by name
+    try {
+      final resp = await api.get('/users/search', params: {'q': query});
+      final data = resp.data['data'];
+      if (data is List) {
+        for (final item in data.cast<Map<String, dynamic>>()) {
+          final p = _UserProfile.fromMap(item);
+          if (p.id.isNotEmpty && !seen.contains(p.id)) {
+            results.add(p);
+            seen.add(p.id);
+          }
         }
       }
-    }
-  } catch (_) {
-    // 404 or any error — silently ignore
+    } catch (_) {}
+  } else {
+    // Show suggestions — students in the same department
+    try {
+      final resp = await api.get('/users/suggestions');
+      final data = resp.data['data'];
+      if (data is List) {
+        for (final item in data.cast<Map<String, dynamic>>()) {
+          final p = _UserProfile.fromMap(item);
+          if (p.id.isNotEmpty && !seen.contains(p.id)) {
+            results.add(p);
+            seen.add(p.id);
+          }
+        }
+      }
+    } catch (_) {}
   }
 
   return results;
@@ -646,31 +634,21 @@ class _FindStudentsTab extends ConsumerWidget {
           ),
         ),
 
-        // Results
+        // Results — show suggestions when no query, search results when typing
         Expanded(
-          child: searchQuery.length < 2
-              ? const Center(
-                  child: Text(
-                    'Enter a name to search for students.',
-                    style: TextStyle(
-                      fontFamily: 'Nunito',
-                      color: AppColors.textHint,
-                    ),
-                  ),
-                )
-              : studentsAsync.when(
+          child: studentsAsync.when(
                   loading: () => const Center(
                     child: CircularProgressIndicator(strokeWidth: 2),
                   ),
                   error: (e, _) => _ConnErrorWidget(
-                    message: 'Could not search for students. Check your connection and try again.',
+                    message: 'Could not load students. Check your connection and try again.',
                     onRetry: () => ref.invalidate(_findStudentsProvider(searchQuery)),
                   ),
                   data: (students) {
                     if (students.isEmpty) {
                       return const _EmptyState(
-                        icon: Icons.search_off_outlined,
-                        message: 'No students found for that name.',
+                        icon: Icons.people_outline,
+                        message: 'No students found.',
                       );
                     }
                     return ListView.separated(
