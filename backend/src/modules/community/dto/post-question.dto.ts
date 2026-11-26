@@ -1,33 +1,20 @@
 import { IsString, IsNotEmpty, IsOptional, IsArray, MaxLength } from 'class-validator';
 import { Transform } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import sanitizeHtml from 'sanitize-html';
 
 export class PostQuestionDto {
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
   @MaxLength(300)
-  @Transform(({ value }) =>
-    typeof value === 'string'
-      ? value
-          .trim()
-          .replace(/<script[^>]*>.*?<\/script>/gi, '')
-          .replace(/<[^>]*>/g, '')
-      : value,
-  )
+  @Transform(({ value }) => sanitizeHtml(value, { allowedTags: [], allowedAttributes: {} }))
   title: string;
 
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
-  @Transform(({ value }) =>
-    typeof value === 'string'
-      ? value
-          .trim()
-          .replace(/<script[^>]*>.*?<\/script>/gi, '')
-          .replace(/<[^>]*>/g, '')
-      : value,
-  )
+  @Transform(({ value }) => sanitizeHtml(value, { allowedTags: [], allowedAttributes: {} }))
   body?: string;
 
   @ApiPropertyOptional()

@@ -13,6 +13,7 @@ import {
 } from 'class-validator';
 import { Transform } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import sanitizeHtml from 'sanitize-html';
 import { ResourceType } from '../entities/resource.entity';
 
 export class SubmitResourceDto {
@@ -20,14 +21,7 @@ export class SubmitResourceDto {
   @IsString()
   @IsNotEmpty()
   @MaxLength(400)
-  @Transform(({ value }) =>
-    typeof value === 'string'
-      ? value
-          .trim()
-          .replace(/<script[^>]*>.*?<\/script>/gi, '')
-          .replace(/<[^>]*>/g, '')
-      : value,
-  )
+  @Transform(({ value }) => sanitizeHtml(value, { allowedTags: [], allowedAttributes: {} }))
   title: string;
 
   @ApiProperty()
@@ -48,14 +42,7 @@ export class SubmitResourceDto {
   @IsOptional()
   @IsString()
   @MaxLength(2000)
-  @Transform(({ value }) =>
-    typeof value === 'string'
-      ? value
-          .trim()
-          .replace(/<script[^>]*>.*?<\/script>/gi, '')
-          .replace(/<[^>]*>/g, '')
-      : value,
-  )
+  @Transform(({ value }) => sanitizeHtml(value, { allowedTags: [], allowedAttributes: {} }))
   description?: string;
 
   @ApiPropertyOptional({ maxLength: 20 })

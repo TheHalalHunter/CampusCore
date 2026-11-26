@@ -1,10 +1,13 @@
 import { IsString, IsOptional } from 'class-validator';
+import { Transform } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
+import sanitizeHtml from 'sanitize-html';
 
 export class UpdateUserDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
+  @Transform(({ value }) => sanitizeHtml(value, { allowedTags: [], allowedAttributes: {} }))
   fullName?: string;
 
   @ApiPropertyOptional()
