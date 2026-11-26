@@ -222,6 +222,11 @@ export class AuthService {
         // different (deleted) Firebase UID, or the PostgreSQL save failed for any
         // other reason. Delete the Firebase account that was just created so the
         // client is not permanently stuck with an orphaned Firebase account.
+        // Log the actual error before rollback
+        this.logger.error(
+          `PostgreSQL save failed during registration for ${email}: ${(error as Error).message}`,
+          (error as Error).stack,
+        );
         try {
           await this.firebase.auth().deleteUser(uid);
           this.logger.warn(`Rolled back Firebase account ${uid} after PostgreSQL failure`);
