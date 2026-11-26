@@ -5,12 +5,12 @@ import sanitizeHtml from 'sanitize-html';
 export class CreateStudyGroupDto {
   @IsString()
   @MaxLength(200)
-  @Transform(({ value }) => sanitizeHtml(value, { allowedTags: [], allowedAttributes: {} }))
+  @Transform(({ value }) => typeof value === 'string' ? sanitizeHtml(value, { allowedTags: [], allowedAttributes: {} }) : value)
   name: string;
 
   @IsOptional()
   @IsString()
-  @Transform(({ value }) => sanitizeHtml(value, { allowedTags: [], allowedAttributes: {} }))
+  @Transform(({ value }) => typeof value === 'string' ? sanitizeHtml(value, { allowedTags: [], allowedAttributes: {} }) : value)
   description?: string;
 
   @IsOptional()

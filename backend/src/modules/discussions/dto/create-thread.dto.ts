@@ -8,13 +8,13 @@ export class CreateThreadDto {
   @IsString()
   @IsNotEmpty()
   @MaxLength(300)
-  @Transform(({ value }) => sanitizeHtml(value, { allowedTags: [], allowedAttributes: {} }))
+  @Transform(({ value }) => typeof value === 'string' ? sanitizeHtml(value, { allowedTags: [], allowedAttributes: {} }) : value)
   title: string;
 
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
-  @Transform(({ value }) => sanitizeHtml(value, { allowedTags: [], allowedAttributes: {} }))
+  @Transform(({ value }) => typeof value === 'string' ? sanitizeHtml(value, { allowedTags: [], allowedAttributes: {} }) : value)
   body: string;
 
   @ApiPropertyOptional({ description: 'e.g. 100L, 200L — omit for all levels' })

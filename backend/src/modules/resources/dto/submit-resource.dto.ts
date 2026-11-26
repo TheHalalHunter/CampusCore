@@ -21,7 +21,7 @@ export class SubmitResourceDto {
   @IsString()
   @IsNotEmpty()
   @MaxLength(400)
-  @Transform(({ value }) => sanitizeHtml(value, { allowedTags: [], allowedAttributes: {} }))
+  @Transform(({ value }) => typeof value === 'string' ? sanitizeHtml(value, { allowedTags: [], allowedAttributes: {} }) : value)
   title: string;
 
   @ApiProperty()
@@ -42,7 +42,7 @@ export class SubmitResourceDto {
   @IsOptional()
   @IsString()
   @MaxLength(2000)
-  @Transform(({ value }) => sanitizeHtml(value, { allowedTags: [], allowedAttributes: {} }))
+  @Transform(({ value }) => typeof value === 'string' ? sanitizeHtml(value, { allowedTags: [], allowedAttributes: {} }) : value)
   description?: string;
 
   @ApiPropertyOptional({ maxLength: 20 })
