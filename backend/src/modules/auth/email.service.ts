@@ -76,24 +76,24 @@ export class EmailService {
 </body>
 </html>`;
 
-    const apiKey = this.config.get<string>('RESEND_API_KEY');
+    const apiKey = this.config.get<string>('BREVO_API_KEY');
 
     const body = JSON.stringify({
-      from: 'CampusCore <onboarding@resend.dev>',
-      to: toEmail,
+      sender: { name: 'CampusCore', email: 'campuscore8@gmail.com' },
+      to: [{ email: toEmail }],
       subject: 'Verify your CampusCore email address',
-      html,
+      htmlContent: html,
     });
 
     try {
       await new Promise<void>((resolve, reject) => {
         const req = https.request(
           {
-            hostname: 'api.resend.com',
-            path: '/emails',
+            hostname: 'api.brevo.com',
+            path: '/v3/smtp/email',
             method: 'POST',
             headers: {
-              Authorization: `Bearer ${apiKey}`,
+              'api-key': apiKey,
               'Content-Type': 'application/json',
               'Content-Length': Buffer.byteLength(body),
             },
@@ -105,7 +105,7 @@ export class EmailService {
               if (res.statusCode && res.statusCode >= 200 && res.statusCode < 300) {
                 resolve();
               } else {
-                reject(new Error(`Resend API responded with ${res.statusCode}: ${data}`));
+                reject(new Error(`Brevo API responded with ${res.statusCode}: ${data}`));
               }
             });
           },
