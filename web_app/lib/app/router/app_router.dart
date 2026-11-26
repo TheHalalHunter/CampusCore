@@ -33,7 +33,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 
       if (!auth.initialized) return null;
       if (!auth.isAuthenticated && !isPublic) return '/login';
-      if (auth.isAuthenticated  &&  isPublic) return '/';
+      if (auth.isAuthenticated  &&  isLogin) return '/';
       return null;
     },
     routes: [
