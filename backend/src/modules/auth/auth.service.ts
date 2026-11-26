@@ -13,6 +13,7 @@ import { UsersService } from '../users/users.service';
 import { FirebaseAuthDto } from './dto/firebase-auth.dto';
 import { User } from '../users/entities/user.entity';
 import { FirebaseAdminService } from '../../config/firebase.config';
+import { TelegramService } from '../notifications/telegram.service';
 
 /**
  * Well-known disposable / temporary email domains.
@@ -75,16 +76,27 @@ export class AuthService {
     }
   }
 
-  private recordFailedAttempt(email: string): void {
+  private recordFailedAttempt(email: string, ip?: string): void {
     const now = Date.now();
     const record = this.failedLoginMap.get(email);
     if (!record || now - record.firstAttempt > this.LOCKOUT_WINDOW_MS) {
       this.failedLoginMap.set(email, { count: 1, firstAttempt: now });
     } else {
+      const newCount = record.count + 1;
       this.failedLoginMap.set(email, {
-        count: record.count + 1,
+        count: newCount,
         firstAttempt: record.firstAttempt,
       });
+      // Fire Telegram alert exactly when the lockout threshold is crossed
+      if (newCount >= this.MAX_FAILED_ATTEMPTS) {
+        this.telegramService
+          .sendAlert(
+            `🔒 <b>Account Locked</b>\nUser: ${email}\nFailed attempts: ${newCount}\nTime: ${new Date().toUTCString()}${ip ? `\nIP: ${ip}` : ''}`,
+          )
+          .catch(() => {
+            /* already logged inside sendAlert */
+          });
+      }
     }
   }
 
@@ -97,6 +109,7 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly config: ConfigService,
     private readonly firebase: FirebaseAdminService,
+    private readonly telegramService: TelegramService,
   ) {}
 
   async authenticateWithFirebase(dto: FirebaseAuthDto): Promise<{

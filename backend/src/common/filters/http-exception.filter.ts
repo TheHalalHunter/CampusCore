@@ -5,12 +5,17 @@ import {
   HttpException,
   HttpStatus,
   Logger,
+  Injectable,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
+import { TelegramService } from '../../modules/notifications/telegram.service';
 
+@Injectable()
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
   private readonly logger = new Logger(AllExceptionsFilter.name);
+
+  constructor(private readonly telegramService: TelegramService) {}
 
   catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
@@ -29,6 +34,21 @@ export class AllExceptionsFilter implements ExceptionFilter {
           : (exceptionResponse as any).message || exceptionResponse;
     } else {
       this.logger.error('Unhandled exception', exception as Error);
+    }
+
+    // Alert admin when a rate limit is hit
+    if (status === HttpStatus.TOO_MANY_REQUESTS) {
+      const ip =
+        (request.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() ??
+        request.socket?.remoteAddress ??
+        'unknown';
+      this.telegramService
+        .sendAlert(
+          `⚠️ <b>Rate Limit Hit</b>\nEndpoint: ${request.method} ${request.url}\nIP: ${ip}\nTime: ${new Date().toUTCString()}`,
+        )
+        .catch(() => {
+          /* already logged inside sendAlert */
+        });
     }
 
     response.status(status).json({

@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import OpenAI from 'openai';
 import { AiUsage, AiAction } from './entities/ai-usage.entity';
+import { TelegramService } from '../notifications/telegram.service';
 
 const EXAM_CHEAT_PATTERNS = [
   /answer the following.*exam/i,
@@ -24,6 +25,7 @@ export class AiService {
     private readonly config: ConfigService,
     @InjectRepository(AiUsage)
     private readonly usageRepo: Repository<AiUsage>,
+    private readonly telegramService: TelegramService,
   ) {
     this.openai = new OpenAI({
       apiKey: config.get('OPENAI_API_KEY') || '',
@@ -126,6 +128,13 @@ export class AiService {
     history?: Array<{ role: string; content: string }>,
   ): Promise<string> {
     if (this.detectExamCheat(concept)) {
+      this.telegramService
+        .sendAlert(
+          `🤖 <b>AI Exam Lock Triggered</b>\nUser: ${userId}\nPrompt snippet: "${concept.substring(0, 100)}"\nTime: ${new Date().toUTCString()}`,
+        )
+        .catch(() => {
+          /* already logged inside sendAlert */
+        });
       throw new BadRequestException(
         'This request appears to be related to an active exam. CampusCore AI is here to help you learn, not to assist during exams.',
       );
