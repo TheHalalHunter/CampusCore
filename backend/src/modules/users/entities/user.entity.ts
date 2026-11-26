@@ -48,6 +48,9 @@ export class User {
   @Column({ name: 'is_active', default: true })
   isActive: boolean;
 
+  @Column({ name: 'refresh_token_hash', nullable: true })
+  refreshTokenHash: string;
+
   @Column({ name: 'reputation_points', default: 0 })
   reputationPoints: number;
 

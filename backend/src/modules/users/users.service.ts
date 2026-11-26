@@ -47,6 +47,18 @@ export class UsersService {
     await this.usersRepository.increment({ id }, 'reputationPoints', points);
   }
 
+  async updateRefreshTokenHash(id: string, hash: string | null): Promise<void> {
+    await this.usersRepository.update(id, { refreshTokenHash: hash });
+  }
+
+  async setEmailVerified(id: string): Promise<void> {
+    await this.usersRepository.update(id, { isEmailVerified: true });
+  }
+
+  async lockAccount(id: string): Promise<void> {
+    await this.usersRepository.update(id, { isActive: false, refreshTokenHash: null });
+  }
+
   async acceptIntegrityPolicy(id: string): Promise<{ accepted: boolean }> {
     await this.usersRepository.update(id, { acceptedIntegrityPolicy: true });
     return { accepted: true };
@@ -70,14 +82,12 @@ export class UsersService {
     if (!query || query.trim().length < 2) return [];
     const pattern = ILike(`%${query.trim()}%`);
     const users = await this.usersRepository.find({
-      where: [
-        { fullName: pattern, isActive: true, role: UserRole.STUDENT },
-      ],
+      where: [{ fullName: pattern, isActive: true, role: UserRole.STUDENT }],
       select: ['id', 'fullName', 'avatar', 'academicLevel', 'departmentId', 'reputationPoints'],
       take: 20,
       order: { fullName: 'ASC' },
     });
-    return users.filter(u => u.id !== excludeId);
+    return users.filter((u) => u.id !== excludeId);
   }
 
   async getSuggestedUsers(departmentId?: string, excludeId?: string, limit = 20) {
@@ -89,7 +99,7 @@ export class UsersService {
       take: limit,
       order: { reputationPoints: 'DESC' },
     });
-    return users.filter(u => u.id !== excludeId);
+    return users.filter((u) => u.id !== excludeId);
   }
 
   async getLeaderboard(): Promise<

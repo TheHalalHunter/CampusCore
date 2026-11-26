@@ -7,6 +7,7 @@ import { AuthController } from './auth.controller';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { UsersModule } from '../users/users.module';
 import { FirebaseModule } from '../../config/firebase.module';
+import { EmailService } from './email.service';
 
 @Module({
   imports: [
@@ -22,7 +23,7 @@ import { FirebaseModule } from '../../config/firebase.module';
       inject: [ConfigService],
     }),
   ],
-  providers: [AuthService, JwtStrategy],
+  providers: [AuthService, JwtStrategy, EmailService],
   controllers: [AuthController],
   exports: [AuthService],
 })
