@@ -268,6 +268,7 @@ class _SignInFormState extends ConsumerState<_SignInForm> {
   final _emailCtrl    = TextEditingController();
   final _passwordCtrl = TextEditingController();
   bool _obscure = true;
+  bool _showResendVerification = false;
 
   @override
   void dispose() {
@@ -387,7 +388,102 @@ class _SignInFormState extends ConsumerState<_SignInForm> {
           _emailCtrl.text.trim(),
           _passwordCtrl.text,
         );
-    if (error == null && mounted) widget.onSuccess();
+    if (error == null && mounted) {
+      setState(() => _showResendVerification = false);
+      widget.onSuccess();
+    } else if (error != null && mounted) {
+      setState(() {
+        _showResendVerification =
+            error.toLowerCase().contains('verify your email');
+      });
+    }
+  }
+
+  Future<void> _resendVerificationEmail(String email) async {
+    try {
+      final api = ref.read(apiClientProvider);
+      await api.post(
+        ApiConstants.resendVerification,
+        data: {'email': email},
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Verification email sent. Check your inbox.',
+            style: TextStyle(fontFamily: 'Nunito'),
+          ),
+          backgroundColor: AppColors.success,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Could not resend email. Please try again later.',
+            style: TextStyle(fontFamily: 'Nunito'),
+          ),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    }
+  }
+
+  void _showResendDialog() {
+    final emailCtrl = TextEditingController(text: _emailCtrl.text.trim());
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text(
+          'Resend Verification Email',
+          style: TextStyle(fontFamily: 'Nunito', fontWeight: FontWeight.w700),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'Enter your email and we\'ll send a new verification link.',
+              style: TextStyle(fontFamily: 'Nunito'),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: emailCtrl,
+              keyboardType: TextInputType.emailAddress,
+              decoration: const InputDecoration(
+                labelText: 'Email address',
+                prefixIcon: Icon(Icons.email_outlined),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: AppColors.textHint, fontFamily: 'Nunito'),
+            ),
+          ),
+          TextButton(
+            onPressed: () {
+              final email = emailCtrl.text.trim();
+              Navigator.of(ctx).pop();
+              if (email.isNotEmpty) _resendVerificationEmail(email);
+            },
+            child: const Text(
+              'Send',
+              style: TextStyle(
+                color: AppColors.primary,
+                fontFamily: 'Nunito',
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -462,6 +558,30 @@ class _SignInFormState extends ConsumerState<_SignInForm> {
             if (auth.error != null) ...[
               const SizedBox(height: 10),
               _ErrorBox(message: auth.error!),
+              if (_showResendVerification) ...[
+                const SizedBox(height: 8),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton.icon(
+                    onPressed: _showResendDialog,
+                    icon: const Icon(Icons.email_outlined, size: 16),
+                    label: const Text(
+                      'Resend verification email',
+                      style: TextStyle(
+                        color: AppColors.primary,
+                        fontSize: 13,
+                        fontFamily: 'Nunito',
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    style: TextButton.styleFrom(
+                      padding: EdgeInsets.zero,
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                  ),
+                ),
+              ],
             ],
             const SizedBox(height: 20),
             SizedBox(

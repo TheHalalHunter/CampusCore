@@ -7,6 +7,7 @@ import '../../presentation/screens/auth/register_screen.dart';
 import '../../presentation/screens/auth/onboarding_screen.dart';
 import '../../presentation/screens/auth/integrity_policy_screen.dart';
 import '../../presentation/screens/auth/forgot_password_screen.dart';
+import '../../presentation/screens/auth/verify_email_screen.dart';
 import '../../presentation/screens/home/home_screen.dart';
 import '../../presentation/screens/courses/courses_screen.dart';
 import '../../presentation/screens/courses/course_detail_screen.dart';
@@ -50,6 +51,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         AppRoutes.login,
         AppRoutes.register,
         AppRoutes.forgotPassword,
+        AppRoutes.verifyEmail,
       ].contains(location);
 
       // Not logged in — send to onboarding
@@ -77,6 +79,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(path: AppRoutes.register, builder: (_, __) => const RegisterScreen()),
       GoRoute(path: AppRoutes.integrityPolicy, builder: (_, __) => const IntegrityPolicyScreen()),
       GoRoute(path: AppRoutes.forgotPassword, builder: (_, __) => const ForgotPasswordScreen()),
+      GoRoute(
+        path: AppRoutes.verifyEmail,
+        builder: (_, state) {
+          final email = state.uri.queryParameters['email'] ?? '';
+          return VerifyEmailScreen(email: email);
+        },
+      ),
 
       // Main shell with bottom navigation
       ShellRoute(
@@ -136,6 +145,7 @@ class AppRoutes {
   static const String register = '/register';
   static const String forgotPassword  = '/forgot-password';
   static const String integrityPolicy = '/integrity-policy';
+  static const String verifyEmail     = '/verify-email';
   static const String home = '/home';
   static const String courses = '/courses';
   static const String resources = '/resources';

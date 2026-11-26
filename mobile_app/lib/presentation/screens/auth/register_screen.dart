@@ -57,8 +57,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             academicLevel: _selectedLevel,
           );
 
-      // 4. Router will redirect to integrity policy screen automatically
-      if (mounted) context.go(AppRoutes.integrityPolicy);
+      // 4. Navigate to verify-email screen (email verification required before login)
+      if (mounted) {
+        context.go('${AppRoutes.verifyEmail}?email=${Uri.encodeComponent(_emailCtrl.text.trim())}');
+      }
     } on FirebaseAuthException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(

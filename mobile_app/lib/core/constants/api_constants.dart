@@ -8,8 +8,10 @@ class ApiConstants {
   );
 
   // Auth
-  static const String login = '/auth/login';
-  static const String refresh = '/auth/refresh';
+  static const String login               = '/auth/login';
+  static const String refresh             = '/auth/refresh';
+  static const String verifyEmail         = '/auth/verify-email';
+  static const String resendVerification  = '/auth/resend-verification';
 
   // Users
   static const String me = '/users/me';

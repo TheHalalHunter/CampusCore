@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../shell/app_shell.dart';
 import '../../core/providers/auth_provider.dart';
 import '../../presentation/screens/auth/login_screen.dart';
+import '../../presentation/screens/auth/verify_email_screen.dart';
 import '../../presentation/screens/home/home_screen.dart';
 import '../../presentation/screens/courses/courses_screen.dart';
 import '../../presentation/screens/courses/course_detail_screen.dart';
@@ -28,10 +29,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     redirect: (context, state) {
       final auth    = ref.read(authProvider);
       final isLogin = state.matchedLocation == '/login';
+      final isPublic = isLogin || state.matchedLocation == '/verify-email';
 
       if (!auth.initialized) return null;
-      if (!auth.isAuthenticated && !isLogin) return '/login';
-      if (auth.isAuthenticated  &&  isLogin) return '/';
+      if (!auth.isAuthenticated && !isPublic) return '/login';
+      if (auth.isAuthenticated  &&  isPublic) return '/';
       return null;
     },
     routes: [
@@ -39,6 +41,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/login',
         name: 'login',
         builder: (context, state) => const LoginScreen(),
+      ),
+      GoRoute(
+        path: '/verify-email',
+        name: 'verify-email',
+        builder: (context, state) {
+          final token = state.uri.queryParameters['token'] ?? '';
+          return VerifyEmailScreen(token: token);
+        },
       ),
       ShellRoute(
         builder: (context, state, child) => AppShell(child: child),

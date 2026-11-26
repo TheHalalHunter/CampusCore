@@ -3,7 +3,9 @@ class ApiConstants {
       'https://campuscore-bfrq.onrender.com/api/v1';
 
   // Auth
-  static const String login = '/auth/login';
+  static const String login                = '/auth/login';
+  static const String verifyEmail          = '/auth/verify-email';
+  static const String resendVerification   = '/auth/resend-verification';
   static const String me    = '/users/me';
 
   // Users / Profile
