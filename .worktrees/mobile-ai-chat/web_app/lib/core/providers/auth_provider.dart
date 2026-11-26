@@ -1,0 +1,348 @@
+import 'dart:convert';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../network/api_client.dart';
+import '../storage/token_storage.dart';
+import '../constants/api_constants.dart';
+
+// ── User model ────────────────────────────────────────────────────────────────
+class AppUser {
+  final String id;
+  final String email;
+  final String firstName;
+  final String lastName;
+  final String role;
+  final String? avatarUrl;
+  final int? reputationPoints;
+  final String? level;
+  final String? departmentId;
+  final String? phone;
+
+  const AppUser({
+    required this.id,
+    required this.email,
+    required this.firstName,
+    required this.lastName,
+    required this.role,
+    this.avatarUrl,
+    this.reputationPoints,
+    this.level,
+    this.departmentId,
+    this.phone,
+  });
+
+  String get fullName => '$firstName $lastName';
+  String get initials {
+    final f = firstName.isNotEmpty ? firstName[0].toUpperCase() : '';
+    final l = lastName.isNotEmpty  ? lastName[0].toUpperCase()  : '';
+    return '$f$l';
+  }
+
+  factory AppUser.fromJson(Map<String, dynamic> json) {
+    // Backend returns fullName — split into first/last
+    final fullName = json['fullName']?.toString() ?? '';
+    final parts    = fullName.trim().split(' ');
+    final firstName = json['firstName']?.toString() ??
+        (parts.isNotEmpty ? parts.first : '');
+    final lastName  = json['lastName']?.toString() ??
+        (parts.length > 1 ? parts.sublist(1).join(' ') : '');
+    return AppUser(
+      id:               json['id']?.toString()              ?? '',
+      email:            json['email']?.toString()            ?? '',
+      firstName:        firstName,
+      lastName:         lastName,
+      role:             json['role']?.toString()             ?? 'student',
+      avatarUrl:        json['avatarUrl']?.toString()        ?? json['avatar']?.toString(),
+      reputationPoints: json['reputationPoints'] as int?,
+      level:            json['academicLevel']?.toString()    ?? json['level']?.toString(),
+      departmentId:     json['departmentId']?.toString()     ?? json['department_id']?.toString(),
+      phone:            json['phone']?.toString(),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'id': id, 'email': email, 'firstName': firstName,
+    'lastName': lastName, 'role': role, 'avatarUrl': avatarUrl,
+    'reputationPoints': reputationPoints, 'level': level,
+    'departmentId': departmentId, 'phone': phone,
+  };
+}
+
+// ── Auth state ────────────────────────────────────────────────────────────────
+class AuthState {
+  final AppUser? user;
+  final bool isLoading;
+  final String? error;
+  final bool initialized;
+
+  const AuthState({
+    this.user,
+    this.isLoading = false,
+    this.error,
+    this.initialized = false,
+  });
+
+  bool get isAuthenticated => user != null && initialized;
+
+  AuthState copyWith({
+    AppUser? user,
+    bool? isLoading,
+    String? error,
+    bool? initialized,
+    bool clearUser = false,
+    bool clearError = false,
+  }) {
+    return AuthState(
+      user:        clearUser  ? null  : (user        ?? this.user),
+      isLoading:   isLoading  ?? this.isLoading,
+      error:       clearError ? null  : (error       ?? this.error),
+      initialized: initialized ?? this.initialized,
+    );
+  }
+}
+
+// ── Auth notifier ─────────────────────────────────────────────────────────────
+class AuthNotifier extends StateNotifier<AuthState> {
+  final ApiClient _api;
+
+  AuthNotifier(this._api) : super(const AuthState()) {
+    _init();
+  }
+
+  Future<void> _init() async {
+    try {
+      await _doInit().timeout(const Duration(seconds: 5));
+    } catch (_) {
+      // timeout or unexpected error — mark initialized so dependents don't wait forever
+    }
+    // Always ensure initialized is set, even if _doInit threw or timed out
+    if (!state.initialized) {
+      state = state.copyWith(initialized: true, clearUser: true);
+    }
+  }
+
+  Future<void> _doInit() async {
+    final token    = await TokenStorage.getAccessToken();
+    final userJson = await TokenStorage.getUser();
+
+    if (token != null && token.isNotEmpty && userJson != null) {
+      final user = AppUser.fromJson(jsonDecode(userJson) as Map<String, dynamic>);
+      state = AuthState(user: user, initialized: true);
+
+      // Refresh user data from API in background
+      _refreshUser();
+      return;
+    }
+
+    state = state.copyWith(initialized: true, clearUser: true);
+  }
+
+  Future<void> _refreshUser() async {
+    try {
+      final resp = await _api.get(ApiConstants.me);
+      final data = resp.data['data'] as Map<String, dynamic>;
+      final user = AppUser.fromJson(data);
+      await TokenStorage.saveUser(jsonEncode(user.toJson()));
+      state = state.copyWith(user: user);
+    } catch (_) {
+      // Silent fail — cached user is still valid
+    }
+  }
+
+  Future<String?> signIn(String email, String password) async {
+    state = state.copyWith(isLoading: true, clearError: true);
+    try {
+      // 1. Firebase sign-in
+      final credential = await FirebaseAuth.instance
+          .signInWithEmailAndPassword(email: email, password: password);
+      final firebaseToken = await credential.user?.getIdToken();
+
+      if (firebaseToken == null) {
+        state = state.copyWith(isLoading: false, error: 'Firebase token error');
+        return 'Firebase token error';
+      }
+
+      // 2. Backend token exchange
+      final resp = await _api.post(ApiConstants.login, data: {
+        'idToken': firebaseToken,
+      });
+
+      final body = resp.data as Map<String, dynamic>;
+      if (body['success'] != true) {
+        state = state.copyWith(isLoading: false, error: body['message']?.toString() ?? 'Login failed');
+        return body['message']?.toString() ?? 'Login failed';
+      }
+
+      final tokenData = body['data'] as Map<String, dynamic>;
+      final accessToken  = tokenData['accessToken']?.toString()  ?? '';
+      final refreshToken = tokenData['refreshToken']?.toString();
+      final userData     = tokenData['user'] as Map<String, dynamic>? ?? {};
+
+      // 3. Persist tokens + user
+      await TokenStorage.saveTokens(
+        accessToken: accessToken,
+        refreshToken: refreshToken,
+      );
+      final user = AppUser.fromJson(userData);
+      await TokenStorage.saveUser(jsonEncode(user.toJson()));
+
+      state = AuthState(user: user, initialized: true);
+      return null; // success
+    } on FirebaseAuthException catch (e) {
+      final msg = _firebaseMsg(e.code);
+      state = state.copyWith(isLoading: false, error: msg);
+      return msg;
+    } catch (e) {
+      const msg = 'Login failed. Please try again.';
+      state = state.copyWith(isLoading: false, error: msg);
+      return msg;
+    }
+  }
+
+  /// Called by sign-up flow after it handles token exchange itself.
+  void setUserDirectly(AppUser user) {
+    state = AuthState(user: user, initialized: true);
+  }
+
+  Future<String?> signInWithGoogle() async {
+    state = state.copyWith(isLoading: true, clearError: true);
+    try {
+      // Web-specific Google sign-in
+      final googleProvider = GoogleAuthProvider();
+      googleProvider.addScope('email');
+      googleProvider.addScope('profile');
+
+      final credential = await FirebaseAuth.instance.signInWithPopup(googleProvider);
+      final firebaseToken = await credential.user?.getIdToken();
+
+      if (firebaseToken == null) {
+        state = state.copyWith(isLoading: false, error: 'Google sign-in failed. Try again.');
+        return 'Google sign-in failed.';
+      }
+
+      final resp = await _api.post(ApiConstants.login, data: {
+        'idToken':  firebaseToken,
+        'fullName': credential.user?.displayName ?? '',
+      });
+
+      final body = resp.data as Map<String, dynamic>;
+      if (body['success'] != true) {
+        state = state.copyWith(isLoading: false, error: body['message']?.toString() ?? 'Login failed');
+        return body['message']?.toString() ?? 'Login failed';
+      }
+
+      final tokenData    = body['data'] as Map<String, dynamic>;
+      final accessToken  = tokenData['accessToken']?.toString()  ?? '';
+      final refreshToken = tokenData['refreshToken']?.toString();
+      final userData     = tokenData['user'] as Map<String, dynamic>? ?? {};
+
+      await TokenStorage.saveTokens(accessToken: accessToken, refreshToken: refreshToken);
+      final user = AppUser.fromJson(userData);
+      await TokenStorage.saveUser(jsonEncode(user.toJson()));
+
+      state = AuthState(user: user, initialized: true);
+      return null;
+    } on FirebaseAuthException catch (e) {
+      final msg = e.code == 'popup-closed-by-user'
+          ? null // user cancelled — not an error
+          : 'Google sign-in failed: ${e.message}';
+      state = state.copyWith(isLoading: false, error: msg, clearError: msg == null);
+      return msg;
+    } catch (e) {
+      final msg = e.toString().contains('ServiceUnavailable') || e.toString().contains('503')
+          ? 'Auth service temporarily unavailable. Please try again in a minute.'
+          : 'Google sign-in failed. Please try again.';
+      state = state.copyWith(isLoading: false, error: msg);
+      return msg;
+    }
+  }
+
+  Future<String?> updateProfile({
+    required String firstName,
+    required String lastName,
+    String? phone,
+    String? academicLevel,
+  }) async {
+    state = state.copyWith(isLoading: true, clearError: true);
+    try {
+      final body = <String, dynamic>{
+        'fullName': '$firstName $lastName',
+      };
+      if (phone != null && phone.isNotEmpty) body['phone'] = phone;
+      if (academicLevel != null && academicLevel.isNotEmpty) {
+        // Strip the 'L' suffix — backend stores '100', '200' etc or '100L'
+        body['academicLevel'] = academicLevel;
+      }
+
+      final resp = await _api.patch(ApiConstants.updateProfile, data: body);
+      final respBody = resp.data as Map<String, dynamic>;
+      if (respBody['success'] != true) {
+        state = state.copyWith(isLoading: false, error: respBody['message']?.toString() ?? 'Update failed');
+        return respBody['message']?.toString() ?? 'Update failed';
+      }
+      final data = respBody['data'] as Map<String, dynamic>? ?? {};
+      final updated = AppUser.fromJson({...state.user!.toJson(), ...data});
+      await TokenStorage.saveUser(jsonEncode(updated.toJson()));
+      state = state.copyWith(user: updated, isLoading: false);
+      return null;
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: 'Update failed. Please try again.');
+      return 'Update failed. Please try again.';
+    }
+  }
+
+  Future<String?> updateAvatar(String avatarUrl) async {
+    state = state.copyWith(isLoading: true, clearError: true);
+    try {
+      final resp = await _api.patch(ApiConstants.updateProfile, data: {'avatar': avatarUrl});
+      final respBody = resp.data as Map<String, dynamic>;
+      if (respBody['success'] != true) {
+        state = state.copyWith(isLoading: false, error: respBody['message']?.toString() ?? 'Avatar update failed');
+        return respBody['message']?.toString() ?? 'Avatar update failed';
+      }
+      final data = respBody['data'] as Map<String, dynamic>? ?? {};
+      final updated = AppUser.fromJson({...state.user!.toJson(), ...data});
+      await TokenStorage.saveUser(jsonEncode(updated.toJson()));
+      state = state.copyWith(user: updated, isLoading: false);
+      return null;
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: 'Avatar update failed. Please try again.');
+      return 'Avatar update failed. Please try again.';
+    }
+  }
+
+  Future<void> signOut() async {
+    await FirebaseAuth.instance.signOut();
+    await TokenStorage.clear();
+    state = const AuthState(initialized: true);
+  }
+
+  String _firebaseMsg(String code) {
+    switch (code) {
+      case 'user-not-found':
+        return 'No account found with this email. Check the email or sign up.';
+      case 'wrong-password':
+      case 'invalid-credential':
+      case 'INVALID_LOGIN_CREDENTIALS':
+        return 'Incorrect password. Please try again or reset your password.';
+      case 'user-disabled':
+        return 'This account has been disabled. Contact support for help.';
+      case 'too-many-requests':
+        return 'Too many failed attempts. Please wait a few minutes before trying again.';
+      case 'network-request-failed':
+        return 'No internet connection. Check your network and try again.';
+      default:
+        return 'Login failed ($code). Please try again.';
+    }
+  }
+}
+
+// ── Providers ─────────────────────────────────────────────────────────────────
+final authProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
+  final api = ref.watch(apiClientProvider);
+  return AuthNotifier(api);
+});
+
+final currentUserProvider = Provider<AppUser?>((ref) {
+  return ref.watch(authProvider).user;
+});

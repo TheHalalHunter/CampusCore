@@ -1,0 +1,41 @@
+{"users": [
+{
+  "localId": "4QKcuIyKdOZslF51rxm4NjddvcT2",
+  "email": "thehalalblogging@gmail.com",
+  "emailVerified": true,
+  "displayName": "TheHalalBlogger",
+  "photoUrl": "https://lh3.googleusercontent.com/a/ACg8ocJW4RLu92FNkUq-RfG1tEp6j8eoF7N3akaxwhr0O1w4fRdqHQ=s96-c",
+  "lastSignedInAt": "1788978429510",
+  "createdAt": "1788978429510",
+  "providerUserInfo": [
+    {
+      "providerId": "google.com",
+      "rawId": "103593394976338462593",
+      "email": "thehalalblogging@gmail.com",
+      "displayName": "TheHalalBlogger",
+      "photoUrl": "https://lh3.googleusercontent.com/a/ACg8ocJW4RLu92FNkUq-RfG1tEp6j8eoF7N3akaxwhr0O1w4fRdqHQ=s96-c"
+    }
+  ]
+},
+{
+  "localId": "E3a6FA2iKlUlmyMd7kJxv79dLUZ2",
+  "email": "test@campuscore.ng",
+  "emailVerified": false,
+  "passwordHash": "JVbuLq9Y11lOFGJUGJa042bhteaiTBYdHGWsqbmqdw6a4srmetCk/gAl5ARtdg8fl10cV60lMxydHsvfqOfuNA==",
+  "salt": "ubqS+3wSd8QoEg==",
+  "lastSignedInAt": "1789039818733",
+  "createdAt": "1785539776796",
+  "disabled": false,
+  "providerUserInfo": []
+},
+{
+  "localId": "gSWiTiD66KVlDOWQSNlHb1amhx82",
+  "email": "okusanyamarcusoluwabunmi@gmail.com",
+  "emailVerified": true,
+  "passwordHash": "8Jng4/JocKrC8itJHZF9V1wRWYc/Au5LjbhH0EVQqtF1qy/xdPENY1SyzZry6i7LlEoL+cL5ZL8UFf6l30/jPw==",
+  "salt": "8Bo6xL2PLtFTSg==",
+  "displayName": "Okusanya Marcus Oluwabunmi",
+  "lastSignedInAt": "1788967593181",
+  "createdAt": "1788965254042",
+  "providerUserInfo": []
+}]}

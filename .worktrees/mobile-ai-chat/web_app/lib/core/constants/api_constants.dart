@@ -1,0 +1,74 @@
+class ApiConstants {
+  static const String baseUrl =
+      'https://campuscore-bfrq.onrender.com/api/v1';
+
+  // Auth
+  static const String login = '/auth/login';
+  static const String me    = '/users/me';
+
+  // Users / Profile
+  static const String updateProfile = '/users/me';
+
+  // Courses
+  static const String courses     = '/courses';
+  static const String departments = '/departments';
+
+  // Resources
+  static const String resources      = '/resources';
+  static const String uploadResource = '/resources';
+
+  // Community / Q&A
+  static const String questions    = '/community/questions';
+  static const String postQuestion = '/community/questions';
+  static String questionAnswers(String id)  => '/community/questions/$id/answers';
+  static String postAnswer(String id)       => '/community/questions/$id/answers';
+  static String questionDetail(String id)   => '/community/questions/$id';
+  static String upvoteQuestion(String id)   => '/community/questions/$id/upvote';
+  static String downvoteQuestion(String id) => '/community/questions/$id/downvote';
+  static String upvoteAnswer(String id)     => '/community/answers/$id/upvote';
+  static String downvoteAnswer(String id)   => '/community/answers/$id/downvote';
+  static String resolveQuestion(String id)  => '/community/questions/$id/resolve';
+
+  // Progress / GPA
+  static const String gpa      = '/gpa';
+  static const String progress = '/progress';
+  static const String gpaCgpa      = '/gpa/cgpa';
+  static const String gpaSemesters = '/gpa/semesters';
+  static String deleteSemester(String id) => '/gpa/semesters/$id';
+
+  // AI — all real backend endpoints
+  static const String aiExplain       = '/ai/explain';       // POST {concept, courseContext?}
+  static const String aiQuiz          = '/ai/quiz';          // POST {topic, count?}
+  static const String aiSummarize     = '/ai/summarize';     // POST {text}
+  static const String aiFlashcards    = '/ai/flashcards';    // POST {topic, count?}
+  static const String aiPredictTopics = '/ai/predict-topics';// POST {courseTitle, recentTopics[]}
+
+  // Notifications
+  static const String notifications        = '/notifications';
+  static const String notificationsReadAll = '/notifications/read-all';
+  static const String unreadCount          = '/notifications/unread-count';
+  static String markNotificationRead(String id) => '/notifications/$id/read';
+
+  // Connections
+  static const String connections = '/connections';
+  static const String connectionRequest = '/connections/request';
+  static const String connectionsPendingReceived = '/connections/pending/received';
+  static const String connectionsPendingSent     = '/connections/pending/sent';
+  static String connectionAccept(String id) => '/connections/$id/accept';
+  static String connectionRemove(String id) => '/connections/$id';
+  static String connectionStatus(String userId) => '/connections/status/$userId';
+
+  // Users
+  static String userProfile(String id) => '/users/$id/profile';
+  static const String leaderboard = '/users/leaderboard';
+
+  // Personal Library
+  static const String library = '/library';
+  static String libraryRemove(String resourceId) => '/library/$resourceId';
+
+  // Study Groups
+  static const String studyGroups = '/study-groups';
+  static const String studyGroupsMy = '/study-groups/my';
+  static String joinStudyGroup(String id) => '/study-groups/$id/join';
+  static String leaveStudyGroup(String id) => '/study-groups/$id/leave';
+}

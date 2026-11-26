@@ -1,0 +1,23 @@
+{
+  "verdict": "CHANGES_REQUESTED",
+  "findings": [
+    {
+      "id": "SANITIZE_NO_TYPE_GUARD",
+      "severity": "blocker",
+      "title": "sanitize-html crashes on non-string input before @IsString() runs",
+      "files": [
+        "src/modules/community/dto/post-answer.dto.ts:10",
+        "src/modules/community/dto/post-question.dto.ts:11,17",
+        "src/modules/discussions/dto/create-reply.dto.ts:10",
+        "src/modules/discussions/dto/create-thread.dto.ts:11,17",
+        "src/modules/resources/dto/submit-resource.dto.ts:24,45",
+        "src/modules/study-groups/dto/create-study-group.dto.ts:8,13",
+        "src/modules/users/dto/update-user.dto.ts:10"
+      ],
+      "evidence": "sanitize-html@2.18.2 throws `TypeError: this.buffers[0].slice is not a function` when called with a boolean or plain-object value (confirmed by running the installed package). NestJS ValidationPipe with transform:true executes @Transform (class-transformer plainToInstance) before @IsString() fires, so the type guard is gone and the crash reaches the error filter as an unhandled 500 for any request where a sanitized field carries a non-string JSON value (e.g. {\"body\": false}).",
+      "consequence": "Any client sending a boolean or object for a sanitized field receives a 500 instead of a 400. All 7 endpoints are reachable without authentication guards on the DTO itself, making this a denial-of-service path for authenticated users.",
+      "correction": "Restore the typeof guard: `@Transform(({ value }) => typeof value === 'string' ? sanitizeHtml(value, { allowedTags: [], allowedAttributes: {} }) : value)`"
+    }
+  ],
+  "reviewDoc": "c:\\Users\\USER\\Documents\\CampusCoreNew\\backend\\.agents\\tasks\\security-hardening\\review.md"
+}

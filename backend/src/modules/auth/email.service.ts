@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import * as nodemailer from 'nodemailer';
+import * as https from 'https';
 
 @Injectable()
 export class EmailService {
@@ -8,21 +8,8 @@ export class EmailService {
 
   constructor(private readonly config: ConfigService) {}
 
-  private createTransporter() {
-    return nodemailer.createTransport({
-      host: this.config.get<string>('SMTP_HOST'),
-      port: this.config.get<number>('SMTP_PORT', 587),
-      secure: this.config.get<number>('SMTP_PORT', 587) === 465,
-      auth: {
-        user: this.config.get<string>('SMTP_USER'),
-        pass: this.config.get<string>('SMTP_PASS'),
-      },
-    });
-  }
-
   async sendVerificationEmail(toEmail: string, token: string): Promise<void> {
     const appUrl = this.config.get<string>('APP_URL', 'http://localhost:3000');
-    const fromAddress = this.config.get<string>('SMTP_FROM', 'noreply@campuscore.ng');
     const verificationUrl = `${appUrl}/auth/verify-email?token=${token}`;
 
     const html = `
@@ -89,13 +76,43 @@ export class EmailService {
 </body>
 </html>`;
 
+    const apiKey = this.config.get<string>('RESEND_API_KEY');
+
+    const body = JSON.stringify({
+      from: 'CampusCore <onboarding@resend.dev>',
+      to: toEmail,
+      subject: 'Verify your CampusCore email address',
+      html,
+    });
+
     try {
-      const transporter = this.createTransporter();
-      await transporter.sendMail({
-        from: fromAddress,
-        to: toEmail,
-        subject: 'Verify your CampusCore email address',
-        html,
+      await new Promise<void>((resolve, reject) => {
+        const req = https.request(
+          {
+            hostname: 'api.resend.com',
+            path: '/emails',
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${apiKey}`,
+              'Content-Type': 'application/json',
+              'Content-Length': Buffer.byteLength(body),
+            },
+          },
+          (res) => {
+            let data = '';
+            res.on('data', (chunk) => (data += chunk));
+            res.on('end', () => {
+              if (res.statusCode && res.statusCode >= 200 && res.statusCode < 300) {
+                resolve();
+              } else {
+                reject(new Error(`Resend API responded with ${res.statusCode}: ${data}`));
+              }
+            });
+          },
+        );
+        req.on('error', reject);
+        req.write(body);
+        req.end();
       });
       this.logger.log(`Verification email sent to ${toEmail}`);
     } catch (err) {

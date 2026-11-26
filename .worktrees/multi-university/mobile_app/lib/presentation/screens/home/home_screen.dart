@@ -1,0 +1,569 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
+import '../../../app/theme/app_theme.dart';
+import '../../../app/router/app_router.dart';
+import '../../providers/user_provider.dart';
+import '../../providers/courses_provider.dart';
+import '../../providers/department_provider.dart';
+import '../../providers/community_provider.dart';
+
+class HomeScreen extends ConsumerWidget {
+  const HomeScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final userAsync = ref.watch(currentUserProvider);
+
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      body: CustomScrollView(
+        slivers: [
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Greeting with real user name
+                  userAsync.when(
+                    data: (user) {
+                      final hour = DateTime.now().hour;
+                      final greeting = hour < 12
+                          ? 'Good morning'
+                          : hour < 17
+                              ? 'Good afternoon'
+                              : 'Good evening';
+                      final firstName = user?.firstName ?? 'Scholar';
+                      final dateStr = DateFormat('EEEE, MMMM d').format(DateTime.now());
+                      return Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [
+                            AppColors.navyDark,
+                            AppColors.navyMid,
+                            AppColors.primary,
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(
+                                hour < 12
+                                    ? Icons.wb_sunny_outlined
+                                    : hour < 17
+                                        ? Icons.wb_sunny
+                                        : Icons.nights_stay_outlined,
+                                color: AppColors.amber,
+                                size: 22,
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  '$greeting, $firstName! 👋',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 20,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            dateStr,
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 13,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            user != null
+                                ? '${user.displayLevel} • ${ref.watch(primaryDepartmentProvider).value?.name ?? 'Loading...'}'
+                                : 'Ready to learn something new today?',
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );},
+                    loading: () => Container(
+                      width: double.infinity,
+                      height: 80,
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [AppColors.navyDark, AppColors.primary],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: const Center(
+                        child: _ShimmerBox(width: 200, height: 20),
+                      ),
+                    ),
+                    error: (_, __) => Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [AppColors.navyDark, AppColors.primary],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '${DateTime.now().hour < 12 ? 'Good morning' : DateTime.now().hour < 17 ? 'Good afternoon' : 'Good evening'}, Scholar! 👋',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 20,
+                              color: Colors.white,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            DateFormat('EEEE, MMMM d').format(DateTime.now()),
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Quick actions
+                  const _SectionHeader(title: 'Quick Actions'),
+                  const SizedBox(height: 12),
+                  GridView.count(
+                    crossAxisCount: 3,
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    crossAxisSpacing: 12,
+                    mainAxisSpacing: 12,
+                    childAspectRatio: 1.0,
+                    children: [
+                      _QuickAction(icon: Icons.auto_awesome,          label: 'AI Tutor',      color: AppColors.amber,        onTap: () => context.push(AppRoutes.aiAssistant)),
+                      _QuickAction(icon: Icons.calculate,             label: 'GPA Calc',      color: AppColors.info,         onTap: () => context.push(AppRoutes.gpaCalculator)),
+                      _QuickAction(icon: Icons.trending_up,           label: 'Progress',      color: AppColors.success,      onTap: () => context.push(AppRoutes.progress)),
+                      _QuickAction(icon: Icons.upload_file,           label: 'Upload',        color: AppColors.primaryLight, onTap: () => context.push(AppRoutes.uploadResource)),
+                      _QuickAction(icon: Icons.folder_outlined,       label: 'Resources',     color: AppColors.cyan,         onTap: () => context.push(AppRoutes.resources)),
+                      _QuickAction(icon: Icons.leaderboard_outlined,  label: 'Leaderboard',   color: AppColors.primary,      onTap: () => context.push(AppRoutes.leaderboard)),
+                      _QuickAction(icon: Icons.groups_outlined,       label: 'Study Groups',  color: AppColors.navyMid,      onTap: () => context.push(AppRoutes.studyGroups)),
+                      _QuickAction(icon: Icons.people_outline,        label: 'Connections',   color: AppColors.secondary,    onTap: () => context.push(AppRoutes.connections)),
+                      _QuickAction(icon: Icons.notifications_outlined, label: 'Notifications', color: AppColors.warning,     onTap: () => context.push(AppRoutes.notifications)),
+                    ],
+                  ),
+                  const SizedBox(height: 28),
+
+                  // Continue studying
+                  _SectionHeader(
+                    title: 'Courses',
+                    actionLabel: 'See all',
+                    onAction: () => context.go(AppRoutes.courses),
+                  ),
+                  const SizedBox(height: 12),
+                  _RealCoursesList(ref: ref),
+                  const SizedBox(height: 28),
+
+                  // Department info
+                  _DepartmentCard(ref: ref),
+                  const SizedBox(height: 28),
+
+                  // Recent discussions
+                  _SectionHeader(
+                    title: 'Community',
+                    actionLabel: 'See all',
+                    onAction: () => context.go(AppRoutes.community),
+                  ),
+                  const SizedBox(height: 12),
+                  _RecentQuestionsList(ref: ref),
+                  const SizedBox(height: 40),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Real Courses List ────────────────────────────────────────────────────────
+
+class _RealCoursesList extends StatelessWidget {
+  final WidgetRef ref;
+  const _RealCoursesList({required this.ref});
+
+  @override
+  Widget build(BuildContext context) {
+    final coursesAsync = ref.watch(coursesProvider);
+    return coursesAsync.when(
+      data: (courses) {
+        if (courses.isEmpty) {
+          return const _EmptyState(
+            icon: Icons.menu_book_outlined,
+            message: 'No courses available yet.',
+          );
+        }
+        // Show first 3 courses
+        final preview = courses.take(3).toList();
+        return Column(
+          children: preview
+              .map((course) => Card(
+                    margin: const EdgeInsets.only(bottom: 10),
+                    child: ListTile(
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 6),
+                      leading: Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(Icons.menu_book,
+                            color: AppColors.primary, size: 22),
+                      ),
+                      title: Text(
+                        course.title,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      subtitle: Text(
+                        '${course.courseCode} • ${course.academicLevel} • ${course.creditUnits} units',
+                        style: const TextStyle(
+                            color: AppColors.textSecondary, fontSize: 12),
+                      ),
+                      trailing: const Icon(Icons.arrow_forward_ios,
+                          size: 14, color: AppColors.textSecondary),
+                      onTap: () =>
+                          context.push('${AppRoutes.courses}/${course.id}'),
+                    ),
+                  ))
+              .toList(),
+        );
+      },
+      loading: () => Column(
+        children: List.generate(
+            3,
+            (_) => const Padding(
+                  padding: EdgeInsets.only(bottom: 10),
+                  child: _ShimmerBox(
+                      width: double.infinity, height: 72, radius: 16),
+                )),
+      ),
+      error: (_, __) => const _EmptyState(
+        icon: Icons.wifi_off,
+        message: 'Could not load courses. Make sure the backend is running.',
+      ),
+    );
+  }
+}
+
+// ─── Department Card ─────────────────────────────────────────────────────────
+
+class _DepartmentCard extends StatelessWidget {
+  final WidgetRef ref;
+  const _DepartmentCard({required this.ref});
+
+  @override
+  Widget build(BuildContext context) {
+    final deptAsync = ref.watch(primaryDepartmentProvider);
+    final coursesAsync = ref.watch(coursesProvider);
+
+    return deptAsync.when(
+      data: (dept) {
+        if (dept == null) return const SizedBox();
+        final courseCount = coursesAsync.value?.length ?? 0;
+        return Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [AppColors.primary, AppColors.primaryLight],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.school, color: Colors.white, size: 40),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      dept.name,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 16,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      dept.universityName,
+                      style:
+                          const TextStyle(color: Colors.white70, fontSize: 13),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      '$courseCount courses available',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+      loading: () =>
+          const _ShimmerBox(width: double.infinity, height: 100, radius: 16),
+      error: (_, __) => const SizedBox(),
+    );
+  }
+}
+
+// ─── Supporting widgets ───────────────────────────────────────────────────────
+
+class _SectionHeader extends StatelessWidget {
+  final String title;
+  final String? actionLabel;
+  final VoidCallback? onAction;
+
+  const _SectionHeader({required this.title, this.actionLabel, this.onAction});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          title,
+          style: const TextStyle(
+            fontSize: 17,
+            fontWeight: FontWeight.w700,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        if (actionLabel != null)
+          TextButton(
+            onPressed: onAction,
+            child: Text(
+              actionLabel!,
+              style: const TextStyle(
+                  color: AppColors.primary, fontWeight: FontWeight.w600),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _QuickAction extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _QuickAction({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: AppColors.border, width: 0.8),
+          boxShadow: [
+            BoxShadow(
+              color: color.withValues(alpha: 0.08),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.14),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, color: color, size: 22),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
+              ),
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.visible,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Real Questions Preview ───────────────────────────────────────────────────
+
+class _RecentQuestionsList extends StatelessWidget {
+  final WidgetRef ref;
+  const _RecentQuestionsList({required this.ref});
+
+  @override
+  Widget build(BuildContext context) {
+    final questionsAsync = ref.watch(
+      allQuestionsProvider,
+    );
+    return questionsAsync.when(
+      data: (questions) {
+        if (questions.isEmpty) {
+          return const _EmptyState(
+            icon: Icons.forum_outlined,
+            message: 'No community questions yet. Be the first to ask!',
+          );
+        }
+        final preview = questions.take(3).toList();
+        return Column(
+          children: preview
+              .map((q) => Card(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    child: ListTile(
+                      leading: const CircleAvatar(
+                        backgroundColor: AppColors.accent,
+                        child: Icon(Icons.question_answer,
+                            color: Colors.white, size: 18),
+                      ),
+                      title: Text(
+                        q.title,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      subtitle: Text(
+                        '${q.answerCount} answer${q.answerCount != 1 ? 's' : ''} · ${q.timeAgo}',
+                        style: const TextStyle(
+                            color: AppColors.textSecondary, fontSize: 12),
+                      ),
+                      onTap: () => context.push(
+                          '${AppRoutes.community}/questions/${q.id}'),
+                    ),
+                  ))
+              .toList(),
+        );
+      },
+      loading: () => Column(
+        children: List.generate(
+          3,
+          (_) => const Padding(
+            padding: EdgeInsets.only(bottom: 8),
+            child: _ShimmerBox(width: double.infinity, height: 72, radius: 16),
+          ),
+        ),
+      ),
+      error: (_, __) => const SizedBox.shrink(),
+    );
+  }
+}
+
+class _EmptyState extends StatelessWidget {
+  final IconData icon;
+  final String message;
+  const _EmptyState({required this.icon, required this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, size: 36, color: AppColors.textHint),
+          const SizedBox(height: 8),
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style:
+                const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ShimmerBox extends StatelessWidget {
+  final double width;
+  final double height;
+  final double radius;
+  const _ShimmerBox(
+      {required this.width, required this.height, this.radius = 8});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: width,
+      height: height,
+      decoration: BoxDecoration(
+        color: AppColors.grey200,
+        borderRadius: BorderRadius.circular(radius),
+      ),
+    );
+  }
+}

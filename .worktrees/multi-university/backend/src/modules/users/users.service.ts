@@ -1,0 +1,105 @@
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository, ILike } from 'typeorm';
+import { User } from './entities/user.entity';
+import { UpdateUserDto } from './dto/update-user.dto';
+import { UserRole } from './enums/user-role.enum';
+
+@Injectable()
+export class UsersService {
+  constructor(
+    @InjectRepository(User)
+    private readonly usersRepository: Repository<User>,
+  ) {}
+
+  async findById(id: string): Promise<User> {
+    const user = await this.usersRepository.findOne({ where: { id } });
+    if (!user) throw new NotFoundException('User not found');
+    return user;
+  }
+
+  async findByEmail(email: string): Promise<User | null> {
+    return this.usersRepository.findOne({ where: { email } });
+  }
+
+  async findByFirebaseUid(firebaseUid: string): Promise<User | null> {
+    return this.usersRepository.findOne({ where: { firebaseUid } });
+  }
+
+  async create(data: Partial<User>): Promise<User> {
+    const existing = await this.findByEmail(data.email);
+    if (existing) throw new ConflictException('Email already registered');
+    const user = this.usersRepository.create(data);
+    return this.usersRepository.save(user);
+  }
+
+  async update(id: string, dto: UpdateUserDto): Promise<User> {
+    const user = await this.findById(id);
+    Object.assign(user, dto);
+    return this.usersRepository.save(user);
+  }
+
+  async updateLastSeen(id: string): Promise<void> {
+    await this.usersRepository.update(id, { lastSeenAt: new Date() });
+  }
+
+  async addReputationPoints(id: string, points: number): Promise<void> {
+    await this.usersRepository.increment({ id }, 'reputationPoints', points);
+  }
+
+  async acceptIntegrityPolicy(id: string): Promise<{ accepted: boolean }> {
+    await this.usersRepository.update(id, { acceptedIntegrityPolicy: true });
+    return { accepted: true };
+  }
+
+  async getPublicProfile(id: string) {
+    const user = await this.findById(id);
+    return {
+      id: user.id,
+      fullName: user.fullName,
+      avatar: user.avatar,
+      academicLevel: user.academicLevel,
+      departmentId: user.departmentId,
+      reputationPoints: user.reputationPoints,
+      role: user.role,
+      createdAt: user.createdAt,
+    };
+  }
+
+  async searchUsers(query: string, departmentId?: string, excludeId?: string) {
+    if (!query || query.trim().length < 2) return [];
+    const pattern = ILike(`%${query.trim()}%`);
+    const users = await this.usersRepository.find({
+      where: [
+        { fullName: pattern, isActive: true, role: UserRole.STUDENT },
+      ],
+      select: ['id', 'fullName', 'avatar', 'academicLevel', 'departmentId', 'reputationPoints'],
+      take: 20,
+      order: { fullName: 'ASC' },
+    });
+    return users.filter(u => u.id !== excludeId);
+  }
+
+  async getSuggestedUsers(departmentId?: string, excludeId?: string, limit = 20) {
+    const where: any = { isActive: true, role: UserRole.STUDENT };
+    if (departmentId) where.departmentId = departmentId;
+    const users = await this.usersRepository.find({
+      where,
+      select: ['id', 'fullName', 'avatar', 'academicLevel', 'departmentId', 'reputationPoints'],
+      take: limit,
+      order: { reputationPoints: 'DESC' },
+    });
+    return users.filter(u => u.id !== excludeId);
+  }
+
+  async getLeaderboard(): Promise<
+    Pick<User, 'id' | 'fullName' | 'reputationPoints' | 'role' | 'academicLevel' | 'departmentId'>[]
+  > {
+    return this.usersRepository.find({
+      select: ['id', 'fullName', 'reputationPoints', 'role', 'academicLevel', 'departmentId'],
+      where: { isActive: true, role: UserRole.STUDENT },
+      order: { reputationPoints: 'DESC' },
+      take: 50,
+    });
+  }
+}

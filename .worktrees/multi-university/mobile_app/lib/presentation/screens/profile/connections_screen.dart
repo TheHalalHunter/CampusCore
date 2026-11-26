@@ -1,0 +1,547 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import '../../../app/theme/app_theme.dart';
+import '../../../app/router/app_router.dart';
+import '../../providers/connections_provider.dart';
+import '../../providers/user_provider.dart';
+import '../../../core/network/api_client.dart';
+import '../../../core/constants/api_constants.dart';
+import '../../../data/models/user_model.dart';
+
+// ─── Find students provider ───────────────────────────────────────────────────
+
+final _findStudentsProvider =
+    FutureProvider.family<List<Map<String, dynamic>>, String>(
+        (ref, query) async {
+  try {
+    final api = ref.read(apiClientProvider);
+    if (query.length >= 2) {
+      // Search by name
+      final response = await api.get('/users/search', queryParams: {'q': query});
+      final data = response.data['data'] ?? response.data;
+      if (data is List) return data.cast<Map<String, dynamic>>();
+    } else {
+      // Show suggestions when no search query
+      final response = await api.get('/users/suggestions');
+      final data = response.data['data'] ?? response.data;
+      if (data is List) return data.cast<Map<String, dynamic>>();
+    }
+    return [];
+  } catch (_) {
+    return [];
+  }
+});
+
+class ConnectionsScreen extends ConsumerStatefulWidget {
+  const ConnectionsScreen({super.key});
+
+  @override
+  ConsumerState<ConnectionsScreen> createState() => _ConnectionsScreenState();
+}
+
+class _ConnectionsScreenState extends ConsumerState<ConnectionsScreen>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+  final _searchCtrl = TextEditingController();
+  String _searchQuery = '';
+  final Map<String, bool> _actionLoading = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 3, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    _searchCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _sendRequest(String receiverId) async {
+    if (_actionLoading[receiverId] == true) return;
+    setState(() => _actionLoading[receiverId] = true);
+    try {
+      final ok = await ref
+          .read(connectionActionsProvider.notifier)
+          .sendRequest(receiverId);
+      if (mounted && ok) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Connection request sent!'),
+          backgroundColor: AppColors.success,
+        ));
+      }
+    } finally {
+      if (mounted) setState(() => _actionLoading.remove(receiverId));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return DefaultTabController(
+      length: 3,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Connections'),
+          bottom: TabBar(
+            controller: _tabController,
+            tabs: const [
+              Tab(text: 'My Connections'),
+              Tab(text: 'Pending'),
+              Tab(text: 'Find Students'),
+            ],
+          ),
+        ),
+        body: TabBarView(
+          controller: _tabController,
+          children: [
+            const _ConnectionsTab(),
+            const _PendingTab(),
+            _FindStudentsTab(
+              searchCtrl: _searchCtrl,
+              searchQuery: _searchQuery,
+              onQueryChanged: (q) => setState(() => _searchQuery = q),
+              onSendRequest: _sendRequest,
+              actionLoading: _actionLoading,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─── My Connections tab ───────────────────────────────────────────────────────
+
+class _ConnectionsTab extends ConsumerWidget {
+  const _ConnectionsTab();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final connectionsAsync = ref.watch(connectionsProvider);
+
+    return connectionsAsync.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (_, __) =>
+          const Center(child: Text('Could not load connections.')),
+      data: (connections) {
+        if (connections.isEmpty) {
+          return const Center(
+            child: Column(mainAxisSize: MainAxisSize.min, children: [
+              Icon(Icons.people_outline, size: 56, color: AppColors.grey400),
+              SizedBox(height: 16),
+              Text('No connections yet',
+                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+              SizedBox(height: 8),
+              Text('Browse profiles and connect with fellow students.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: AppColors.textSecondary)),
+            ]),
+          );
+        }
+
+        return ListView.separated(
+          padding: const EdgeInsets.all(16),
+          itemCount: connections.length,
+          separatorBuilder: (_, __) => const SizedBox(height: 8),
+          itemBuilder: (_, i) {
+            final c = connections[i];
+            return _ConnectionTile(connection: c);
+          },
+        );
+      },
+    );
+  }
+}
+
+// ─── Pending requests tab ─────────────────────────────────────────────────────
+
+class _PendingTab extends ConsumerWidget {
+  const _PendingTab();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final pendingAsync = ref.watch(pendingRequestsProvider);
+
+    return pendingAsync.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (_, __) => const Center(child: Text('Could not load requests.')),
+      data: (pending) {
+        if (pending.isEmpty) {
+          return const Center(
+            child: Column(mainAxisSize: MainAxisSize.min, children: [
+              Icon(Icons.mark_email_unread_outlined,
+                  size: 56, color: AppColors.grey400),
+              SizedBox(height: 16),
+              Text('No pending requests',
+                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+              SizedBox(height: 8),
+              Text('Connection requests you receive will appear here.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: AppColors.textSecondary)),
+            ]),
+          );
+        }
+
+        return ListView.separated(
+          padding: const EdgeInsets.all(16),
+          itemCount: pending.length,
+          separatorBuilder: (_, __) => const SizedBox(height: 8),
+          itemBuilder: (_, i) {
+            final c = pending[i];
+            return _PendingTile(connection: c);
+          },
+        );
+      },
+    );
+  }
+}
+
+// ─── Find Students tab ────────────────────────────────────────────────────────
+
+class _FindStudentsTab extends ConsumerWidget {
+  final TextEditingController searchCtrl;
+  final String searchQuery;
+  final ValueChanged<String> onQueryChanged;
+  final Future<void> Function(String) onSendRequest;
+  final Map<String, bool> actionLoading;
+
+  const _FindStudentsTab({
+    required this.searchCtrl,
+    required this.searchQuery,
+    required this.onQueryChanged,
+    required this.onSendRequest,
+    required this.actionLoading,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final studentsAsync = ref.watch(_findStudentsProvider(searchQuery));
+
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+          child: TextField(
+            controller: searchCtrl,
+            onChanged: onQueryChanged,
+            decoration: const InputDecoration(
+              hintText: 'Search students by name…',
+              prefixIcon: Icon(Icons.search),
+              filled: true,
+              fillColor: AppColors.surfaceAlt,
+            ),
+          ),
+        ),
+        Expanded(
+          child: searchQuery.length < 2
+              ? studentsAsync.when(
+                  loading: () => const Center(child: CircularProgressIndicator()),
+                  error: (_, __) => const Center(
+                    child: Text('Could not load suggestions.',
+                        style: TextStyle(color: AppColors.textSecondary)),
+                  ),
+                  data: (students) {
+                    if (students.isEmpty) {
+                      return const Center(
+                        child: Column(mainAxisSize: MainAxisSize.min, children: [
+                          Icon(Icons.person_search, size: 56, color: AppColors.grey400),
+                          SizedBox(height: 16),
+                          Text('No students found.',
+                              style: TextStyle(color: AppColors.textHint)),
+                        ]),
+                      );
+                    }
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Padding(
+                          padding: EdgeInsets.fromLTRB(16, 8, 16, 4),
+                          child: Text('Suggested Students',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w700,
+                                fontSize: 14,
+                                color: AppColors.textSecondary,
+                              )),
+                        ),
+                        Expanded(
+                          child: ListView.separated(
+                            padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+                            itemCount: students.length,
+                            separatorBuilder: (_, __) => const SizedBox(height: 8),
+                            itemBuilder: (_, i) => _buildStudentCard(students[i]),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                )
+              : studentsAsync.when(
+                  loading: () =>
+                      const Center(child: CircularProgressIndicator()),
+                  error: (_, __) => const Center(
+                    child: Text('Could not search. Check your connection.',
+                        style: TextStyle(color: AppColors.textSecondary)),
+                  ),
+                  data: (students) {
+                    if (students.isEmpty) {
+                      return const Center(
+                        child: Column(mainAxisSize: MainAxisSize.min, children: [
+                          Icon(Icons.search_off, size: 56, color: AppColors.grey400),
+                          SizedBox(height: 16),
+                          Text('No students found.',
+                              style: TextStyle(color: AppColors.textHint)),
+                        ]),
+                      );
+                    }
+                    return ListView.separated(
+                      padding: const EdgeInsets.all(16),
+                      itemCount: students.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 8),
+                      itemBuilder: (_, i) => _buildStudentCard(students[i]),
+                    );
+                  },
+                ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStudentCard(Map<String, dynamic> s) {
+    final id = s['id']?.toString() ?? '';
+    final fullName = s['fullName']?.toString() ??
+        '${s['firstName'] ?? ''} ${s['lastName'] ?? ''}'.trim();
+    final level = s['academicLevel']?.toString();
+    final initials = fullName.isNotEmpty
+        ? fullName.trim().split(RegExp(r'\s+')).take(2)
+            .map((w) => w.isNotEmpty ? w[0].toUpperCase() : '').join()
+        : '?';
+    final isLoading = actionLoading[id] == true;
+    return Card(
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+        leading: CircleAvatar(
+          backgroundColor: AppColors.primary.withValues(alpha: 0.15),
+          child: Text(initials,
+              style: const TextStyle(
+                  color: AppColors.primary, fontWeight: FontWeight.w700)),
+        ),
+        title: Text(fullName.isNotEmpty ? fullName : 'Student',
+            style: const TextStyle(fontWeight: FontWeight.w600)),
+        subtitle: level != null
+            ? Text(level,
+                style: const TextStyle(
+                    fontSize: 12, color: AppColors.textSecondary))
+            : null,
+        trailing: isLoading
+            ? const SizedBox(
+                width: 20, height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2))
+            : ElevatedButton(
+                onPressed: id.isEmpty ? null : () => onSendRequest(id),
+                style: ElevatedButton.styleFrom(
+                  minimumSize: const Size(80, 34),
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  textStyle: const TextStyle(fontSize: 12),
+                ),
+                child: const Text('Connect'),
+              ),
+      ),
+    );
+  }
+}
+
+// ─── Connection tile ──────────────────────────────────────────────────────────
+
+class _ConnectionTile extends ConsumerWidget {
+  final ConnectionModel connection;
+  const _ConnectionTile({required this.connection});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final currentUserId = ref.watch(currentUserProvider).valueOrNull?.id ?? '';
+    final otherUserId = connection.requesterId == currentUserId
+        ? connection.receiverId
+        : connection.requesterId;
+
+    final profileAsync = ref.watch(_userProfileProvider(otherUserId));
+
+    return Card(
+      child: ListTile(
+        leading: profileAsync.when(
+          data: (user) => CircleAvatar(
+            backgroundColor: AppColors.primary.withValues(alpha: 0.15),
+            backgroundImage:
+                user?.avatar != null ? NetworkImage(user!.avatar!) : null,
+            child: user?.avatar == null
+                ? Text(
+                    (user?.firstName ?? 'U').substring(0, 1).toUpperCase(),
+                    style: const TextStyle(
+                        color: AppColors.primary, fontWeight: FontWeight.w700),
+                  )
+                : null,
+          ),
+          loading: () => const CircleAvatar(
+            backgroundColor: AppColors.grey200,
+            child: Icon(Icons.person_outline, color: AppColors.textHint),
+          ),
+          error: (_, __) => const CircleAvatar(
+            backgroundColor: AppColors.primary,
+            child: Icon(Icons.person_outline, color: Colors.white),
+          ),
+        ),
+        title: profileAsync.when(
+          data: (user) => Text(
+            user?.fullName ?? 'Student',
+            style: const TextStyle(fontWeight: FontWeight.w600),
+          ),
+          loading: () =>
+              Container(width: 100, height: 14, color: AppColors.grey200),
+          error: (_, __) => const Text('Student',
+              style: TextStyle(fontWeight: FontWeight.w600)),
+        ),
+        subtitle: Text(
+          'Connected · ${_timeAgo(connection.createdAt)}',
+          style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+        ),
+        trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+          TextButton(
+            onPressed: () =>
+                context.push('${AppRoutes.profile}/$otherUserId'),
+            child: const Text('View'),
+          ),
+          IconButton(
+            icon: const Icon(Icons.person_remove_outlined,
+                size: 18, color: AppColors.error),
+            tooltip: 'Remove',
+            onPressed: () => _remove(context, ref, connection, currentUserId),
+          ),
+        ]),
+      ),
+    );
+  }
+
+  Future<void> _remove(BuildContext ctx, WidgetRef ref, ConnectionModel c,
+      String currentUserId) async {
+    final otherUserId = c.requesterId == currentUserId
+        ? c.receiverId
+        : c.requesterId;
+    final confirm = await showDialog<bool>(
+      context: ctx,
+      builder: (_) => AlertDialog(
+        title: const Text('Remove Connection'),
+        content: const Text('Are you sure you want to remove this connection?'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancel')),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Remove',
+                  style: TextStyle(color: AppColors.error))),
+        ],
+      ),
+    );
+    if (confirm != true) return;
+    await ref
+        .read(connectionActionsProvider.notifier)
+        .removeConnection(c.id, otherUserId);
+  }
+
+  String _timeAgo(DateTime dt) {
+    final diff = DateTime.now().difference(dt);
+    if (diff.inDays > 0) return '${diff.inDays}d ago';
+    if (diff.inHours > 0) return '${diff.inHours}h ago';
+    return 'just now';
+  }
+}
+
+// Provider to fetch another user's public profile
+final _userProfileProvider =
+    FutureProvider.family<UserModel?, String>((ref, userId) async {
+  if (userId.isEmpty) return null;
+  try {
+    final api = ref.read(apiClientProvider);
+    final response = await api.get(ApiConstants.userProfile(userId));
+    final data = response.data['data'] ?? response.data;
+    return UserModel.fromJson(data as Map<String, dynamic>);
+  } catch (_) {
+    return null;
+  }
+});
+
+// ─── Pending request tile ─────────────────────────────────────────────────────
+
+class _PendingTile extends ConsumerWidget {
+  final ConnectionModel connection;
+  const _PendingTile({required this.connection});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isLoading = ref.watch(connectionActionsProvider) is AsyncLoading;
+
+    return Card(
+      child: ListTile(
+        leading: CircleAvatar(
+          backgroundColor: AppColors.warning.withValues(alpha: 0.15),
+          child:
+              const Icon(Icons.person_add_outlined, color: AppColors.warning),
+        ),
+        title: const Text('Connection Request',
+            style: TextStyle(fontWeight: FontWeight.w600)),
+        subtitle: Text(_timeAgo(connection.createdAt),
+            style:
+                const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+        trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+          ElevatedButton(
+            onPressed: isLoading
+                ? null
+                : () async {
+                    final ok = await ref
+                        .read(connectionActionsProvider.notifier)
+                        .acceptRequest(connection.id, connection.requesterId);
+                    if (context.mounted && ok) {
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                        content: Text('Connection accepted!'),
+                        backgroundColor: AppColors.success,
+                      ));
+                    }
+                  },
+            style: ElevatedButton.styleFrom(
+              minimumSize: const Size(0, 32),
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+            ),
+            child: const Text('Accept', style: TextStyle(fontSize: 12)),
+          ),
+          const SizedBox(width: 6),
+          OutlinedButton(
+            onPressed: isLoading
+                ? null
+                : () async {
+                    await ref
+                        .read(connectionActionsProvider.notifier)
+                        .removeConnection(
+                            connection.id, connection.requesterId);
+                  },
+            style: OutlinedButton.styleFrom(
+              minimumSize: const Size(0, 32),
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              foregroundColor: AppColors.error,
+              side: const BorderSide(color: AppColors.error),
+            ),
+            child: const Text('Decline', style: TextStyle(fontSize: 12)),
+          ),
+        ]),
+      ),
+    );
+  }
+
+  String _timeAgo(DateTime dt) {
+    final diff = DateTime.now().difference(dt);
+    if (diff.inDays > 0) return '${diff.inDays}d ago';
+    if (diff.inHours > 0) return '${diff.inHours}h ago';
+    return 'just now';
+  }
+}

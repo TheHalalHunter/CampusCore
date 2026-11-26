@@ -1,0 +1,435 @@
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+  BadRequestException,
+} from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Question } from './entities/question.entity';
+import { Answer } from './entities/answer.entity';
+import { Vote } from './entities/vote.entity';
+import { GamificationService } from '../gamification/gamification.service';
+import { NotificationsService } from '../notifications/notifications.service';
+import { NotificationType } from '../notifications/entities/notification.entity';
+
+@Injectable()
+export class CommunityService {
+  constructor(
+    @InjectRepository(Question)
+    private readonly questionsRepo: Repository<Question>,
+    @InjectRepository(Answer)
+    private readonly answersRepo: Repository<Answer>,
+    @InjectRepository(Vote)
+    private readonly votesRepo: Repository<Vote>,
+    private readonly gamification: GamificationService,
+    private readonly notifications: NotificationsService,
+  ) {}
+
+  // --- Questions ---
+
+  async findQuestions(filters: {
+    departmentId?: string;
+    courseId?: string;
+    level?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<{ questions: any[]; total: number }> {
+    const page = filters.page ?? 1;
+    const limit = Math.min(filters.limit ?? 20, 50);
+
+    const where: any = {};
+    if (filters.departmentId) where.departmentId = filters.departmentId;
+    if (filters.courseId) where.courseId = filters.courseId;
+    if (filters.level) where.academicLevel = filters.level;
+
+    const [rawQuestions, total] = await this.questionsRepo.findAndCount({
+      where,
+      order: { createdAt: 'DESC' },
+      skip: (page - 1) * limit,
+      take: limit,
+    });
+
+    // Fetch author names separately using the users repository
+    const authorIds = [...new Set(rawQuestions.map((q) => q.authorId))];
+    const authorMap: Record<
+      string,
+      { firstName: string; lastName: string; avatar: string | null }
+    > = {};
+
+    if (authorIds.length > 0) {
+      const users = await this.questionsRepo.manager.getRepository('User').findByIds(authorIds);
+
+      for (const u of users as any[]) {
+        const parts = ((u.fullName || u.full_name || '') as string).split(' ');
+        authorMap[u.id] = {
+          firstName: parts[0] || 'Student',
+          lastName: parts.slice(1).join(' ') || '',
+          avatar: u.avatar || null,
+        };
+      }
+    }
+
+    const questions = rawQuestions.map((q) => ({
+      ...q,
+      author: authorMap[q.authorId] ?? { firstName: 'Student', lastName: '' },
+    }));
+
+    return { questions, total };
+  }
+
+  async findQuestion(id: string): Promise<Question> {
+    const q = await this.questionsRepo.findOne({ where: { id } });
+    if (!q) throw new NotFoundException('Question not found');
+    return q;
+  }
+
+  async postQuestion(authorId: string, data: Partial<Question>): Promise<Question> {
+    const question = this.questionsRepo.create({ ...data, authorId });
+    const saved = await this.questionsRepo.save(question);
+    // Award reputation for posting a question
+    await this.gamification.awardPoints(authorId, 'QUESTION_POSTED');
+    await this.gamification.checkAndAwardBadges(authorId);
+    return saved;
+  }
+
+  // --- Answers ---
+
+  findAnswers(questionId: string): Promise<Answer[]> {
+    return this.answersRepo.find({
+      where: { questionId },
+      order: { upvoteCount: 'DESC', createdAt: 'ASC' },
+    });
+  }
+
+  async postAnswer(authorId: string, questionId: string, body: string): Promise<Answer> {
+    const question = await this.findQuestion(questionId);
+    const answer = this.answersRepo.create({ authorId, questionId, body });
+    const saved = await this.answersRepo.save(answer);
+    await this.questionsRepo.increment({ id: questionId }, 'answerCount', 1);
+    // Award reputation for posting an answer
+    await this.gamification.awardPoints(authorId, 'ANSWER_POSTED');
+    await this.gamification.checkAndAwardBadges(authorId);
+    // Notify the question author (not self)
+    if (question.authorId !== authorId) {
+      await this.notifications.create({
+        userId: question.authorId,
+        title: 'New answer on your question',
+        body: `Someone answered: "${question.title}"`,
+        type: NotificationType.QUESTION_ANSWERED,
+        relatedId: questionId,
+      });
+    }
+    return saved;
+  }
+
+  async verifyAnswer(answerId: string): Promise<Answer> {
+    const answer = await this.answersRepo.findOne({ where: { id: answerId } });
+    if (!answer) throw new NotFoundException('Answer not found');
+    answer.isVerified = true;
+    const saved = await this.answersRepo.save(answer);
+    // Award helpful points and notify the answer author
+    await this.gamification.awardPoints(answer.authorId, 'ANSWER_HELPFUL');
+    await this.gamification.checkAndAwardBadges(answer.authorId);
+    await this.notifications.create({
+      userId: answer.authorId,
+      title: 'Your answer was verified! ✅',
+      body: 'A moderator marked your answer as the best answer.',
+      type: NotificationType.ANSWER_VERIFIED,
+      relatedId: answer.questionId,
+    });
+    return saved;
+  }
+
+  async postAnnouncement(
+    adminId: string,
+    data: { title: string; body: string; departmentId?: string },
+  ): Promise<Question> {
+    const question = this.questionsRepo.create({
+      title: data.title,
+      body: data.body,
+      authorId: adminId,
+      departmentId: data.departmentId,
+      isAnnouncement: true,
+      isPinned: true, // announcements are always pinned
+    });
+    return this.questionsRepo.save(question);
+  }
+
+  async incrementViews(questionId: string, userId: string): Promise<void> {
+    // Only count unique views: one record per user+question
+    const existing = await this.votesRepo.findOne({
+      where: { userId, targetId: questionId, targetType: 'question', voteType: 'view' },
+    });
+    if (!existing) {
+      const record = this.votesRepo.create({
+        userId,
+        targetId: questionId,
+        targetType: 'question',
+        voteType: 'view',
+      });
+      await this.votesRepo.save(record);
+      await this.questionsRepo.increment({ id: questionId }, 'viewCount', 1);
+    }
+  }
+
+  async markResolved(questionId: string, userId: string): Promise<Question> {
+    const question = await this.findQuestion(questionId);
+    if (question.authorId !== userId) {
+      throw new ForbiddenException('Only the question author can mark it as resolved');
+    }
+    question.isResolved = true;
+    return this.questionsRepo.save(question);
+  }
+
+  async flagContent(type: 'question' | 'answer', id: string): Promise<void> {
+    if (type === 'question') {
+      await this.questionsRepo.update(id, { isFlagged: true });
+    } else {
+      await this.answersRepo.update(id, { isFlagged: true });
+    }
+  }
+
+  async getFlaggedContent(): Promise<{ questions: Question[]; answers: Answer[] }> {
+    const [questions, answers] = await Promise.all([
+      this.questionsRepo.find({
+        where: { isFlagged: true },
+        order: { createdAt: 'DESC' },
+      }),
+      this.answersRepo.find({
+        where: { isFlagged: true },
+        order: { createdAt: 'DESC' },
+      }),
+    ]);
+    return { questions, answers };
+  }
+
+  async unflagContent(type: 'question' | 'answer', id: string): Promise<void> {
+    if (type !== 'question' && type !== 'answer') {
+      throw new BadRequestException('type must be question or answer');
+    }
+    if (type === 'question') {
+      await this.questionsRepo.update(id, { isFlagged: false });
+    } else {
+      await this.answersRepo.update(id, { isFlagged: false });
+    }
+  }
+
+  async pinQuestion(id: string): Promise<Question> {
+    const question = await this.findQuestion(id);
+    question.isPinned = true;
+    return this.questionsRepo.save(question);
+  }
+
+  async unpinQuestion(id: string): Promise<Question> {
+    const question = await this.findQuestion(id);
+    question.isPinned = false;
+    return this.questionsRepo.save(question);
+  }
+
+  async deleteQuestion(id: string, userId: string, role: string): Promise<void> {
+    const question = await this.findQuestion(id);
+    if (role !== 'admin' && role !== 'moderator' && question.authorId !== userId) {
+      throw new ForbiddenException('You can only delete your own questions');
+    }
+    await this.questionsRepo.delete(id);
+  }
+
+  async deleteAnswer(id: string, userId: string, role: string): Promise<void> {
+    const answer = await this.answersRepo.findOne({ where: { id } });
+    if (!answer) throw new NotFoundException('Answer not found');
+    if (role !== 'admin' && role !== 'moderator' && answer.authorId !== userId) {
+      throw new ForbiddenException('You can only delete your own answers');
+    }
+    await this.answersRepo.delete(id);
+    await this.questionsRepo.decrement({ id: answer.questionId }, 'answerCount', 1);
+  }
+
+  // --- Upvotes ---
+
+  async upvoteQuestion(
+    id: string,
+    userId: string,
+  ): Promise<{ upvoteCount: number; userVote: string | null }> {
+    const existing = await this.votesRepo.findOne({
+      where: { userId, targetId: id, targetType: 'question' },
+    });
+
+    if (existing && existing.voteType === 'up') {
+      // Toggle off — remove vote
+      await this.votesRepo.delete(existing.id);
+      await this.questionsRepo
+        .createQueryBuilder()
+        .update()
+        .set({ upvoteCount: () => 'GREATEST(upvote_count - 1, 0)' })
+        .where('id = :id', { id })
+        .execute();
+      const q = await this.questionsRepo.findOne({ where: { id } });
+      return { upvoteCount: q?.upvoteCount ?? 0, userVote: null };
+    }
+
+    if (existing && existing.voteType === 'down') {
+      // Switch from down to up
+      existing.voteType = 'up';
+      await this.votesRepo.save(existing);
+      await this.questionsRepo.increment({ id }, 'upvoteCount', 1);
+      const q = await this.questionsRepo.findOne({ where: { id } });
+      return { upvoteCount: q?.upvoteCount ?? 0, userVote: 'up' };
+    }
+
+    // No existing vote — create upvote
+    const vote = this.votesRepo.create({
+      userId,
+      targetId: id,
+      targetType: 'question',
+      voteType: 'up',
+    });
+    await this.votesRepo.save(vote);
+    await this.questionsRepo.increment({ id }, 'upvoteCount', 1);
+    const q = await this.questionsRepo.findOne({ where: { id } });
+    return { upvoteCount: q?.upvoteCount ?? 0, userVote: 'up' };
+  }
+
+  async downvoteQuestion(
+    id: string,
+    userId: string,
+  ): Promise<{ upvoteCount: number; userVote: string | null }> {
+    const existing = await this.votesRepo.findOne({
+      where: { userId, targetId: id, targetType: 'question' },
+    });
+
+    if (existing && existing.voteType === 'down') {
+      // Toggle off — remove vote
+      await this.votesRepo.delete(existing.id);
+      await this.questionsRepo
+        .createQueryBuilder()
+        .update()
+        .set({ upvoteCount: () => 'GREATEST(upvote_count - 1, 0)' })
+        .where('id = :id', { id })
+        .execute();
+      const q = await this.questionsRepo.findOne({ where: { id } });
+      return { upvoteCount: q?.upvoteCount ?? 0, userVote: null };
+    }
+
+    if (existing && existing.voteType === 'up') {
+      // Switch from up to down
+      existing.voteType = 'down';
+      await this.votesRepo.save(existing);
+      await this.questionsRepo
+        .createQueryBuilder()
+        .update()
+        .set({ upvoteCount: () => 'GREATEST(upvote_count - 1, 0)' })
+        .where('id = :id', { id })
+        .execute();
+      const q = await this.questionsRepo.findOne({ where: { id } });
+      return { upvoteCount: q?.upvoteCount ?? 0, userVote: 'down' };
+    }
+
+    // No existing vote — create downvote
+    const vote = this.votesRepo.create({
+      userId,
+      targetId: id,
+      targetType: 'question',
+      voteType: 'down',
+    });
+    await this.votesRepo.save(vote);
+    await this.questionsRepo
+      .createQueryBuilder()
+      .update()
+      .set({ upvoteCount: () => 'GREATEST(upvote_count - 1, 0)' })
+      .where('id = :id', { id })
+      .execute();
+    const q = await this.questionsRepo.findOne({ where: { id } });
+    return { upvoteCount: q?.upvoteCount ?? 0, userVote: 'down' };
+  }
+
+  async upvoteAnswer(
+    id: string,
+    userId: string,
+  ): Promise<{ upvoteCount: number; userVote: string | null }> {
+    const existing = await this.votesRepo.findOne({
+      where: { userId, targetId: id, targetType: 'answer' },
+    });
+
+    if (existing && existing.voteType === 'up') {
+      await this.votesRepo.delete(existing.id);
+      await this.answersRepo
+        .createQueryBuilder()
+        .update()
+        .set({ upvoteCount: () => 'GREATEST(upvote_count - 1, 0)' })
+        .where('id = :id', { id })
+        .execute();
+      const a = await this.answersRepo.findOne({ where: { id } });
+      return { upvoteCount: a?.upvoteCount ?? 0, userVote: null };
+    }
+
+    if (existing && existing.voteType === 'down') {
+      existing.voteType = 'up';
+      await this.votesRepo.save(existing);
+      await this.answersRepo.increment({ id }, 'upvoteCount', 1);
+      const a = await this.answersRepo.findOne({ where: { id } });
+      return { upvoteCount: a?.upvoteCount ?? 0, userVote: 'up' };
+    }
+
+    const vote = this.votesRepo.create({
+      userId,
+      targetId: id,
+      targetType: 'answer',
+      voteType: 'up',
+    });
+    await this.votesRepo.save(vote);
+    await this.answersRepo.increment({ id }, 'upvoteCount', 1);
+    const a = await this.answersRepo.findOne({ where: { id } });
+    return { upvoteCount: a?.upvoteCount ?? 0, userVote: 'up' };
+  }
+
+  async downvoteAnswer(
+    id: string,
+    userId: string,
+  ): Promise<{ upvoteCount: number; userVote: string | null }> {
+    const existing = await this.votesRepo.findOne({
+      where: { userId, targetId: id, targetType: 'answer' },
+    });
+
+    if (existing && existing.voteType === 'down') {
+      await this.votesRepo.delete(existing.id);
+      await this.answersRepo
+        .createQueryBuilder()
+        .update()
+        .set({ upvoteCount: () => 'GREATEST(upvote_count - 1, 0)' })
+        .where('id = :id', { id })
+        .execute();
+      const a = await this.answersRepo.findOne({ where: { id } });
+      return { upvoteCount: a?.upvoteCount ?? 0, userVote: null };
+    }
+
+    if (existing && existing.voteType === 'up') {
+      existing.voteType = 'down';
+      await this.votesRepo.save(existing);
+      await this.answersRepo
+        .createQueryBuilder()
+        .update()
+        .set({ upvoteCount: () => 'GREATEST(upvote_count - 1, 0)' })
+        .where('id = :id', { id })
+        .execute();
+      const a = await this.answersRepo.findOne({ where: { id } });
+      return { upvoteCount: a?.upvoteCount ?? 0, userVote: 'down' };
+    }
+
+    const vote = this.votesRepo.create({
+      userId,
+      targetId: id,
+      targetType: 'answer',
+      voteType: 'down',
+    });
+    await this.votesRepo.save(vote);
+    await this.answersRepo
+      .createQueryBuilder()
+      .update()
+      .set({ upvoteCount: () => 'GREATEST(upvote_count - 1, 0)' })
+      .where('id = :id', { id })
+      .execute();
+    const a = await this.answersRepo.findOne({ where: { id } });
+    return { upvoteCount: a?.upvoteCount ?? 0, userVote: 'down' };
+  }
+}

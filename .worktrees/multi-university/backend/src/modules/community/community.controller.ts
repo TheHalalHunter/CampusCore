@@ -1,0 +1,205 @@
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Param,
+  Body,
+  Query,
+  UseGuards,
+  ForbiddenException,
+} from '@nestjs/common';
+import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+import { CommunityService } from './community.service';
+import { PostQuestionDto } from './dto/post-question.dto';
+import { PostAnswerDto } from './dto/post-answer.dto';
+import { ExamLockService } from '../exam-lock/exam-lock.service';
+import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { RolesGuard } from '../../common/guards/roles.guard';
+import { Roles } from '../../common/decorators/roles.decorator';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { Public } from '../../common/decorators/public.decorator';
+import { UserRole } from '../users/enums/user-role.enum';
+import { User } from '../users/entities/user.entity';
+
+@ApiTags('Community')
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
+@Controller('community')
+export class CommunityController {
+  constructor(
+    private readonly service: CommunityService,
+    private readonly examLock: ExamLockService,
+  ) {}
+
+  private async checkDiscussionsLock(user: User): Promise<void> {
+    const locked = await this.examLock.areDiscussionsLocked(user.academicLevel);
+    if (locked) {
+      const details = await this.examLock.getActiveLockDetails(user.academicLevel);
+      const reason = details?.reason ? ` Reason: ${details.reason}` : '';
+      throw new ForbiddenException(`Community Q&A is disabled during the exam period.${reason}`);
+    }
+  }
+
+  @Public()
+  @Get('questions')
+  @ApiOperation({ summary: 'Browse questions (filter by dept, course, level)' })
+  getQuestions(
+    @Query('departmentId') departmentId?: string,
+    @Query('courseId') courseId?: string,
+    @Query('level') level?: string,
+    @Query('page') page = 1,
+    @Query('limit') limit = 20,
+  ) {
+    return this.service.findQuestions({
+      departmentId,
+      courseId,
+      level,
+      page: +page,
+      limit: +limit,
+    });
+  }
+
+  @Public()
+  @Get('questions/:id')
+  @ApiOperation({ summary: 'Get a question with its answers' })
+  async getQuestion(@Param('id') id: string, @CurrentUser('id') userId: string | undefined) {
+    // Increment view count when question is opened (unique per user)
+    this.service.incrementViews(id, userId ?? '').catch(() => {}); // fire-and-forget
+    const question = await this.service.findQuestion(id);
+    const answers = await this.service.findAnswers(id);
+    return { question, answers };
+  }
+
+  @Post('questions')
+  @ApiOperation({ summary: 'Post a new question' })
+  async postQuestion(@CurrentUser() user: User, @Body() dto: PostQuestionDto) {
+    await this.checkDiscussionsLock(user);
+    // Auto-fill department and level from user if not provided
+    const data = {
+      ...dto,
+      departmentId: dto.departmentId || user.departmentId || undefined,
+      academicLevel: dto.academicLevel || user.academicLevel || undefined,
+    };
+    return this.service.postQuestion(user.id, data);
+  }
+
+  @Post('questions/:id/answers')
+  @ApiOperation({ summary: 'Answer a question' })
+  async postAnswer(
+    @Param('id') questionId: string,
+    @CurrentUser() user: User,
+    @Body() dto: PostAnswerDto,
+  ) {
+    await this.checkDiscussionsLock(user);
+    return this.service.postAnswer(user.id, questionId, dto.body);
+  }
+
+  @Patch('questions/:id/resolve')
+  @ApiOperation({ summary: 'Mark question as resolved (author only)' })
+  resolve(@Param('id') id: string, @CurrentUser('id') userId: string) {
+    return this.service.markResolved(id, userId);
+  }
+
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.MODERATOR, UserRole.ADMIN)
+  @Patch('answers/:id/verify')
+  @ApiOperation({
+    summary: 'Verify an answer as correct (moderator/admin only)',
+  })
+  verifyAnswer(@Param('id') id: string) {
+    return this.service.verifyAnswer(id);
+  }
+
+  @Post('flag/:type/:id')
+  @ApiOperation({ summary: 'Flag a question or answer for review' })
+  flag(@Param('type') type: 'question' | 'answer', @Param('id') id: string) {
+    return this.service.flagContent(type, id);
+  }
+
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @Get('flagged')
+  @ApiOperation({ summary: 'Get all flagged questions and answers (admin only)' })
+  getFlagged() {
+    return this.service.getFlaggedContent();
+  }
+
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @Patch('flagged/:type/:id/resolve')
+  @ApiOperation({ summary: 'Unflag (resolve) a flagged question or answer (admin only)' })
+  resolveFlag(@Param('type') type: 'question' | 'answer', @Param('id') id: string) {
+    return this.service.unflagContent(type, id);
+  }
+
+  @Post('questions/:id/upvote')
+  @ApiOperation({ summary: 'Upvote a question' })
+  upvoteQuestion(@Param('id') id: string, @CurrentUser('id') userId: string) {
+    return this.service.upvoteQuestion(id, userId);
+  }
+
+  @Post('questions/:id/downvote')
+  @ApiOperation({ summary: 'Downvote a question' })
+  downvoteQuestion(@Param('id') id: string, @CurrentUser('id') userId: string) {
+    return this.service.downvoteQuestion(id, userId);
+  }
+
+  @Post('answers/:id/upvote')
+  @ApiOperation({ summary: 'Upvote an answer' })
+  upvoteAnswer(@Param('id') id: string, @CurrentUser('id') userId: string) {
+    return this.service.upvoteAnswer(id, userId);
+  }
+
+  @Post('answers/:id/downvote')
+  @ApiOperation({ summary: 'Downvote an answer' })
+  downvoteAnswer(@Param('id') id: string, @CurrentUser('id') userId: string) {
+    return this.service.downvoteAnswer(id, userId);
+  }
+
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.MODERATOR)
+  @Patch('questions/:id/pin')
+  @ApiOperation({ summary: 'Pin a question (admin/moderator only)' })
+  pinQuestion(@Param('id') id: string) {
+    return this.service.pinQuestion(id);
+  }
+
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.MODERATOR)
+  @Patch('questions/:id/unpin')
+  @ApiOperation({ summary: 'Unpin a question (admin/moderator only)' })
+  unpinQuestion(@Param('id') id: string) {
+    return this.service.unpinQuestion(id);
+  }
+
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @Post('announcements')
+  @ApiOperation({ summary: 'Post an official announcement (admin only)' })
+  postAnnouncement(
+    @CurrentUser() user: User,
+    @Body('title') title: string,
+    @Body('body') body: string,
+    @Body('departmentId') departmentId?: string,
+  ) {
+    return this.service.postAnnouncement(user.id, {
+      title,
+      body,
+      departmentId: departmentId || user.departmentId,
+    });
+  }
+
+  @Delete('questions/:id')
+  @ApiOperation({ summary: 'Delete a question (admin/moderator deletes any; author deletes own)' })
+  deleteQuestion(@Param('id') id: string, @CurrentUser() user: User) {
+    return this.service.deleteQuestion(id, user.id, user.role);
+  }
+
+  @Delete('answers/:id')
+  @ApiOperation({ summary: 'Delete an answer (admin/moderator deletes any; author deletes own)' })
+  deleteAnswer(@Param('id') id: string, @CurrentUser() user: User) {
+    return this.service.deleteAnswer(id, user.id, user.role);
+  }
+}

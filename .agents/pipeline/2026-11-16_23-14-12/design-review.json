@@ -1,0 +1,61 @@
+{
+  "verdict": "CHANGES_REQUESTED",
+  "findings": [
+    {
+      "id": 1,
+      "severity": "HIGH",
+      "title": "ResourcesScreen does not handle empty courseId — sends bad API request",
+      "location": "Design §2.5 and §6.2",
+      "description": "The design claims ResourcesScreen handles an empty courseId by showing all resources. In reality, offlineResourcesProvider passes courseId directly to the API with no empty-string guard, sending GET /resources?courseId= to the backend. No 'show all' branch exists in the screen or provider.",
+      "fix": "Add a guard in offlineResourcesProvider: omit the courseId query param when it is empty, or document and verify that the backend returns all resources for an absent/empty courseId."
+    },
+    {
+      "id": 2,
+      "severity": "HIGH",
+      "title": "_QuickAction widget is not grid-compatible without layout changes",
+      "location": "Design §2.4",
+      "description": "The design claims the _QuickAction widget is unchanged and only the container changes. The widget uses Column(mainAxisSize: min) and TextOverflow.visible. In a GridView.count cell this produces top-aligned content and text that can bleed outside cell boundaries. The design omits the required Center wrapper and overflow fix.",
+      "fix": "Wrap _QuickAction (or create a _QuickActionCell variant) with Center and change overflow to TextOverflow.ellipsis for use inside GridView cells. The design must specify this change explicitly."
+    },
+    {
+      "id": 3,
+      "severity": "MEDIUM",
+      "title": "flutter clean does not fix a pub solver failure; runbook explanation is incorrect",
+      "location": "Design §1.1 and §1.3",
+      "description": "The user's error showed flutter pub get failing (a pub solver error). The design explains this as a 'stale cached APK' and prescribes flutter clean. flutter clean does not affect pub's package cache (~/.pub-cache/). If pubspec.yaml already has ^8.3.7, the pub solver should not fail at all, so the design's explanation contradicts itself.",
+      "fix": "Add to the runbook: if flutter pub get still fails, run 'flutter pub cache repair' or delete pubspec.lock and re-run 'flutter pub get'. Correct the explanation to distinguish pub solver failures from Gradle/AAR failures."
+    },
+    {
+      "id": 4,
+      "severity": "MEDIUM",
+      "title": "GoRoute insertion point is ambiguous relative to parameterised routes",
+      "location": "Design §4.2",
+      "description": "The design says to add new routes 'after GoRoute(path: AppRoutes.connections, ...)' but does not specify whether they go before or after the two parameterised routes (/:threadId and /:userId) that follow connections in the source.",
+      "fix": "State explicitly: insert the three new GoRoute entries after AppRoutes.connections and before the /:threadId and /:userId parameterised routes. Or provide the complete updated routes list."
+    },
+    {
+      "id": 5,
+      "severity": "MEDIUM",
+      "title": "childAspectRatio 0.85 is contingent on a layout fix that the design omits",
+      "location": "Design §2.2",
+      "description": "The childAspectRatio calculation assumes correct vertical centring of content in grid cells. Without the Center wrapper fix (Finding 2), the ratio is irrelevant because content will be top-aligned regardless. The design presents the ratio as independently valid.",
+      "fix": "Add a note that childAspectRatio: 0.85 is only correct when cells are wrapped with Center to handle vertical alignment. The ratio should be re-verified after the layout fix is applied."
+    },
+    {
+      "id": 6,
+      "severity": "NIT",
+      "title": "Placeholder screens use ConsumerWidget with an unused ref parameter",
+      "location": "Design §3",
+      "description": "The placeholder screens extend ConsumerWidget but never use ref. flutter analyze will emit an unused-parameter warning, which the design's own rationale (Riverpod-aware for future use) does not justify over a plain StatelessWidget.",
+      "fix": "Use StatelessWidget for the placeholders now and migrate to ConsumerWidget when ref is actually needed, or add a comment acknowledging the unused parameter is intentional."
+    },
+    {
+      "id": 7,
+      "severity": "NIT",
+      "title": "flutter run --debug flag is redundant",
+      "location": "Design §1.3",
+      "description": "flutter run already defaults to debug mode. The --debug flag adds noise without meaning.",
+      "fix": "Replace 'flutter run --debug' with 'flutter run' in the runbook."
+    }
+  ]
+}
