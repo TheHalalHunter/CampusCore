@@ -2,6 +2,7 @@ import {
   Injectable,
   UnauthorizedException,
   BadRequestException,
+  ConflictException,
   ServiceUnavailableException,
   HttpException,
   HttpStatus,
@@ -198,19 +199,48 @@ export class AuthService {
     if (!user) {
       isNewUser = true;
       const fullName = dto.fullName || name || email.split('@')[0];
-      user = await this.usersService.create({
-        firebaseUid: uid,
-        email,
-        fullName,
-        departmentId: dto.departmentId,
-        academicLevel: dto.academicLevel,
-        isEmailVerified: decodedToken.email_verified ?? false,
-      });
+      // Atomicity guard: if the PostgreSQL save fails after Firebase already
+      // created the account (on the client side), roll back by deleting the
+      // Firebase user so the client can retry without hitting "email-already-exists".
+      try {
+        user = await this.usersService.create({
+          firebaseUid: uid,
+          email,
+          fullName,
+          departmentId: dto.departmentId,
+          academicLevel: dto.academicLevel,
+          isEmailVerified: decodedToken.email_verified ?? false,
+        });
 
-      // Send verification email for new users (Task 2)
-      if (!user.isEmailVerified) {
-        const verificationToken = this.generateEmailVerificationToken(user);
-        await this.emailService.sendVerificationEmail(user.email, verificationToken);
+        // Send verification email for new users (Task 2)
+        if (!user.isEmailVerified) {
+          const verificationToken = this.generateEmailVerificationToken(user);
+          await this.emailService.sendVerificationEmail(user.email, verificationToken);
+        }
+      } catch (error) {
+        // Orphaned Firebase account: email exists in PostgreSQL but belongs to a
+        // different (deleted) Firebase UID, or the PostgreSQL save failed for any
+        // other reason. Delete the Firebase account that was just created so the
+        // client is not permanently stuck with an orphaned Firebase account.
+        try {
+          await this.firebase.auth().deleteUser(uid);
+          this.logger.warn(`Rolled back Firebase account ${uid} after PostgreSQL failure`);
+        } catch (rollbackErr) {
+          this.logger.error(
+            `Firebase rollback failed for uid ${uid}: ${(rollbackErr as Error).message}`,
+          );
+        }
+
+        if (error instanceof ConflictException) {
+          // Email is in PostgreSQL but the Firebase account had no matching record —
+          // likely an orphaned stale record from a previous failed registration.
+          // The Firebase account has been deleted; the client must register again
+          // after the stale data is resolved.
+          throw new ConflictException(
+            'This email is already registered. If you deleted your account and are trying again, please contact support to clear the stale record.',
+          );
+        }
+        throw error;
       }
     } else {
       // Block login for unverified accounts (Task 2)
