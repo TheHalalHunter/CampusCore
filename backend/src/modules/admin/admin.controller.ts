@@ -37,8 +37,11 @@ export class AdminController {
   async suspend(@Param('id') id: string, @CurrentUser() actor: User, @Req() req: any) {
     const result = await this.service.suspendUser(id);
     await this.audit.log({
-      actorId: actor.id, actorRole: actor.role,
-      action: 'USER_SUSPENDED', targetType: 'user', targetId: id,
+      actorId: actor.id,
+      actorRole: actor.role,
+      action: 'USER_SUSPENDED',
+      targetType: 'user',
+      targetId: id,
       ipAddress: req.ip,
     });
     return result;
@@ -49,8 +52,11 @@ export class AdminController {
   async activate(@Param('id') id: string, @CurrentUser() actor: User, @Req() req: any) {
     const result = await this.service.activateUser(id);
     await this.audit.log({
-      actorId: actor.id, actorRole: actor.role,
-      action: 'USER_ACTIVATED', targetType: 'user', targetId: id,
+      actorId: actor.id,
+      actorRole: actor.role,
+      action: 'USER_ACTIVATED',
+      targetType: 'user',
+      targetId: id,
       ipAddress: req.ip,
     });
     return result;
@@ -66,9 +72,13 @@ export class AdminController {
   ) {
     const result = await this.service.changeUserRole(id, role);
     await this.audit.log({
-      actorId: actor.id, actorRole: actor.role,
-      action: 'USER_ROLE_CHANGED', targetType: 'user', targetId: id,
-      details: { newRole: role }, ipAddress: req.ip,
+      actorId: actor.id,
+      actorRole: actor.role,
+      action: 'USER_ROLE_CHANGED',
+      targetType: 'user',
+      targetId: id,
+      details: { newRole: role },
+      ipAddress: req.ip,
     });
     return result;
   }

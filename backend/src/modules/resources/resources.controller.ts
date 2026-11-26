@@ -1,4 +1,15 @@
-import { Controller, Get, Post, Patch, Delete, Param, Body, Query, UseGuards, Req } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Param,
+  Body,
+  Query,
+  UseGuards,
+  Req,
+} from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { ResourcesService } from './resources.service';
 import { ResourceStatus } from './entities/resource.entity';
@@ -101,12 +112,19 @@ export class ResourcesController {
     @Req() req?: any,
   ) {
     const result = this.service.review(id, reviewer, status, reviewNote);
-    result.then(() => this.audit.log({
-      actorId: reviewer.id, actorRole: reviewer.role,
-      action: status === ResourceStatus.APPROVED ? 'RESOURCE_APPROVED' : 'RESOURCE_REJECTED',
-      targetType: 'resource', targetId: id,
-      details: { reviewNote }, ipAddress: req?.ip,
-    })).catch(() => {});
+    result
+      .then(() =>
+        this.audit.log({
+          actorId: reviewer.id,
+          actorRole: reviewer.role,
+          action: status === ResourceStatus.APPROVED ? 'RESOURCE_APPROVED' : 'RESOURCE_REJECTED',
+          targetType: 'resource',
+          targetId: id,
+          details: { reviewNote },
+          ipAddress: req?.ip,
+        }),
+      )
+      .catch(() => {});
     return result;
   }
 }
