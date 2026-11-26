@@ -190,7 +190,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               ),
               const SizedBox(height: 4),
               const Text(
-                'More universities coming soon',
+                'More universities coming soon. Contact us to add your university.',
                 style: TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 12,

@@ -739,7 +739,7 @@ class _SignUpFormState extends ConsumerState<_SignUpForm> {
                   ),
                   const SizedBox(height: 4),
                   const Text(
-                    'More universities coming soon',
+                    'More universities coming soon. Contact us to add your university.',
                     style: TextStyle(
                       color: AppColors.textHint,
                       fontSize: 11,
