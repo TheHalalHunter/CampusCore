@@ -8,6 +8,7 @@ import '../../../core/providers/auth_provider.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/constants/api_constants.dart';
 import '../../../core/storage/token_storage.dart';
+import '../../widgets/password_strength_indicator.dart';
 
 // ── Departments provider ──────────────────────────────────────────────────────
 final departmentsProvider =
@@ -683,11 +684,23 @@ class _SignUpFormState extends ConsumerState<_SignUpForm> {
   String? _selectedDeptId;
   String? _selectedUniversityId;
   String  _selectedLevel = '100L';
+  String  _passwordValue = '';
 
   final _levels = ['100L', '200L', '300L', '400L', '500L'];
 
   @override
+  void initState() {
+    super.initState();
+    _passwordCtrl.addListener(_onPasswordChanged);
+  }
+
+  void _onPasswordChanged() {
+    setState(() => _passwordValue = _passwordCtrl.text);
+  }
+
+  @override
   void dispose() {
+    _passwordCtrl.removeListener(_onPasswordChanged);
     _firstNameCtrl.dispose();
     _lastNameCtrl.dispose();
     _emailCtrl.dispose();
@@ -939,10 +952,15 @@ class _SignUpFormState extends ConsumerState<_SignUpForm> {
               ),
               validator: (v) {
                 if (v == null || v.isEmpty) return 'Required';
-                if (v.length < 6) return 'Min 6 characters';
+                final regex = RegExp(
+                    r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&_#\-])[A-Za-z\d@$!%*?&_#\-]{8,}$');
+                if (!regex.hasMatch(v)) {
+                  return 'Password must be at least 8 characters and include uppercase, lowercase, number, and special character';
+                }
                 return null;
               },
             ),
+            PasswordStrengthIndicator(password: _passwordValue),
             const SizedBox(height: 12),
 
             TextFormField(

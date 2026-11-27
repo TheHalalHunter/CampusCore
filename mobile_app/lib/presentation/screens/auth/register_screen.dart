@@ -6,6 +6,7 @@ import '../../../app/theme/app_theme.dart';
 import '../../../app/router/app_router.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/university_provider.dart';
+import '../../widgets/password_strength_indicator.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
@@ -24,9 +25,21 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   String? _selectedLevel;
   String? _selectedUniversityId;
   String? _selectedDepartmentId;
+  String _passwordValue = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _passwordCtrl.addListener(_onPasswordChanged);
+  }
+
+  void _onPasswordChanged() {
+    setState(() => _passwordValue = _passwordCtrl.text);
+  }
 
   @override
   void dispose() {
+    _passwordCtrl.removeListener(_onPasswordChanged);
     _nameCtrl.dispose();
     _emailCtrl.dispose();
     _passwordCtrl.dispose();
@@ -155,10 +168,17 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     onPressed: () => setState(() => _obscure = !_obscure),
                   ),
                 ),
-                validator: (v) => v == null || v.length < 8
-                    ? 'At least 8 characters required'
-                    : null,
+                validator: (v) {
+                  if (v == null || v.isEmpty) return 'Password is required';
+                  final regex = RegExp(
+                      r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&_#\-])[A-Za-z\d@$!%*?&_#\-]{8,}$');
+                  if (!regex.hasMatch(v)) {
+                    return 'Password must be at least 8 characters and include uppercase, lowercase, number, and special character';
+                  }
+                  return null;
+                },
               ),
+              PasswordStrengthIndicator(password: _passwordValue),
               const SizedBox(height: 16),
 
               // University dropdown
