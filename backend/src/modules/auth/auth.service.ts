@@ -215,7 +215,28 @@ export class AuthService {
         // Send verification email for new users (Task 2)
         if (!user.isEmailVerified) {
           const verificationToken = this.generateEmailVerificationToken(user);
-          await this.emailService.sendVerificationEmail(user.email, verificationToken);
+          try {
+            await this.emailService.sendVerificationEmail(user.email, verificationToken);
+          } catch (emailError) {
+            // Email sending failed — roll back both PostgreSQL and Firebase
+            // so the user can retry registration cleanly
+            this.logger.error(
+              `Email sending failed for ${email}, rolling back registration: ${(emailError as Error).message}`,
+            );
+            try {
+              await this.usersService.deleteByEmail(email);
+            } catch (dbErr) {
+              this.logger.error(`Failed to delete user from PostgreSQL during email rollback: ${(dbErr as Error).message}`);
+            }
+            try {
+              await this.firebase.auth().deleteUser(uid);
+            } catch (fbErr) {
+              this.logger.error(`Failed to delete Firebase account during email rollback: ${(fbErr as Error).message}`);
+            }
+            throw new ServiceUnavailableException(
+              'Registration failed: could not send verification email. Please try again later.',
+            );
+          }
         }
       } catch (error) {
         // Orphaned Firebase account: email exists in PostgreSQL but belongs to a

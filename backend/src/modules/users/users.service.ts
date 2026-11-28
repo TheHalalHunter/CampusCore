@@ -59,6 +59,10 @@ export class UsersService {
     await this.usersRepository.update(id, { isActive: false, refreshTokenHash: null });
   }
 
+  async deleteByEmail(email: string): Promise<void> {
+    await this.usersRepository.delete({ email });
+  }
+
   async acceptIntegrityPolicy(id: string): Promise<{ accepted: boolean }> {
     await this.usersRepository.update(id, { acceptedIntegrityPolicy: true });
     return { accepted: true };

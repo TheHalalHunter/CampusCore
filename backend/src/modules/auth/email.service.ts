@@ -117,7 +117,8 @@ export class EmailService {
       this.logger.log(`Verification email sent to ${toEmail}`);
     } catch (err) {
       this.logger.error(`Failed to send verification email to ${toEmail}`, (err as Error).message);
-      // Do not rethrow — email failure must not block registration
+      // Rethrow so the caller can roll back registration
+      throw err;
     }
   }
 }
