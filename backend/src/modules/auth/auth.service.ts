@@ -256,6 +256,13 @@ export class AuthService {
       }
     }
 
+    // Block new users who haven't verified their email yet
+    if (isNewUser && !user.isEmailVerified) {
+      throw new UnauthorizedException(
+        'Please verify your email before logging in. Check your inbox.',
+      );
+    }
+
     // 3. Update last seen
     await this.usersService.updateLastSeen(user.id);
     this.clearFailedAttempts(email);
