@@ -161,8 +161,9 @@ describe('UsersService', () => {
       expect(result).not.toHaveProperty('firebaseUid');
       expect(result).not.toHaveProperty('isEmailVerified');
       expect(result).not.toHaveProperty('acceptedIntegrityPolicy');
-      expect(result).toHaveProperty('email');
+      expect(result).not.toHaveProperty('email');
       expect(result).toHaveProperty('fullName');
+      expect(result).toHaveProperty('id');
     });
   });
 });
