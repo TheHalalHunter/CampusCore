@@ -239,6 +239,10 @@ export class AuthService {
           }
         }
       } catch (error) {
+        // Don't roll back if we already handled the error (e.g. email rollback)
+        if (error instanceof ServiceUnavailableException || error instanceof ConflictException) {
+          throw error;
+        }
         // Orphaned Firebase account: email exists in PostgreSQL but belongs to a
         // different (deleted) Firebase UID, or the PostgreSQL save failed for any
         // other reason. Delete the Firebase account that was just created so the
